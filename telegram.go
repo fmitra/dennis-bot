@@ -17,68 +17,16 @@ type Telegram struct {
 	Token string
 }
 
-// ref: https://core.telegram.org/bots/api#update
-// Represents a Telegram Update object. This payload is sent
-// to the webhook whenever a user messages us. Message field
-// is optional but for our use case this all we care about at
-// the moment
-type IncomingMessage struct {
-	UpdateId int `json:"update_id"`
-	Message struct {
-		MessageId int `json:"message_id"`
-		Date int `json:"date"`
-		Text string `json:"text"`
-		From struct {
-			Id int `json:"id"`
-			FirstName string `json:"first_name"`
-			LastName string `json:"last_name"`
-			UserName string `json:"username"`
-		} `json:"from"`
-		Chat struct {
-			Id int `json:"id"`
-			FirstName string `json:"first_name"`
-			LastName string `json:"last_name"`
-			UserName string `json:"username"`
-		} `json:"chat"`
-	} `json:"message"`
-}
-
-// Bot response to an `IncomingMessage`
-type OutgoingMessage struct {
-	ChatId int `json:"chat_id"`
-	Text string `json:"text"`
-}
-
-// Receives incoming messages from Telegram and processes a response
-func (t Telegram) Webhook(w http.ResponseWriter, req *http.Request) {
-	body, _ := ioutil.ReadAll(req.Body)
-	log.Printf("bot: incoming message - %s", body)
-	parseMessage(body)
-	defer req.Body.Close()
-	w.Write([]byte("received"))
-}
-
 func (t Telegram) sendUrl() (string) {
-	return fmt.Sprintf("%s%s/sendMessage", baseUrl, telegram.Token)
+	return fmt.Sprintf("%s%s/sendMessage", baseUrl, t.Token)
 }
 
-// Parses an incoming message from Telegram. If the message is valid,
-// we send a response in a new thread
-func parseMessage(payload []byte) {
-	var incMessage IncomingMessage
-	err := json.Unmarshal(payload, &incMessage)
-	if err != nil {
-		log.Printf("bot: invalid payload - %s", err)
-		return
-	}
-
-	go sendMessage(incMessage)
-}
-
-// Sends a message to Telegram
-func sendMessage(incMessage IncomingMessage) {
-	url := telegram.sendUrl()
-	outMessage := OutgoingMessage{incMessage.Message.Chat.Id, "Hi I'm Dennis"}
+// Sends a message to Telegram. Sending a message
+// requires the ID of a chat log (received from an IncomingMessage)
+// and the text we are sending to the user.
+func (t Telegram) send(chatId int, message string) {
+	url := t.sendUrl()
+	outMessage := OutgoingMessage{chatId, message}
 	payload, _ := json.Marshal(outMessage)
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(payload))
 	req.Header.Set("Content-Type", "application/json")
@@ -91,5 +39,5 @@ func sendMessage(incMessage IncomingMessage) {
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	log.Printf("bot: outgoing message - %s - %s", payload, body)
+	log.Printf("telegram: outgoing message - %s - %s", payload, body)
 }
