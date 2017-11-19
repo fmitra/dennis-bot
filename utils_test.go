@@ -1,6 +1,11 @@
 package main
 
-import "testing"
+import (
+	"testing"
+	"time"
+
+	"github.com/kierdavis/dateparser"
+)
 
 func TestIsISO(t *testing.T) {
 	var isoTests = []struct {
@@ -49,7 +54,27 @@ func TestInferAmount(t *testing.T) {
 		e_amount := test.expected.amount
 		e_currency := test.expected.currency
 		if amount != e_amount || currency != e_currency {
-			t.Error("inferAmount = %d, %d, want %d, %d", amount, currency, e_amount, e_currency)
+			t.Error("inferAmount(%d) = %d, %d, want %d, %d", test.input, amount, currency, e_amount, e_currency)
+		}
+	}
+}
+
+func TestInferDate(t *testing.T) {
+	parser := &dateparser.Parser{}
+	date, _ := parser.Parse("2017/11/10")
+	var inferDateTests = []struct {
+		input string
+		expected time.Time
+	}{
+		{"I paid 0.0023BTC on 2017-11-10", date},
+		{"2017/11/10 is todays Date", date},
+		{"11/10/2017", date},
+	}
+
+	for _, test := range inferDateTests {
+		result := inferDate(test.input)
+		if result != test.expected {
+			t.Error("inferDate(%d) = %d, want %d", test.input, result, test.expected)
 		}
 	}
 }

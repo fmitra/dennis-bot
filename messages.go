@@ -24,6 +24,8 @@ var messageMap = map[string][]string {
 	},
 }
 
+// Returns a message based on a message key. Messages are stored
+// as slices for each key and are randomly selected.
 func getMessage(messageKey string) (string) {
 	messages := messageMap[messageKey]
 	totalMessages := len(messages)
