@@ -10,7 +10,8 @@ import (
 
 // Checks if an input string is a currency ISO
 func isISO(s string) (bool) {
-	upperS := strings.ToUpper(s)
+	cleanString := strings.Replace(s, " ", "", -1)
+	upperS := strings.ToUpper(cleanString)
 	for _, iso := range CURRENCIES {
 		if upperS == iso {
 			return true
@@ -19,38 +20,29 @@ func isISO(s string) (bool) {
 	return false
 }
 
-// Checks if an input string contains a cominbation of
-// an amount and currency. For simplicity, we require
-// an amount to be written on the left of the currency ISO
-func inferAmount(s string) (float64, string) {
-	cleanString := strings.Replace(s, " ", "", -1)
-	upperCase := strings.ToUpper(cleanString)
+// Parses an input string for an amount and currency
+func parseAmount(s string) (amount float64, currency string) {
+	upperCase := strings.ToUpper(s)
+	for _, currency := range CURRENCIES {
+		if strings.Contains(upperCase, currency) {
 
-	if isISO(cleanString) {
-		return 0, upperCase
-	}
-
-	var currency string
-	for _, iso := range CURRENCIES {
-		if strings.Contains(upperCase, iso) {
-			currency = iso
-
-			// We expect the amount to be written on the left of the currency
-			splitString := strings.Split(upperCase, iso)
-			amount := strings.Replace(splitString[0], ",", "", -1)
+			amount := strings.Split(upperCase, currency)[0]
 			parsedAmount, err := strconv.ParseFloat(amount, 64)
 
 			if err != nil {
 				return 0, currency
 			}
+
 			return parsedAmount, currency
 		}
 	}
-	return 0, ""
+
+	parsedAmount, _ := strconv.ParseFloat(s, 64)
+	return parsedAmount, ""
 }
 
-// Checks if an input string contains a possible date value
-func inferDate(s string) (time.Time) {
+// Parses an input string for a date value
+func parseDate(s string) (inferredDate time.Time) {
 	lowerCase := strings.ToLower(s)
 	splitString := strings.Split(lowerCase, " ")
 	today := time.Now()
@@ -71,4 +63,14 @@ func inferDate(s string) (time.Time) {
 	}
 
 	return date
+}
+
+// Parses an input string for a description
+func parseDescription(s string) (description string) {
+	lowerCase := strings.ToLower(s)
+	if strings.HasPrefix(lowerCase, "for ") {
+		return s[3:]
+	}
+
+	return s
 }

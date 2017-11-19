@@ -17,7 +17,7 @@ type Telegram struct {
 	Token string
 }
 
-func (t Telegram) sendUrl() (string) {
+func (t Telegram) sendUrl() (url string) {
 	return fmt.Sprintf("%s%s/sendMessage", baseUrl, t.Token)
 }
 

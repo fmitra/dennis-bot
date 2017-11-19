@@ -24,45 +24,42 @@ func TestIsISO(t *testing.T) {
 	for _, test := range isoTests {
 		result := isISO(test.input)
 		if result != test.expected {
-			t.Errorf("isISO(%d) = %d, want %d", test.input, result, test.expected)
+			t.Errorf("[Input]", test.input, "[Output]", result, "[Expected]", test.expected)
 		}
 	}
 }
 
-func TestInferAmount(t *testing.T) {
+func TestParseAmount(t * testing.T) {
 	type output struct {
 		amount float64
 		currency string
 	}
-	var inferAmountTests = []struct {
+	var parseAmountTests = []struct {
 		input string
 		expected output
 	}{
 		{"PHP", output{0, "PHP"}},
-		{"   SGD", output{0, "SGD"}},
-		{"12 SGD", output{12, "SGD"}},
-		{"10,000.50 JPY", output{10000.50, "JPY"}},
-		{"0.000345BTC", output{0.000345, "BTC"}},
-		{"12USD", output{12, "USD"}},
-		{"12,000USD Something here", output{12000, "USD"}},
-		{"0.0023BTC on 2017/12/18", output{0.0023, "BTC"}},
-		{"I paid 0.0023BTC on 2017/12/18", output{0, "BTC"}},
+		{"12SGD", output{12, "SGD"}},
+		{"0.00345BTC", output{0.00345, "BTC"}},
+		{"200", output{200, ""}},
+		{"Hogwarts", output{0, ""}},
 	}
 
-	for _, test := range inferAmountTests {
-		amount, currency := inferAmount(test.input)
-		e_amount := test.expected.amount
-		e_currency := test.expected.currency
-		if amount != e_amount || currency != e_currency {
-			t.Error("inferAmount(%d) = %d, %d, want %d, %d", test.input, amount, currency, e_amount, e_currency)
+	for _, test := range parseAmountTests {
+		amount, currency := parseAmount(test.input)
+		if amount != test.expected.amount || currency != test.expected.currency {
+			t.Error(
+				"[Input]", test.input, "[Output]", amount, currency, "[Expected]",
+				test.expected.amount, test.expected.currency,
+			)
 		}
 	}
 }
 
-func TestInferDate(t *testing.T) {
+func ParseDateTest(t *testing.T) {
 	parser := &dateparser.Parser{}
 	date, _ := parser.Parse("2017/11/10")
-	var inferDateTests = []struct {
+	var parseDateTests = []struct {
 		input string
 		expected time.Time
 	}{
@@ -71,10 +68,31 @@ func TestInferDate(t *testing.T) {
 		{"11/10/2017", date},
 	}
 
-	for _, test := range inferDateTests {
-		result := inferDate(test.input)
+	for _, test := range parseDateTests {
+		result := parseDate(test.input)
 		if result != test.expected {
-			t.Error("inferDate(%d) = %d, want %d", test.input, result, test.expected)
+			t.Error(
+				"[Input]", test.input, "[Output]", result, "[Expected]", test.expected,
+			)
+		}
+	}
+}
+
+func ParseDescriptionTest(t *testing.T) {
+	var parseDescriptionTests = []struct {
+		input string
+		expected string
+	}{
+		{"for bananas", "bananas"},
+		{"apple oranges grapes", "apple oranges grape"},
+	}
+
+	for _, test := range parseDescriptionTests {
+		result := parseDescription(test.input)
+		if result != test.expected {
+			t.Error(
+				"[Input]", test.input, "[Output]", result, "[Expected]", test.expected,
+			)
 		}
 	}
 }

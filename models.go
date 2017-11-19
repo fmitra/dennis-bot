@@ -42,11 +42,11 @@ type Expense struct {
 	Category string     // Category of the expense
 }
 
-func (incMessage IncomingMessage) getChatId() (int) {
+func (incMessage IncomingMessage) getChatId() (chatId int) {
 	return incMessage.Message.Chat.Id
 }
 
-func (incMessage IncomingMessage) getMessage() (string) {
+func (incMessage IncomingMessage) getMessage() (message string) {
 	return incMessage.Message.Text
 }
 
@@ -56,14 +56,4 @@ func (expense Expense) setHistorical() {
 		expense.Historical = expense.Total
 	}
 	expense.Historical = float64(0)
-}
-
-// Parses a line of text to build an Expense.
-//
-// For example:
-//   >> "6USD for Locavore 12/15/2017"
-//   >> "50SGD for DTF yesterday"
-//   >> "20000JPY for Sushi"
-func parseExpense(expense string) (Expense) {
-	return Expense{}
 }
