@@ -32,10 +32,38 @@ type OutgoingMessage struct {
 	Text string `json:"text"`
 }
 
+// Describes a tracked expense
+type Expense struct {
+	Date string         // Date the expense was made
+	Description string  // Description of the expense
+	Total float64       // Total amount paid for the expense
+	Historical float64  // Historical USD value of the total
+	Currency string     // Currency denomination of the total
+	Category string     // Category of the expense
+}
+
 func (incMessage IncomingMessage) getChatId() (int) {
 	return incMessage.Message.Chat.Id
 }
 
 func (incMessage IncomingMessage) getMessage() (string) {
 	return incMessage.Message.Text
+}
+
+// Sets historical USD value of of foriegn expenses
+func (expense Expense) setHistorical() {
+	if expense.Currency == "USD" {
+		expense.Historical = expense.Total
+	}
+	expense.Historical = float64(0)
+}
+
+// Parses a line of text to build an Expense.
+//
+// For example:
+//   >> "6USD for Locavore 12/15/2017"
+//   >> "50SGD for DTF yesterday"
+//   >> "20000JPY for Sushi"
+func parseExpense(expense string) (Expense) {
+	return Expense{}
 }

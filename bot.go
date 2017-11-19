@@ -33,13 +33,13 @@ func sendMessage(keyword string, chatId int) {
 	var message string
 	switch keyword {
 	case "track":
-		message = Messages["basic.track"]
+		message = getMessage("basic.track")
 	case "help":
-		message = Messages["basic.help"]
+		message = getMessage("basic.help")
 	case "identity":
-		message = Messages["basic.identity"]
+		message = getMessage("basic.identity")
 	default:
-		message = Messages["basic.default"]
+		message = getMessage("basic.default")
 	}
 
 	go telegram.send(chatId, message)
@@ -49,7 +49,7 @@ func sendMessage(keyword string, chatId int) {
 // message for a user's intent.
 func mapToKeyword(incMessage IncomingMessage) (string) {
 	var responseTriggers = map[string][]string {
-		"default": []string{
+		"default": []string {
 			"hello",
 		},
 		"help": []string {
@@ -59,7 +59,7 @@ func mapToKeyword(incMessage IncomingMessage) (string) {
 			"who are",
 			"your name",
 		},
-		"track": []string{
+		"track": []string {
 			"expense",
 			"track",
 			"log",
