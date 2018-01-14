@@ -11,8 +11,9 @@ func converse(payload []byte) {
 	if err != nil {
 		panic(err)
 	}
+	updateSession(incMessage.getUser())
 	keyword := mapToKeyword(incMessage)
-	sendMessage(keyword, incMessage.getChatId())
+	sendMessage(keyword, incMessage)
 }
 
 // Parses an incoming message to ensure valid JSON
@@ -29,11 +30,13 @@ func receiveMessage(payload []byte) (IncomingMessage, error) {
 }
 
 // Determines outgoing response based on the keyword
-func sendMessage(keyword string, chatId int) {
+func sendMessage(keyword string, incMessage IncomingMessage) {
 	var message string
 	switch keyword {
+	case "dogfood":
+		message = getMessage("dogfood")
 	case "track":
-		message = getMessage("basic.track")
+		message = getIntentResponse(keyword, incMessage)
 	case "help":
 		message = getMessage("basic.help")
 	case "identity":
@@ -42,13 +45,24 @@ func sendMessage(keyword string, chatId int) {
 		message = getMessage("basic.default")
 	}
 
+	chatId := incMessage.getChatId()
 	go telegram.send(chatId, message)
 }
 
 // IncomingMessages are mapped to keywords to trigger the approriate
 // message for a user's intent.
 func mapToKeyword(incMessage IncomingMessage) (string) {
+	// If a session is already in progress, return the keyword of the
+	// session to allo the conversation to continue
+	intentSession, err := getIntentSession(incMessage.getUser().Id)
+	if err == nil {
+		return intentSession.Keyword
+	}
+
 	var responseTriggers = map[string][]string {
+		"dogfood": []string {
+			"dogfood",
+		},
 		"default": []string {
 			"hello",
 		},
