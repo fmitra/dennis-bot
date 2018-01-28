@@ -17,15 +17,11 @@ type Telegram struct {
 	Token string
 }
 
-func (t Telegram) sendUrl() (url string) {
-	return fmt.Sprintf("%s%s/sendMessage", telegramBaseUrl, t.Token)
-}
-
 // Sends a message to Telegram. Sending a message
 // requires the ID of a chat log (received from an IncomingMessage)
 // and the text we are sending to the user.
 func (t Telegram) send(chatId int, message string) {
-	url := t.sendUrl()
+	url := fmt.Sprintf("%s%s/sendMessage", telegramBaseUrl, t.Token)
 	outMessage := OutgoingMessage{chatId, message}
 	payload, _ := json.Marshal(outMessage)
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(payload))

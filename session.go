@@ -3,7 +3,6 @@ package main
 import (
 	"time"
 	"strconv"
-	"fmt"
 	"errors"
 
 	"github.com/vmihailenco/msgpack"
@@ -47,32 +46,4 @@ func getSession(userId int) (User, error) {
 		return user, errors.New("No session found")
 	}
 	return user, nil
-}
-
-// Updates an intent session based on a keyword
-func updateIntentSession(userId int, intentSession IntentSession) {
-	userIdStr := strconv.Itoa(userId)
-	sessionKey := fmt.Sprintf("%s_intent", userIdStr)
-	fiveMinutes := 300 * time.Millisecond
-	expireIn := time.Duration(fiveMinutes)
-	codec.Set(&cache.Item{
-		Key: sessionKey,
-		Object: intentSession,
-		Expiration: expireIn,
-	})
-}
-
-func getIntentSession(userId int) (IntentSession, error) {
-	var intentSession IntentSession
-	sessionKey := fmt.Sprintf("%s_intent", strconv.Itoa(userId))
-	err := codec.Get(sessionKey, &intentSession)
-	if err != nil {
-		return intentSession, errors.New("No session found")
-	}
-	return intentSession, nil
-}
-
-func clearIntentSession(userId int) {
-	sessionKey := fmt.Sprintf("%s_intent", strconv.Itoa(userId))
-	codec.Delete(sessionKey)
 }

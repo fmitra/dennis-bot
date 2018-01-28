@@ -27,7 +27,8 @@ func parseAmount(s string) (amount float64, currency string) {
 		if strings.Contains(upperCase, currency) {
 
 			amount := strings.Split(upperCase, currency)[0]
-			parsedAmount, err := strconv.ParseFloat(amount, 64)
+			cleanAmount := strings.Replace(amount, " ", "", -1)
+			parsedAmount, err := strconv.ParseFloat(cleanAmount, 64)
 
 			if err != nil {
 				return 0, currency

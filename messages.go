@@ -3,45 +3,31 @@ package main
 import "math/rand"
 
 var messageMap = map[string][]string {
-	"dogfood": []string {
-		"Ok let's test",
-	},
-	"basic.track": []string {
+	"default": []string {
+		"Hi! Tell Dennis what you want to do!",
+
 		"What are you tracking? You can say something like " +
 		"2000JPY for cornerstore sushi. Not in Japan? No problemmm " +
 		"you can use any currency!",
 
 		"Let's get started! You can say something like " +
 		"4USD for coffee yesterday",
-	},
-	"basic.help": []string {
-		"What?? What do you need help with? Want to do something? Say track!",
-		"I can help you track your expenses. Want to start? Just say track!",
-	},
-	"basic.identity": []string {
+
 		"Dennis Dennis Dennis Dennis",
+
 		"Hiiiiiiiii I'm Dennis!",
+
+		"How much did you spend? You can say something like 20USD " +
+		"for Dinner",
 	},
-	"basic.default": []string {
-		"Hi! Tell Dennis what you want to do!",
+	"track.success": []string {
+		"Ok got it!",
+
+		"Roger that!",
 	},
-	"track.askForAmount": []string {
-		"How much did you spend? You can say something like 20USD",
-	},
-	"track.askForDate": []string {
-		"Alright! When did this happen?",
-	},
-	"track.askForDetails": []string {
-		"What did you spend money on?",
-	},
-	"track.endConversation": []string {
-		"Okay got it!",
-	},
-	"track.error.askForAmount": []string {
-		"I didn't understand that. You can say something like 2000JPY",
-	},
-	"track.error.askForDate": []string {
-		"Hmm I don't understand date. Please give a proper date",
+	"track.error": []string {
+		"I didn't understand that. You need to tell me exactly what " +
+		"what your expense is. For example '0.00012BTC for Rent'",
 	},
 }
 

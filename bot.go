@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"encoding/json"
-	"strings"
 )
 
 func converse(payload []byte) {
@@ -31,20 +30,7 @@ func receiveMessage(payload []byte) (IncomingMessage, error) {
 
 // Determines outgoing response based on the keyword
 func sendMessage(keyword string, incMessage IncomingMessage) {
-	var message string
-	switch keyword {
-	case "dogfood":
-		message = getMessage("dogfood")
-	case "track":
-		message = getIntentResponse(keyword, incMessage)
-	case "help":
-		message = getMessage("basic.help")
-	case "identity":
-		message = getMessage("basic.identity")
-	default:
-		message = getMessage("basic.default")
-	}
-
+	message := getMessage(keyword)
 	chatId := incMessage.getChatId()
 	go telegram.send(chatId, message)
 }
@@ -52,44 +38,15 @@ func sendMessage(keyword string, incMessage IncomingMessage) {
 // IncomingMessages are mapped to keywords to trigger the approriate
 // message for a user's intent.
 func mapToKeyword(incMessage IncomingMessage) (string) {
-	witAi.parseMessage(incMessage.getMessage())
-
-	// If a session is already in progress, return the keyword of the
-	// session to allo the conversation to continue
-	intentSession, err := getIntentSession(incMessage.getUser().Id)
-	if err == nil {
-		return intentSession.Keyword
+	witResponse := witAi.parseMessage(incMessage.getMessage())
+	isTracking, err := witResponse.isTracking()
+	if isTracking == true && err == nil {
+		return "track.success"
 	}
 
-	var responseTriggers = map[string][]string {
-		"dogfood": []string {
-			"dogfood",
-		},
-		"default": []string {
-			"hello",
-		},
-		"help": []string {
-			"help",
-		},
-		"identity": []string {
-			"who are",
-			"your name",
-		},
-		"track": []string {
-			"expense",
-			"track",
-			"log",
-		},
+	if isTracking == true && err != nil {
+		return "track.error"
 	}
 
-	message := incMessage.getMessage()
-	for keyword, triggers := range responseTriggers {
-		for _, trigger := range triggers {
-			parsedMessage := strings.ToLower(message)
-			if strings.Contains(parsedMessage, trigger) {
-				return keyword
-			}
-		}
-	}
 	return "default"
 }

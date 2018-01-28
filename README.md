@@ -12,6 +12,7 @@ Telegram does not send any authentication headers in their requests, and instead
 
 ```
 export TELEGRAM_AUTH_TOKEN=$YOUR_TOKEN
+export WITAI_AUTH_TOKEN=$YOUR_TOKEN
 ```
 
 2. Run the bot and ngrok

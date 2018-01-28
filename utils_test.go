@@ -40,6 +40,7 @@ func TestParseAmount(t * testing.T) {
 	}{
 		{"PHP", output{0, "PHP"}},
 		{"12SGD", output{12, "SGD"}},
+		{"12 SGD", output{12, "SGD"}},
 		{"0.00345BTC", output{0.00345, "BTC"}},
 		{"200", output{200, ""}},
 		{"Hogwarts", output{0, ""}},

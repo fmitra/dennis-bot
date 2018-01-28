@@ -1,5 +1,11 @@
 package main
 
+import (
+	"errors"
+	"log"
+	"time"
+)
+
 type User struct {
 	Id int `json:"id"`
 	FirstName string `json:"first_name"`
@@ -69,6 +75,67 @@ func (incMessage IncomingMessage) getMessage() (message string) {
 
 func (incMessage IncomingMessage) getUser() (User) {
 	return incMessage.Message.From
+}
+
+// Checks if Wit.ai was able to infer a valid
+// Amount Entity from the IncomingMessage.getMessage()
+func (witResponse WitResponse) getAmount() (float64, string, error) {
+	amount := witResponse.Entities.Amount
+	if len(amount) == 0 {
+		return 0, "", errors.New("No amount")
+	}
+
+	totalAmount, currency := parseAmount(amount[0].Value)
+
+	if totalAmount > 0 && currency != "" {
+		return totalAmount, currency, nil
+	}
+
+	return 0, "", errors.New("Invalid amount")
+}
+
+// Checks if Wit.ai was able to infer a valid
+// Description Entity from the IncomingMessage.getMessage()
+func (witResponse WitResponse) getDescription() (string, error) {
+	description := witResponse.Entities.Description
+	if len(description) == 0 {
+		return "", errors.New("No description")
+	}
+
+	parsedDescription := parseDescription(description[0].Value)
+	return parsedDescription, nil
+}
+
+// Checks if Wit.ai was able to infer a valid
+// Date Entity from the IncomingMessage.getMessage()
+// If no date is provided, it will always default to today
+func (witResponse WitResponse) getDate() (time.Time) {
+	dateTime := witResponse.Entities.DateTime
+	stringDate := ""
+	if len(dateTime) != 0 {
+		stringDate = dateTime[0].Value
+	}
+
+	parsedDate := parseDate(stringDate)
+	return parsedDate
+}
+
+// Infers whether the User is attempting ot track an expense
+func (witResponse WitResponse) isTracking() (bool, error) {
+	amount, currency, err := witResponse.getAmount()
+	if err != nil {
+		log.Printf("Cannot infer without amount")
+		return false, err
+	}
+
+	description, err := witResponse.getDescription()
+	if err != nil {
+		log.Printf("Cannot infer without description")
+		return true, err
+	}
+
+	log.Printf("Inferring tracking %s %s %s", amount, currency, description)
+	return true, nil
 }
 
 // Sets historical USD value of of foriegn expenses
