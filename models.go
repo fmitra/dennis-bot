@@ -34,6 +34,21 @@ type OutgoingMessage struct {
 	Text string `json:"text"`
 }
 
+// Wit.ai Entity
+type WitEntity []struct {
+	Value string `json:"value"`
+	Confidence float64 `json:"confidence"`
+}
+
+// Wit.ai API Response
+type WitResponse struct {
+	Entities struct {
+		Amount WitEntity `json:"amount"`
+		DateTime WitEntity `json:"datetime"`
+		Description WitEntity `json:"description"`
+	} `json:"entities"`
+}
+
 // Describes a tracked expense
 type Expense struct {
 	Date string         // Date the expense was made

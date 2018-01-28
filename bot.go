@@ -52,6 +52,8 @@ func sendMessage(keyword string, incMessage IncomingMessage) {
 // IncomingMessages are mapped to keywords to trigger the approriate
 // message for a user's intent.
 func mapToKeyword(incMessage IncomingMessage) (string) {
+	witAi.parseMessage(incMessage.getMessage())
+
 	// If a session is already in progress, return the keyword of the
 	// session to allo the conversation to continue
 	intentSession, err := getIntentSession(incMessage.getUser().Id)

@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-var baseUrl = "https://api.telegram.org/bot"
+var telegramBaseUrl = "https://api.telegram.org/bot"
 var telegram = Telegram{os.Getenv("TELEGRAM_AUTH_TOKEN")}
 
 type Telegram struct {
@@ -18,7 +18,7 @@ type Telegram struct {
 }
 
 func (t Telegram) sendUrl() (url string) {
-	return fmt.Sprintf("%s%s/sendMessage", baseUrl, t.Token)
+	return fmt.Sprintf("%s%s/sendMessage", telegramBaseUrl, t.Token)
 }
 
 // Sends a message to Telegram. Sending a message
