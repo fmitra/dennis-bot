@@ -41,6 +41,8 @@ func mapToKeyword(incMessage IncomingMessage) (string) {
 	witResponse := witAi.parseMessage(incMessage.getMessage())
 	isTracking, err := witResponse.isTracking()
 	if isTracking == true && err == nil {
+		log.Printf("%s", witResponse)
+		go createExpense(witResponse)
 		return "track.success"
 	}
 

@@ -10,6 +10,19 @@ import (
 var webhookPath = fmt.Sprintf("/%s", telegram.Token)
 
 func main() {
+	// TODO Create a config file
+	dbConfig := DbConfig{
+		"0.0.0.0",
+		5432,
+		"dennis",
+		"dennis_test",
+		"dennis",
+		"disable",
+	}
+
+	// Set up DB
+	dbConfig.Open()
+
 	http.HandleFunc("/healthcheck", healthcheck)
 	http.HandleFunc(webhookPath, webhook)
 

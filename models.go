@@ -4,6 +4,9 @@ import (
 	"errors"
 	"log"
 	"time"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 type User struct {
@@ -57,7 +60,8 @@ type WitResponse struct {
 
 // Describes a tracked expense
 type Expense struct {
-	Date string         // Date the expense was made
+	gorm.Model
+	Date time.Time      // Date the expense was made
 	Description string  // Description of the expense
 	Total float64       // Total amount paid for the expense
 	Historical float64  // Historical USD value of the total
