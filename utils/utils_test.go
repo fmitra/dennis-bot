@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"testing"
@@ -47,7 +47,7 @@ func TestParseAmount(t * testing.T) {
 	}
 
 	for _, test := range parseAmountTests {
-		amount, currency := parseAmount(test.input)
+		amount, currency := ParseAmount(test.input)
 		if amount != test.expected.amount || currency != test.expected.currency {
 			t.Error(
 				"[Input]", test.input, "[Output]", amount, currency, "[Expected]",
@@ -70,7 +70,7 @@ func ParseDateTest(t *testing.T) {
 	}
 
 	for _, test := range parseDateTests {
-		result := parseDate(test.input)
+		result := ParseDate(test.input)
 		if result != test.expected {
 			t.Error(
 				"[Input]", test.input, "[Output]", result, "[Expected]", test.expected,
@@ -89,7 +89,7 @@ func ParseDescriptionTest(t *testing.T) {
 	}
 
 	for _, test := range parseDescriptionTests {
-		result := parseDescription(test.input)
+		result := ParseDescription(test.input)
 		if result != test.expected {
 			t.Error(
 				"[Input]", test.input, "[Output]", result, "[Expected]", test.expected,

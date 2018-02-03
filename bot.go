@@ -3,6 +3,9 @@ package main
 import (
 	"log"
 	"encoding/json"
+
+	"github.com/fmitra/dennis/wit"
+	"github.com/fmitra/dennis/expenses"
 )
 
 func converse(payload []byte) {
@@ -38,11 +41,11 @@ func sendMessage(keyword string, incMessage IncomingMessage) {
 // IncomingMessages are mapped to keywords to trigger the approriate
 // message for a user's intent.
 func mapToKeyword(incMessage IncomingMessage) (string) {
-	witResponse := witAi.parseMessage(incMessage.getMessage())
-	isTracking, err := witResponse.isTracking()
+	witResponse := wit.Client.ParseMessage(incMessage.getMessage())
+	isTracking, err := witResponse.IsTracking()
 	if isTracking == true && err == nil {
 		log.Printf("%s", witResponse)
-		go createExpense(witResponse)
+		go expenses.NewExpense(witResponse)
 		return "track.success"
 	}
 

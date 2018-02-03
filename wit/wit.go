@@ -1,4 +1,4 @@
-package main
+package wit
 
 import (
 	"log"
@@ -7,18 +7,23 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"fmt"
-	"os"
 )
 
 var witAiBaseUrl = "https://api.wit.ai"
 var witVersion = "20180128"
-var witAi = WitAi{os.Getenv("WITAI_AUTH_TOKEN")}
+var Client WitAi
 
 type WitAi struct {
 	Token string
 }
 
-func (w WitAi) parseMessage(message string) (WitResponse) {
+
+// Set up client to run with Wit.ai token
+func Init(token string) {
+	Client = WitAi{token}
+}
+
+func (w WitAi) ParseMessage(message string) (WitResponse) {
 	baseUrl := fmt.Sprintf("%s/message?v=%s", witAiBaseUrl, witVersion)
 	queryString := url.QueryEscape(message)
 	queryUrl := fmt.Sprintf("%s&q=%s", baseUrl, queryString)

@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"strings"
@@ -21,7 +21,7 @@ func isISO(s string) (bool) {
 }
 
 // Parses an input string for an amount and currency
-func parseAmount(s string) (amount float64, currency string) {
+func ParseAmount(s string) (amount float64, currency string) {
 	upperCase := strings.ToUpper(s)
 	for _, currency := range CURRENCIES {
 		if strings.Contains(upperCase, currency) {
@@ -43,7 +43,7 @@ func parseAmount(s string) (amount float64, currency string) {
 }
 
 // Parses an input string for a date value
-func parseDate(s string) (inferredDate time.Time) {
+func ParseDate(s string) (inferredDate time.Time) {
 	lowerCase := strings.ToLower(s)
 	splitString := strings.Split(lowerCase, " ")
 	today := time.Now()
@@ -67,7 +67,7 @@ func parseDate(s string) (inferredDate time.Time) {
 }
 
 // Parses an input string for a description
-func parseDescription(s string) (description string) {
+func ParseDescription(s string) (description string) {
 	lowerCase := strings.ToLower(s)
 	if strings.HasPrefix(lowerCase, "for ") {
 		return s[3:]

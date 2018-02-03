@@ -5,8 +5,11 @@ import (
 	"net/http"
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/fmitra/dennis/postgres"
+	"github.com/fmitra/dennis/expenses"
+	"github.com/fmitra/dennis/wit"
 )
 
 var webhookPath = fmt.Sprintf("/%s", telegram.Token)
@@ -15,6 +18,9 @@ func main() {
 	// Set up DB
 	setupDb()
 
+	// Set up Wit.ai
+	setupWitAi()
+
 	// Set up endpoints
 	http.HandleFunc("/healthcheck", healthcheck)
 	http.HandleFunc(webhookPath, webhook)
@@ -22,6 +28,11 @@ func main() {
 	// Run server
 	log.Printf("main: starting server on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func setupWitAi() {
+	witToken := os.Getenv("WITAI_AUTH_TOKEN")
+	wit.Init(witToken)
 }
 
 func setupDb() {
@@ -35,7 +46,7 @@ func setupDb() {
 	}
 
 	config.Open()
-	postgres.Db.AutoMigrate(&Expense{})
+	postgres.Db.AutoMigrate(&expenses.Expense{})
 }
 
 func healthcheck(w http.ResponseWriter, req *http.Request) {
