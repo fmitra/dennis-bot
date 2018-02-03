@@ -1,4 +1,4 @@
-package main
+package users
 
 import (
 	"time"
@@ -28,7 +28,7 @@ var codec = cache.Codec{
 
 // Updates a session from redis using the users
 // Telegram ID.
-func updateSession(user User) {
+func UpdateSession(user User) {
 	userId := strconv.Itoa(user.Id)
 	oneWeek := 25200 * time.Millisecond
 	expireIn := time.Duration(oneWeek)
@@ -39,7 +39,7 @@ func updateSession(user User) {
 	})
 }
 
-func getSession(userId int) (User, error) {
+func GetSession(userId int) (User, error) {
 	var user User
 	err := codec.Get(strconv.Itoa(userId), &user)
 	if err != nil {

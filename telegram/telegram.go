@@ -1,4 +1,4 @@
-package main
+package telegram
 
 import (
 	"log"
@@ -7,21 +7,25 @@ import (
 	"io/ioutil"
 	"fmt"
 	"bytes"
-	"os"
 )
 
-var telegramBaseUrl = "https://api.telegram.org/bot"
-var telegram = Telegram{os.Getenv("TELEGRAM_AUTH_TOKEN")}
+var baseUrl = "https://api.telegram.org/bot"
+var Client Telegram
 
 type Telegram struct {
 	Token string
 }
 
+// Set up client to run with Telegram token
+func Init(token string) {
+	Client = Telegram{token}
+}
+
 // Sends a message to Telegram. Sending a message
 // requires the ID of a chat log (received from an IncomingMessage)
 // and the text we are sending to the user.
-func (t Telegram) send(chatId int, message string) {
-	url := fmt.Sprintf("%s%s/sendMessage", telegramBaseUrl, t.Token)
+func (t Telegram) Send(chatId int, message string) {
+	url := fmt.Sprintf("%s%s/sendMessage", baseUrl, t.Token)
 	outMessage := OutgoingMessage{chatId, message}
 	payload, _ := json.Marshal(outMessage)
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(payload))

@@ -1,11 +1,8 @@
-package main
+package telegram
 
-type User struct {
-	Id int `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName string `json:"last_name"`
-	UserName string `json:"username"`
-}
+import (
+	"github.com/fmitra/dennis/users"
+)
 
 // ref: https://core.telegram.org/bots/api#update
 // Represents a Telegram Update object. This payload is sent
@@ -18,7 +15,7 @@ type IncomingMessage struct {
 		MessageId int `json:"message_id"`
 		Date int `json:"date"`
 		Text string `json:"text"`
-		From User `json:"from"`
+		From users.User `json:"from"`
 		Chat struct {
 			Id int `json:"id"`
 			FirstName string `json:"first_name"`
@@ -28,20 +25,20 @@ type IncomingMessage struct {
 	} `json:"message"`
 }
 
-// Bot response to an `IncomingMessage`
+// Represents a response to an `IncomingMessage`
 type OutgoingMessage struct {
 	ChatId int `json:"chat_id"`
 	Text string `json:"text"`
 }
 
-func (incMessage IncomingMessage) getChatId() (chatId int) {
-	return incMessage.Message.Chat.Id
+func (i IncomingMessage) GetChatId() (chatId int) {
+	return i.Message.Chat.Id
 }
 
-func (incMessage IncomingMessage) getMessage() (message string) {
-	return incMessage.Message.Text
+func (i IncomingMessage) GetMessage() (message string) {
+	return i.Message.Text
 }
 
-func (incMessage IncomingMessage) getUser() (User) {
-	return incMessage.Message.From
+func (i IncomingMessage) GetUser() (users.User) {
+	return i.Message.From
 }

@@ -10,9 +10,10 @@ import (
 	"github.com/fmitra/dennis/postgres"
 	"github.com/fmitra/dennis/expenses"
 	"github.com/fmitra/dennis/wit"
+	"github.com/fmitra/dennis/telegram"
 )
 
-var webhookPath = fmt.Sprintf("/%s", telegram.Token)
+var webhookPath = fmt.Sprintf("/%s", telegram.Client.Token)
 
 func main() {
 	// Set up DB
@@ -21,6 +22,9 @@ func main() {
 	// Set up Wit.ai
 	setupWitAi()
 
+	// Set up Telegram
+	setupTelegram()
+
 	// Set up endpoints
 	http.HandleFunc("/healthcheck", healthcheck)
 	http.HandleFunc(webhookPath, webhook)
@@ -28,6 +32,11 @@ func main() {
 	// Run server
 	log.Printf("main: starting server on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func setupTelegram() {
+	telegramToken := os.Getenv("TELEGRAM_AUTH_TOKEN")
+	telegram.Init(telegramToken)
 }
 
 func setupWitAi() {
