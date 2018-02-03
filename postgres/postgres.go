@@ -1,4 +1,4 @@
-package main
+package postgres
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 
 var Db *gorm.DB
 
-type DbConfig struct {
+type Config struct {
 	Host     string
 	Port     int32
 	User     string
@@ -20,17 +20,17 @@ type DbConfig struct {
 }
 
 // Open DB Connection
-func (dbConfig DbConfig) Open() {
+func (config Config) Open() {
 	db, err := gorm.Open(
 		"postgres",
 		fmt.Sprintf(
 			"host=%s port=%d user=%s dbname=%s password=%s sslmode=%s",
-			dbConfig.Host,
-			dbConfig.Port,
-			dbConfig.User,
-			dbConfig.Name,
-			dbConfig.Password,
-			dbConfig.SSLMode,
+			config.Host,
+			config.Port,
+			config.User,
+			config.Name,
+			config.Password,
+			config.SSLMode,
 		),
 	)
 	if err != nil {
@@ -38,6 +38,5 @@ func (dbConfig DbConfig) Open() {
 		panic("Failed to connect to database")
 	}
 
-	db.AutoMigrate(&Expense{})
 	Db = db
 }
