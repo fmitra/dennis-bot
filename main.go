@@ -11,6 +11,7 @@ import (
 	"github.com/fmitra/dennis/expenses"
 	"github.com/fmitra/dennis/wit"
 	"github.com/fmitra/dennis/telegram"
+	"github.com/fmitra/dennis/alphapoint"
 )
 
 var webhookPath = fmt.Sprintf("/%s", telegram.Client.Token)
@@ -25,6 +26,9 @@ func main() {
 	// Set up Telegram
 	setupTelegram()
 
+	// Set up AlphaPoint
+	setupAlphapoint()
+
 	// Set up endpoints
 	http.HandleFunc("/healthcheck", healthcheck)
 	http.HandleFunc(webhookPath, webhook)
@@ -32,6 +36,11 @@ func main() {
 	// Run server
 	log.Printf("main: starting server on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func setupAlphapoint() {
+	alphaPointToken := os.Getenv("ALPHAPOINT_AUTH_TOKEN")
+	alphapoint.Init(alphaPointToken)
 }
 
 func setupTelegram() {

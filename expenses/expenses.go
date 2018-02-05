@@ -8,6 +8,7 @@ import (
 
 	"github.com/fmitra/dennis/postgres"
 	"github.com/fmitra/dennis/wit"
+	"github.com/fmitra/dennis/alphapoint"
 )
 
 // Describes a tracked expense
@@ -26,11 +27,17 @@ func NewExpense(w wit.WitResponse) {
 	date := w.GetDate()
 	amount, currency, _ := w.GetAmount()
 	description, _ := w.GetDescription()
+	historical := alphapoint.Client.Convert(
+		currency,
+		"USD",
+		amount,
+	)
 
 	postgres.Db.Create(&Expense{
 		Date: date,
 		Description: description,
 		Total: amount,
+		Historical: historical,
 		Currency: currency,
 	})
 }
