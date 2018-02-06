@@ -8,13 +8,14 @@ To get started you'll need a [Telegram auth token](https://core.telegram.org/bot
 
 Telegram does not send any authentication headers in their requests, and instead recommends you instead use the token as the path of your webhook.
 
-1. Set your Telegram token to your development environment
+1. Set up a `config.json` file using `config.example.json` as a template.
 
-```
-export TELEGRAM_AUTH_TOKEN=$YOUR_TOKEN
-export WITAI_AUTH_TOKEN=$YOUR_TOKEN
-export ALPHAPOINT_AUTH_TOKEN=$YOUR_TOKEN
-```
+The configuration file will require
+
+* Postgres DB settings
+* Telegram API token to respond to messages
+* Wit.ai auth token to parse user messages
+* Alphapoint API key to convert currency
 
 2. Run the bot and ngrok
 

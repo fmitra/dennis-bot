@@ -30,7 +30,7 @@ func (w WitAi) ParseMessage(message string) (WitResponse) {
 
 	log.Printf("%s", queryUrl)
 	req, _ := http.NewRequest("GET", queryUrl, nil)
-	req.Header.Set("Authorization", w.Token)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", w.Token))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

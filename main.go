@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"fmt"
 	"io/ioutil"
+	"encoding/json"
 	"os"
 
 	"github.com/fmitra/dennis/postgres"
@@ -14,9 +15,33 @@ import (
 	"github.com/fmitra/dennis/alphapoint"
 )
 
+type Config struct {
+	Database struct {
+		Host string `json:"host"`
+		Port int32 `json:"port"`
+		User string `json:"user"`
+		Password string `json:"password"`
+		Name string `json:"name"`
+		SSLMode string `json:"ssl_mode"`
+	} `json:"database"`
+	AlphaPoint struct {
+		Token string `json:"token"`
+	} `json:"alphapoint"`
+	Telegram struct {
+		Token string `json:"token"`
+	} `json:"telegram"`
+	Wit struct {
+		Token string `json:"token"`
+	} `json:"wit"`
+}
+
 var webhookPath = fmt.Sprintf("/%s", telegram.Client.Token)
+var config Config
 
 func main() {
+	// Load config
+	loadConfig()
+
 	// Set up DB
 	setupDb()
 
@@ -38,32 +63,43 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
+func loadConfig() {
+	file := "config.json"
+	configFile, err := os.Open(file)
+	defer configFile.Close()
+	if err != nil {
+		panic(err)
+	}
+	jsonParser := json.NewDecoder(configFile)
+	jsonParser.Decode(&config)
+}
+
 func setupAlphapoint() {
-	alphaPointToken := os.Getenv("ALPHAPOINT_AUTH_TOKEN")
+	alphaPointToken := config.AlphaPoint.Token
 	alphapoint.Init(alphaPointToken)
 }
 
 func setupTelegram() {
-	telegramToken := os.Getenv("TELEGRAM_AUTH_TOKEN")
+	telegramToken := config.Telegram.Token
 	telegram.Init(telegramToken)
 }
 
 func setupWitAi() {
-	witToken := os.Getenv("WITAI_AUTH_TOKEN")
+	witToken := config.Wit.Token
 	wit.Init(witToken)
 }
 
 func setupDb() {
-	config := postgres.Config{
-		"0.0.0.0",
-		5432,
-		"dennis",
-		"dennis_test",
-		"dennis",
-		"disable",
+	db := postgres.Config{
+		config.Database.Host,
+		config.Database.Port,
+		config.Database.User,
+		config.Database.Name,
+		config.Database.Password,
+		config.Database.SSLMode,
 	}
 
-	config.Open()
+	db.Open()
 	postgres.Db.AutoMigrate(&expenses.Expense{})
 }
 
