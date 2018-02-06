@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/fmitra/dennis/postgres"
+	"github.com/fmitra/dennis/sessions"
 	"github.com/fmitra/dennis/expenses"
 	"github.com/fmitra/dennis/wit"
 	"github.com/fmitra/dennis/telegram"
@@ -24,6 +25,12 @@ type Config struct {
 		Name string `json:"name"`
 		SSLMode string `json:"ssl_mode"`
 	} `json:"database"`
+	Redis struct {
+		Host string `json:"host"`
+		Port int32 `json:"port"`
+		Password string `json:"password"`
+		Db int `json:"db"`
+	} `json:"redis"`
 	AlphaPoint struct {
 		Token string `json:"token"`
 	} `json:"alphapoint"`
@@ -41,6 +48,9 @@ var config Config
 func main() {
 	// Load config
 	loadConfig()
+
+	// Set up Redis
+	setupRedis()
 
 	// Set up DB
 	setupDb()
@@ -72,6 +82,15 @@ func loadConfig() {
 	}
 	jsonParser := json.NewDecoder(configFile)
 	jsonParser.Decode(&config)
+}
+
+func setupRedis() {
+	sessions.Init(sessions.Config{
+		config.Redis.Host,
+		config.Redis.Port,
+		config.Redis.Password,
+		config.Redis.Db,
+	})
 }
 
 func setupAlphapoint() {

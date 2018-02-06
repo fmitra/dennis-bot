@@ -1,4 +1,4 @@
-package users
+package telegram
 
 // Represents a User interacting with the bot
 type User struct {

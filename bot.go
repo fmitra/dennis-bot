@@ -3,11 +3,12 @@ package main
 import (
 	"log"
 	"encoding/json"
+	"strconv"
 
 	"github.com/fmitra/dennis/wit"
 	"github.com/fmitra/dennis/expenses"
+	"github.com/fmitra/dennis/sessions"
 	"github.com/fmitra/dennis/telegram"
-	"github.com/fmitra/dennis/users"
 )
 
 // Entry point to communicate with Dennis.
@@ -19,7 +20,8 @@ func converse(payload []byte) {
 	if err != nil {
 		panic(err)
 	}
-	users.UpdateSession(incMessage.GetUser())
+	user := incMessage.GetUser()
+	sessions.Set(strconv.Itoa(user.Id), user)
 	keyword := mapToKeyword(incMessage)
 	sendMessage(keyword, incMessage)
 }

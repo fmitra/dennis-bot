@@ -1,9 +1,5 @@
 package telegram
 
-import (
-	"github.com/fmitra/dennis/users"
-)
-
 // ref: https://core.telegram.org/bots/api#update
 // Represents a Telegram Update object. This payload is sent
 // to the webhook whenever a user messages us. Message field
@@ -15,7 +11,7 @@ type IncomingMessage struct {
 		MessageId int `json:"message_id"`
 		Date int `json:"date"`
 		Text string `json:"text"`
-		From users.User `json:"from"`
+		From User `json:"from"`
 		Chat struct {
 			Id int `json:"id"`
 			FirstName string `json:"first_name"`
@@ -39,6 +35,6 @@ func (i IncomingMessage) GetMessage() (message string) {
 	return i.Message.Text
 }
 
-func (i IncomingMessage) GetUser() (users.User) {
+func (i IncomingMessage) GetUser() (User) {
 	return i.Message.From
 }
