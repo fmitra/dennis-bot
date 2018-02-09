@@ -16,6 +16,7 @@ Set up a `config.json` file using `config.example.json` as a template. The confi
 * Telegram API token to respond to messages
 * Wit.ai auth token to parse user messages
 * Alphapoint API key to convert currency
+* Domain the bot will be receiving webhooks from
 
 ### Docker set up
 
@@ -46,12 +47,4 @@ dep ensure -vendor-only -v
 go build
 ./dennis
 ./ngrok http 8080
-```
-
-### First interaction
-
-Before you start interacting with the bot for the first time you need to send your webhook to Telegram
-
-```
-curl --data "url=https://abcd.ngrok.io/<TELEGRAM_AUTH_TOKEN>" https://api.telegram.org/bot<TELEGRAM_AUTH_TOKEN>/setWebhook
 ```

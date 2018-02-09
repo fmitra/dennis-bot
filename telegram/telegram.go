@@ -14,11 +14,28 @@ var Client Telegram
 
 type Telegram struct {
 	Token string
+	Domain string
 }
 
 // Set up client to run with Telegram token
-func Init(token string) {
-	Client = Telegram{token}
+func Init(token string, domain string) {
+	Client = Telegram{
+		token,
+		domain,
+	}
+
+	go Client.SetWebhook()
+}
+
+// Sets the bot domain webhook with Telegram
+func (t Telegram) SetWebhook() {
+	webhook := fmt.Sprintf("%s/%s", t.Domain, t.Token)
+	url := fmt.Sprintf("%s%s/setWebhook?url=%s", baseUrl, t.Token, webhook)
+	resp, err := http.Get(url)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
 }
 
 // Sends a message to Telegram. Sending a message

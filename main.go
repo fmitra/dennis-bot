@@ -31,6 +31,7 @@ type Config struct {
 		Password string `json:"password"`
 		Db int `json:"db"`
 	} `json:"redis"`
+	BotDomain string `json:"bot_domain"`
 	AlphaPoint struct {
 		Token string `json:"token"`
 	} `json:"alphapoint"`
@@ -100,7 +101,8 @@ func setupAlphapoint() {
 
 func setupTelegram() {
 	telegramToken := config.Telegram.Token
-	telegram.Init(telegramToken)
+	botDomain := config.BotDomain
+	telegram.Init(telegramToken, botDomain)
 }
 
 func setupWitAi() {

@@ -8,6 +8,7 @@
   "wit": {
     "token": "ABC"
   },
+  "bot_domain": "https://ab2cde9.ngrok.io",
   "redis": {
     "host": "0.0.0.0",
     "port": 6379,
