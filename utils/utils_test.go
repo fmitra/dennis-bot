@@ -29,7 +29,7 @@ func TestIsISO(t *testing.T) {
 	}
 }
 
-func TestParseAmount(t * testing.T) {
+func TestParseAmount(t *testing.T) {
 	type output struct {
 		amount float64
 		currency string
@@ -57,7 +57,7 @@ func TestParseAmount(t * testing.T) {
 	}
 }
 
-func ParseDateTest(t *testing.T) {
+func TestDateParser(t *testing.T) {
 	parser := &dateparser.Parser{}
 	date, _ := parser.Parse("2017/11/10")
 	var parseDateTests = []struct {
@@ -79,7 +79,7 @@ func ParseDateTest(t *testing.T) {
 	}
 }
 
-func ParseDescriptionTest(t *testing.T) {
+func TestParseDescription(t *testing.T) {
 	var parseDescriptionTests = []struct {
 		input string
 		expected string

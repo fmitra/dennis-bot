@@ -7,18 +7,22 @@ package telegram
 // the moment
 type IncomingMessage struct {
 	UpdateId int `json:"update_id"`
-	Message struct {
-		MessageId int `json:"message_id"`
-		Date int `json:"date"`
-		Text string `json:"text"`
-		From User `json:"from"`
-		Chat struct {
-			Id int `json:"id"`
-			FirstName string `json:"first_name"`
-			LastName string `json:"last_name"`
-			UserName string `json:"username"`
-		} `json:"chat"`
-	} `json:"message"`
+	Message Message `json:"message"`
+}
+
+type Chat struct {
+	Id int `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName string `json:"last_name"`
+	UserName string `json:"username"`
+}
+
+type Message struct {
+	MessageId int `json:"message_id"`
+	Date int `json:"date"`
+	Text string `json:"text"`
+	From User `json:"from"`
+	Chat Chat `json:"chat"`
 }
 
 // Represents a response to an `IncomingMessage`
