@@ -102,7 +102,7 @@ func setupAlphapoint() {
 func setupTelegram() {
 	telegramToken := config.Telegram.Token
 	botDomain := config.BotDomain
-	telegram.Init(telegramToken, botDomain)
+	<-telegram.Init(telegramToken, botDomain, &http.Client{})
 }
 
 func setupWitAi() {

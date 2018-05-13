@@ -85,7 +85,7 @@ func TestParseDescription(t *testing.T) {
 		expected string
 	}{
 		{"for bananas", "bananas"},
-		{"apple oranges grapes", "apple oranges grape"},
+		{"apple oranges grapes", "apple oranges grapes"},
 	}
 
 	for _, test := range parseDescriptionTests {

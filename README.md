@@ -2,49 +2,73 @@
 
 A pet project to learn Go, Dennis is Telegram bot to manage expense tracking.
 
-## Development
+## Developer Dependencies
 
-To get started you'll need a [Telegram auth token](https://core.telegram.org/bots/api#authorizing-your-bot) and [Ngrok](https://ngrok.com/download)
+* [Ngrok](https://ngrok.com/downlaod)
+* Postgres & Redis or [Docker](https://www.docker.com/)
 
-Telegram does not send any authentication headers in their requests, and instead recommends you instead use the token as the path of your webhook.
+## Getting Started
 
-### Config
+You will need API key's for the following services to get started.
 
-Set up a `config.json` file using `config.example.json` as a template. The configuration file will require
+* [Telegram Auth Token](https://core.telegram.org/bots/api#authorizing-your-bot)
+* [Alphapoint API Key](https://www.alphapoint.com/api/index.html)
+* [Wit.ai API Key](https://wit.ai)
+
+#### Create your configuration files.
+
+```
+make develop
+```
+
+#### Edit `config.json` with the following settings
 
 * Postgres DB settings
 * Telegram API token to respond to messages
 * Wit.ai auth token to parse user messages
 * Alphapoint API key to convert currency
-* Domain the bot will be receiving webhooks from
+* Domain the bot will be receiving webhooks from. In development, this will be the Ngrok URL
 
-### Docker set up
-
-If Postgres and Redis are missing from the environment
+#### Start Postgres and Redis
 
 ```
-docker run -d --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=dennis -e POSTGRES_USER=dennis -e POSTGRES_DB=dennis_test postgres
-docker run -d --name redis -p 6379:6379 redis
+docker-compose up -d
 ```
 
-Run Dennis (remove Postgres and Redis flags if they're running outside the container)
-
-```
-docker build -t fmitra/dennis .
-docker run --rm -p 8080:8080 -v `pwd` fmitra/dennis --link=postgres:postgres --link=redis:redis
-```
-
-Start up Ngrok
+#### Run Ngrok
 
 ```
 ./ngrok http 8080
 ```
 
-### Non Docker setup
+#### Run the bot
 
 ```
 dep ensure -vendor-only -v
+go test ./...
 go build
 ./dennis
-./ngrok http 8080
+```
+
+## Developer Notes
+
+#### Telegram Authentication
+
+Telegram does not send any authentication headers in their requests, and instead recommends
+you instead use the token as the path of your webhook.
+
+#### Docker
+
+There is a Dockerfile to build the bot for deploy. If you'd like to include it in with the
+other dependencies in `docker-compose.yml` you can add the following to your file's services:
+
+```
+bot:
+  build: .
+  ports:
+    - 8080:8080
+  restart: unless-stopped
+  depends_on:
+    - postgres
+    - redis
 ```

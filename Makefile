@@ -1,3 +1,7 @@
+develop:
+	cp config.example.json config.json
+	cp docker-compose.example.yml docker-compose.yml
+
 deps:
 	go get -v -u github.com/golang/dep/cmd/dep && dep ensure -vendor-only -v
 

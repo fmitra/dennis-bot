@@ -15,17 +15,17 @@ type HttpMock struct {
 	}
 }
 
-func (h *HttpMock) Get(url string) (http.Response, error) {
+func (h *HttpMock) Get(url string) (*http.Response, error) {
 	h.Calls.Get++
-	response := http.Response{
+	response := &http.Response{
 		Body: ioutil.NopCloser(bytes.NewBuffer([]byte("GET"))),
 	}
 	return response, nil
 }
 
-func (h *HttpMock) Post(url, contentType string, body io.Reader) (http.Response, error) {
+func (h *HttpMock) Post(url, contentType string, body io.Reader) (*http.Response, error) {
 	h.Calls.Post++
-	response := http.Response{
+	response := &http.Response{
 		Body: ioutil.NopCloser(bytes.NewBuffer([]byte("POST"))),
 	}
 	return response, nil

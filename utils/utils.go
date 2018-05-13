@@ -70,7 +70,7 @@ func ParseDate(s string) (inferredDate time.Time) {
 func ParseDescription(s string) (description string) {
 	lowerCase := strings.ToLower(s)
 	if strings.HasPrefix(lowerCase, "for ") {
-		return s[3:]
+		return s[4:]
 	}
 
 	return s
