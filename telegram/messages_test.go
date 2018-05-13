@@ -2,6 +2,8 @@ package telegram
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var incomingMessage = IncomingMessage{
@@ -25,27 +27,22 @@ var incomingMessage = IncomingMessage{
 	},
 }
 
-func TestGetChatId(t *testing.T) {
-	if incomingMessage.GetChatId() != 3 {
-		t.Error("Invalid chat ID")
-	}
-}
+func TestMessages(t *testing.T) {
+	t.Run("Gets Client ID", func(t *testing.T) {
+		assert.Equal(t, 3, incomingMessage.GetChatId())
+	})
 
-func TestGetUser(t *testing.T) {
-	user := User{
-		Id: 123,
-		FirstName: "Jane",
-		LastName: "Doe",
-		UserName: "janedoe123",
-	}
+	t.Run("Gets User", func(t *testing.T) {
+		user := User{
+			Id: 123,
+			FirstName: "Jane",
+			LastName: "Doe",
+			UserName: "janedoe123",
+		}
+		assert.Equal(t, user, incomingMessage.GetUser())
+	})
 
-	if incomingMessage.GetUser() != user {
-		t.Error("Invalid user")
-	}
-}
-
-func TestGetMessage(t *testing.T) {
-	if incomingMessage.GetMessage() != "Hello world" {
-		t.Error("Invalid message")
-	}
+	t.Run("Gets Message", func(t *testing.T) {
+		assert.Equal(t, "Hello world", incomingMessage.GetMessage())
+	})
 }

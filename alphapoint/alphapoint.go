@@ -2,6 +2,7 @@ package alphapoint
 
 import (
 	"net/http"
+	"io"
 	"io/ioutil"
 	"encoding/json"
 	"fmt"
@@ -9,12 +10,18 @@ import (
 	"strconv"
 )
 
-var baseUrl = "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&"
-
 var Client AlphaPoint
+const baseUrl = "https://www.alphavantage.co/query"
+
+type HttpLib interface {
+	Get(url string) (resp *http.Response, err error)
+	Post(url, contentType string, body io.Reader) (resp *http.Response, err error)
+}
 
 type AlphaPoint struct {
 	Token string
+	BaseUrl string
+	Http HttpLib
 }
 
 type CurrencyDetails struct {
@@ -24,18 +31,25 @@ type CurrencyDetails struct {
 }
 
 // Sets up client to run with AlphaPoint token
-func Init(token string) {
-	Client = AlphaPoint{token}
+func Init(token string, httpLib HttpLib) {
+	Client = AlphaPoint{
+		token,
+		baseUrl,
+		httpLib,
+	}
 }
 
 // Converts from one currency to another using AlphaPoints' API
 func (a AlphaPoint) Convert(fromISO string, toISO string, total float64) (float64) {
 	currencyBase := fmt.Sprintf(
-		"%sfrom_currency=%s&to_currency=%s", baseUrl, fromISO, toISO,
+		"%s?function=CURRENCY_EXCHANGE_RATE&from_currency=%s&to_currency=%s",
+		a.BaseUrl,
+		fromISO,
+		toISO,
 	)
 	url := fmt.Sprintf("%s&apikey=%s", currencyBase, a.Token)
 
-	resp, err := http.Get(url)
+	resp, err := a.Http.Get(url)
 	if err != nil {
 		panic(err)
 	}

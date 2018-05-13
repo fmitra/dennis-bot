@@ -96,7 +96,7 @@ func setupRedis() {
 
 func setupAlphapoint() {
 	alphaPointToken := config.AlphaPoint.Token
-	alphapoint.Init(alphaPointToken)
+	alphapoint.Init(alphaPointToken, &http.Client{})
 }
 
 func setupTelegram() {

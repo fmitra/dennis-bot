@@ -6,6 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"bytes"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type HttpMock struct {
@@ -39,9 +41,7 @@ func TestTelegram(t *testing.T) {
 
 		<-Init(token, domain, mockHttpLib)
 
-		if mockHttpLib.Calls.Get != 1 {
-			t.Error("Http GET request failed")
-		}
+		assert.Equal(t, 1, mockHttpLib.Calls.Get)
 	})
 
 	t.Run("Sets webhook on init", func(t *testing.T) {
@@ -50,17 +50,9 @@ func TestTelegram(t *testing.T) {
 		mockHttpLib := &HttpMock{}
 		Init(token, domain, mockHttpLib)
 
-		if Client.Token != "telegramToken" {
-			t.Error("Client not initialized with token")
-		}
-
-		if Client.Domain != "https://localhost" {
-			t.Error("Client not initialized with domain")
-		}
-
-		if Client.Http != mockHttpLib {
-			t.Error("Client not initialized with Http library")
-		}
+		assert.Equal(t, "telegramToken", Client.Token)
+		assert.Equal(t, "https://localhost", Client.Domain)
+		assert.Equal(t, mockHttpLib, Client.Http)
 	})
 
 	t.Run("Sets webhook", func(t *testing.T) {
@@ -73,9 +65,7 @@ func TestTelegram(t *testing.T) {
 		}
 
 		telegram.SetWebhook()
-		if mock.Calls.Get != 1 {
-			t.Error("Http GET request failed")
-		}
+		assert.Equal(t, 1, mock.Calls.Get)
 	})
 
 	t.Run("Sends telegram message", func(t *testing.T) {
@@ -90,8 +80,6 @@ func TestTelegram(t *testing.T) {
 		chatId := 5
 		message := "Hello world"
 		telegram.Send(chatId, message)
-		if mock.Calls.Post != 1 {
-			t.Error("Http POST request failed")
-		}
+		assert.Equal(t, 1, mock.Calls.Post)
 	})
 }

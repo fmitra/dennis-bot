@@ -8,18 +8,18 @@
   "wit": {
     "token": "ABC"
   },
-  "bot_domain": "https://ab2cde9.ngrok.io",
+  "bot_domain": "https://abc.ngrok.io",
   "redis": {
     "host": "0.0.0.0",
     "port": 6379,
-    "password": "",
+    "password": "dennis",
     "db": 0
   },
   "database": {
     "host": "0.0.0.0",
     "port": 5432,
     "user": "dennis",
-    "name": "dennis",
+    "name": "dennis_test",
     "password": "dennis",
     "ssl_mode": "disable"
   }

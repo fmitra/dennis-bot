@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kierdavis/dateparser"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsISO(t *testing.T) {
@@ -23,9 +24,7 @@ func TestIsISO(t *testing.T) {
 
 	for _, test := range isoTests {
 		result := isISO(test.input)
-		if result != test.expected {
-			t.Errorf("[Input]", test.input, "[Output]", result, "[Expected]", test.expected)
-		}
+		assert.Equal(t, test.expected, result)
 	}
 }
 
@@ -48,12 +47,8 @@ func TestParseAmount(t *testing.T) {
 
 	for _, test := range parseAmountTests {
 		amount, currency := ParseAmount(test.input)
-		if amount != test.expected.amount || currency != test.expected.currency {
-			t.Error(
-				"[Input]", test.input, "[Output]", amount, currency, "[Expected]",
-				test.expected.amount, test.expected.currency,
-			)
-		}
+		assert.Equal(t, test.expected.amount, amount)
+		assert.Equal(t, test.expected.currency, currency)
 	}
 }
 
@@ -71,11 +66,7 @@ func TestDateParser(t *testing.T) {
 
 	for _, test := range parseDateTests {
 		result := ParseDate(test.input)
-		if result != test.expected {
-			t.Error(
-				"[Input]", test.input, "[Output]", result, "[Expected]", test.expected,
-			)
-		}
+		assert.Equal(t, test.expected, result)
 	}
 }
 
@@ -90,10 +81,6 @@ func TestParseDescription(t *testing.T) {
 
 	for _, test := range parseDescriptionTests {
 		result := ParseDescription(test.input)
-		if result != test.expected {
-			t.Error(
-				"[Input]", test.input, "[Output]", result, "[Expected]", test.expected,
-			)
-		}
+		assert.Equal(t, test.expected, result)
 	}
 }
