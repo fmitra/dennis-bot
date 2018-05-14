@@ -53,7 +53,7 @@ func mapToKeyword(incMessage telegram.IncomingMessage) (string) {
 	isTracking, err := witResponse.IsTracking()
 	if isTracking == true && err == nil {
 		log.Printf("%s", witResponse)
-		go expenses.NewExpense(witResponse)
+		go expenses.NewExpense(witResponse, incMessage.GetUser().Id)
 		return "track.success"
 	}
 

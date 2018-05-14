@@ -20,10 +20,11 @@ type Expense struct {
 	Historical float64  // Historical USD value of the total
 	Currency string     // Currency denomination of the total
 	Category string     // Category of the expense
+	UserId int          // Telegram UserId of the expense owner
 }
 
 // Creates an expense item from a Wit.ai response
-func NewExpense(w wit.WitResponse) {
+func NewExpense(w wit.WitResponse, userId int) {
 	date := w.GetDate()
 	amount, currency, _ := w.GetAmount()
 	description, _ := w.GetDescription()
@@ -39,5 +40,6 @@ func NewExpense(w wit.WitResponse) {
 		Total: amount,
 		Historical: historical,
 		Currency: currency,
+		UserId: userId,
 	})
 }
