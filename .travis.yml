@@ -1,0 +1,19 @@
+sudo: required
+
+language: go
+go:
+  - "1.9.x"
+
+go_import_path: github.com/fmitra/dennis
+
+services:
+  - docker
+
+before_script:
+  - sudo /etc/init.d/postgresql stop
+
+script:
+  - make develop
+  - docker-compose up -d
+  - make deps
+  - go test ./...

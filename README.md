@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/fmitra/dennis-bot.svg?branch=master)](https://travis-ci.org/fmitra/dennis-bot)
+
 # Dennis
 
 A pet project to learn Go, Dennis is Telegram bot to manage expense tracking.
