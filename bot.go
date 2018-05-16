@@ -4,31 +4,35 @@ import (
 	"encoding/json"
 	"log"
 	"strconv"
+	"math/rand"
 
-	"github.com/fmitra/dennis/expenses"
+	"github.com/fmitra/dennis/alphapoint"
 	"github.com/fmitra/dennis/sessions"
 	"github.com/fmitra/dennis/telegram"
 	"github.com/fmitra/dennis/wit"
 )
 
-// Entry point to communicate with Dennis.
-// We parse incoming messages from telegram and
-// map it to key word triggers to determine a response
-// to send back to the user.
-func converse(payload []byte) {
-	incMessage, err := receiveMessage(payload)
+// Bot is responsible for parsing messages and responding
+// to a user. It is configured based on the environment
+type Bot struct {
+	env *Env
+}
+
+// Entry point to communicate with the bot. We parse an incoming message
+// and map it to  to a key word trigger to determine a response
+func (bot *Bot) Converse(payload []byte) {
+	incMessage, err := bot.ReceiveMessage(payload)
 	if err != nil {
 		panic(err)
 	}
 	user := incMessage.GetUser()
 	sessions.Set(strconv.Itoa(user.Id), user)
-	keyword := mapToKeyword(incMessage)
-	sendMessage(keyword, incMessage)
+	keyword := bot.MapToKeyword(incMessage)
+	bot.SendMessage(keyword, incMessage)
 }
 
-// Parses an incoming message to ensure valid JSON
-// was returned.
-func receiveMessage(payload []byte) (telegram.IncomingMessage, error) {
+// Parses an incoming telegram message
+func (bot *Bot) ReceiveMessage(payload []byte) (telegram.IncomingMessage, error) {
 	var incMessage telegram.IncomingMessage
 	err := json.Unmarshal(payload, &incMessage)
 	if err != nil {
@@ -39,21 +43,30 @@ func receiveMessage(payload []byte) (telegram.IncomingMessage, error) {
 	return incMessage, nil
 }
 
-// Determines outgoing response based on the keyword
-func sendMessage(keyword string, incMessage telegram.IncomingMessage) {
-	message := getMessage(keyword)
+// Sends a message back through telegram
+func (bot *Bot) SendMessage(keyword string, incMessage telegram.IncomingMessage) {
+	message := bot.GetResponse(keyword)
 	chatId := incMessage.GetChatId()
 	go telegram.Client.Send(chatId, message)
 }
 
+// Returns a message based on a message key. Messages are stored
+// as slices for each key and are randomly selected.
+func (bot *Bot) GetResponse(messageKey string) string {
+	messages := messageMap[messageKey]
+	totalMessages := len(messages)
+	random := rand.Intn(totalMessages)
+	return messages[random]
+}
+
 // IncomingMessages are mapped to keywords to trigger the approriate
 // message for a user's intent.
-func mapToKeyword(incMessage telegram.IncomingMessage) string {
+func (bot *Bot) MapToKeyword(incMessage telegram.IncomingMessage) string {
 	witResponse := wit.Client.ParseMessage(incMessage.GetMessage())
 	isTracking, err := witResponse.IsTracking()
 	if isTracking == true && err == nil {
 		log.Printf("%s", witResponse)
-		go expenses.NewExpense(witResponse, incMessage.GetUser().Id)
+		go bot.NewExpense(witResponse, incMessage.GetUser().Id)
 		return "track.success"
 	}
 
@@ -62,4 +75,25 @@ func mapToKeyword(incMessage telegram.IncomingMessage) string {
 	}
 
 	return "default"
+}
+
+// Creates an expense item from a Wit.ai response
+func (bot *Bot) NewExpense(w wit.WitResponse, userId int) {
+	date := w.GetDate()
+	amount, currency, _ := w.GetAmount()
+	description, _ := w.GetDescription()
+	historical := alphapoint.Client.Convert(
+		currency,
+		"USD",
+		amount,
+	)
+
+	bot.env.db.Create(&Expense{
+		Date:        date,
+		Description: description,
+		Total:       amount,
+		Historical:  historical,
+		Currency:    currency,
+		UserId:      userId,
+	})
 }

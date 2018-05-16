@@ -1,7 +1,5 @@
 package main
 
-import "math/rand"
-
 var messageMap = map[string][]string{
 	"default": []string{
 		"Hi! Tell Dennis what you want to do!",
@@ -29,13 +27,4 @@ var messageMap = map[string][]string{
 		"I didn't understand that. You need to tell me exactly what " +
 			"what your expense is. For example '0.00012BTC for Rent'",
 	},
-}
-
-// Returns a message based on a message key. Messages are stored
-// as slices for each key and are randomly selected.
-func getMessage(messageKey string) string {
-	messages := messageMap[messageKey]
-	totalMessages := len(messages)
-	random := rand.Intn(totalMessages)
-	return messages[random]
 }

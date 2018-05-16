@@ -1,137 +1,105 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"github.com/fmitra/dennis/alphapoint"
-	"github.com/fmitra/dennis/expenses"
-	"github.com/fmitra/dennis/postgres"
 	"github.com/fmitra/dennis/sessions"
 	"github.com/fmitra/dennis/telegram"
 	"github.com/fmitra/dennis/wit"
+	"github.com/fmitra/dennis/config"
 )
 
-type Config struct {
-	Database struct {
-		Host     string `json:"host"`
-		Port     int32  `json:"port"`
-		User     string `json:"user"`
-		Password string `json:"password"`
-		Name     string `json:"name"`
-		SSLMode  string `json:"ssl_mode"`
-	} `json:"database"`
-	Redis struct {
-		Host     string `json:"host"`
-		Port     int32  `json:"port"`
-		Password string `json:"password"`
-		Db       int    `json:"db"`
-	} `json:"redis"`
-	BotDomain  string `json:"bot_domain"`
-	AlphaPoint struct {
-		Token string `json:"token"`
-	} `json:"alphapoint"`
-	Telegram struct {
-		Token string `json:"token"`
-	} `json:"telegram"`
-	Wit struct {
-		Token string `json:"token"`
-	} `json:"wit"`
+// Working environment for the application
+type Env struct {
+	db *gorm.DB
+	config config.AppConfig
 }
 
-var webhookPath = fmt.Sprintf("/%s", telegram.Client.Token)
-var config Config
+func (env *Env) HealthCheck() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	}
+}
 
-func main() {
-	// Load config
-	loadConfig()
+func (env *Env) Webhook() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, _ := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+		log.Printf("main: incoming message - %s", body)
 
-	// Set up Redis
-	setupRedis()
+		bot := &Bot{env}
+		go bot.Converse(body)
 
-	// Set up DB
-	setupDb()
+		w.Write([]byte("received"))
+	}
+}
 
-	// Set up Wit.ai
-	setupWitAi()
+func (env *Env) Start() {
+	// Telegram does not send authentication headers on each request
+	// and instead recommends we use their token as the webhook path
+	webhookPath := fmt.Sprintf("/%s", env.config.Telegram.Token)
 
-	// Set up Telegram
-	setupTelegram()
-
-	// Set up AlphaPoint
-	setupAlphapoint()
-
-	// Set up endpoints
-	http.HandleFunc("/healthcheck", healthcheck)
-	http.HandleFunc(webhookPath, webhook)
+	http.HandleFunc("/healthcheck", env.HealthCheck())
+	http.HandleFunc(webhookPath, env.Webhook())
 
 	// Run server
 	log.Printf("main: starting server on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func loadConfig() {
-	file := "config.json"
-	configFile, err := os.Open(file)
-	defer configFile.Close()
+func LoadEnv(config config.AppConfig) *Env {
+	db, err := gorm.Open(
+		"postgres",
+		fmt.Sprintf(
+			"host=%s port=%d user=%s dbname=%s password=%s sslmode=%s",
+			config.Database.Host,
+			config.Database.Port,
+			config.Database.User,
+			config.Database.Name,
+			config.Database.Password,
+			config.Database.SSLMode,
+		),
+	)
+
+	db.AutoMigrate(&Expense{})
+
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
+		panic("Failed to connect to database")
 	}
-	jsonParser := json.NewDecoder(configFile)
-	jsonParser.Decode(&config)
+
+	return &Env{
+		db: db,
+		config: config,
+	}
 }
 
-func setupRedis() {
+func main() {
+	// Set up the environment
+	config := config.LoadConfig()
+	env := LoadEnv(config)
+
+	// Set up dependencies
 	sessions.Init(sessions.Config{
-		config.Redis.Host,
-		config.Redis.Port,
-		config.Redis.Password,
-		config.Redis.Db,
+		env.config.Redis.Host,
+		env.config.Redis.Port,
+		env.config.Redis.Password,
+		env.config.Redis.Db,
 	})
-}
 
-func setupAlphapoint() {
-	alphaPointToken := config.AlphaPoint.Token
-	alphapoint.Init(alphaPointToken, &http.Client{})
-}
+	alphapoint.Init(env.config.AlphaPoint.Token, &http.Client{})
 
-func setupTelegram() {
-	telegramToken := config.Telegram.Token
-	botDomain := config.BotDomain
-	<-telegram.Init(telegramToken, botDomain, &http.Client{})
-}
+	wit.Init(env.config.Wit.Token)
 
-func setupWitAi() {
-	witToken := config.Wit.Token
-	wit.Init(witToken)
-}
+	<-telegram.Init(env.config.Telegram.Token, env.config.BotDomain, &http.Client{})
 
-func setupDb() {
-	db := postgres.Config{
-		config.Database.Host,
-		config.Database.Port,
-		config.Database.User,
-		config.Database.Name,
-		config.Database.Password,
-		config.Database.SSLMode,
-	}
-
-	db.Open()
-	postgres.Db.AutoMigrate(&expenses.Expense{})
-}
-
-func healthcheck(w http.ResponseWriter, req *http.Request) {
-	w.Write([]byte("ok"))
-}
-
-func webhook(w http.ResponseWriter, req *http.Request) {
-	body, _ := ioutil.ReadAll(req.Body)
-	defer req.Body.Close()
-	log.Printf("main: incoming message - %s", body)
-	converse(body)
-	w.Write([]byte("received"))
+	// Start the application
+	env.Start()
 }

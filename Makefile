@@ -1,5 +1,5 @@
 develop:
-	cp config.example.json config.json
+	cp config/config.example.json config/config.json
 	cp docker-compose.example.yml docker-compose.yml
 
 deps:
