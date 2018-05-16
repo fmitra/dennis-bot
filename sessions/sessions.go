@@ -1,31 +1,31 @@
 package sessions
 
 import (
-	"time"
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
-	"github.com/vmihailenco/msgpack"
-	"github.com/go-redis/redis"
 	"github.com/go-redis/cache"
+	"github.com/go-redis/redis"
+	"github.com/vmihailenco/msgpack"
 )
 
 var codec cache.Codec
 
 type Config struct {
-	Host string
-	Port int32
+	Host     string
+	Port     int32
 	Password string
-	Db int
+	Db       int
 }
 
 func Init(config Config) {
 	address := fmt.Sprintf("%s:%s", config.Host, strconv.Itoa(int(config.Port)))
 	client := redis.NewClient(&redis.Options{
-		Addr: address,
+		Addr:     address,
 		Password: config.Password,
-		DB: config.Db,
+		DB:       config.Db,
 	})
 
 	codec = cache.Codec{
@@ -43,8 +43,8 @@ func Set(cacheKey string, v interface{}) {
 	oneWeek := 25200 * time.Millisecond
 	expireIn := time.Duration(oneWeek)
 	codec.Set(&cache.Item{
-		Key: cacheKey,
-		Object: v,
+		Key:        cacheKey,
+		Object:     v,
 		Expiration: expireIn,
 	})
 }

@@ -1,14 +1,14 @@
 package main
 
 import (
-	"log"
 	"encoding/json"
+	"log"
 	"strconv"
 
-	"github.com/fmitra/dennis/wit"
 	"github.com/fmitra/dennis/expenses"
 	"github.com/fmitra/dennis/sessions"
 	"github.com/fmitra/dennis/telegram"
+	"github.com/fmitra/dennis/wit"
 )
 
 // Entry point to communicate with Dennis.
@@ -48,7 +48,7 @@ func sendMessage(keyword string, incMessage telegram.IncomingMessage) {
 
 // IncomingMessages are mapped to keywords to trigger the approriate
 // message for a user's intent.
-func mapToKeyword(incMessage telegram.IncomingMessage) (string) {
+func mapToKeyword(incMessage telegram.IncomingMessage) string {
 	witResponse := wit.Client.ParseMessage(incMessage.GetMessage())
 	isTracking, err := witResponse.IsTracking()
 	if isTracking == true && err == nil {

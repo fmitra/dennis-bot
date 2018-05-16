@@ -1,16 +1,17 @@
 package telegram
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"encoding/json"
-	"io/ioutil"
-	"io"
-	"fmt"
-	"bytes"
 )
 
 var Client Telegram
+
 const baseUrl = "https://api.telegram.org/bot"
 
 type HttpLib interface {
@@ -19,10 +20,10 @@ type HttpLib interface {
 }
 
 type Telegram struct {
-	Token string
-	Domain string
+	Token   string
+	Domain  string
 	BaseUrl string
-	Http HttpLib
+	Http    HttpLib
 }
 
 // Set up client to run with Telegram token

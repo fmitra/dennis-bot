@@ -1,11 +1,11 @@
 package telegram
 
 import (
-	"testing"
-	"net/http"
+	"bytes"
 	"io"
 	"io/ioutil"
-	"bytes"
+	"net/http"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -13,7 +13,7 @@ import (
 type HttpMock struct {
 	Calls struct {
 		Post int
-		Get int
+		Get  int
 	}
 }
 
@@ -58,10 +58,10 @@ func TestTelegram(t *testing.T) {
 	t.Run("Sets webhook", func(t *testing.T) {
 		mock := &HttpMock{}
 		telegram := Telegram{
-			Token: "telegramToken",
-			Domain: "https://localhost",
+			Token:   "telegramToken",
+			Domain:  "https://localhost",
 			BaseUrl: "https://api.telegram.org/bot",
-			Http: mock,
+			Http:    mock,
 		}
 
 		telegram.SetWebhook()
@@ -71,10 +71,10 @@ func TestTelegram(t *testing.T) {
 	t.Run("Sends telegram message", func(t *testing.T) {
 		mock := &HttpMock{}
 		telegram := Telegram{
-			Token: "telegramToken",
-			Domain: "https://localhost",
+			Token:   "telegramToken",
+			Domain:  "https://localhost",
 			BaseUrl: "https://api.telegram.org/bot",
-			Http: mock,
+			Http:    mock,
 		}
 
 		chatId := 5

@@ -1,16 +1,17 @@
 package alphapoint
 
 import (
-	"net/http"
-	"io"
-	"io/ioutil"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"strconv"
 )
 
 var Client AlphaPoint
+
 const baseUrl = "https://www.alphavantage.co/query"
 
 type HttpLib interface {
@@ -19,9 +20,9 @@ type HttpLib interface {
 }
 
 type AlphaPoint struct {
-	Token string
+	Token   string
 	BaseUrl string
-	Http HttpLib
+	Http    HttpLib
 }
 
 type CurrencyDetails struct {
@@ -40,7 +41,7 @@ func Init(token string, httpLib HttpLib) {
 }
 
 // Converts from one currency to another using AlphaPoints' API
-func (a AlphaPoint) Convert(fromISO string, toISO string, total float64) (float64) {
+func (a AlphaPoint) Convert(fromISO string, toISO string, total float64) float64 {
 	currencyBase := fmt.Sprintf(
 		"%s?function=CURRENCY_EXCHANGE_RATE&from_currency=%s&to_currency=%s",
 		a.BaseUrl,

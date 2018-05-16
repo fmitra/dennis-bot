@@ -1,6 +1,6 @@
 package utils
 
-var CURRENCIES = []string {
+var CURRENCIES = []string{
 	"AED",
 	"AFN",
 	"ALL",

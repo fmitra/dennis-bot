@@ -1,10 +1,10 @@
 package alphapoint
 
 import (
-	"testing"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"fmt"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -38,9 +38,9 @@ func TestAlphapoint(t *testing.T) {
 		defer server.Close()
 
 		alphapoint := AlphaPoint{
-			Token: "alphapointToken",
+			Token:   "alphapointToken",
 			BaseUrl: server.URL,
-			Http: &http.Client{},
+			Http:    &http.Client{},
 		}
 
 		fromISO := "USD"

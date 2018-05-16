@@ -1,10 +1,10 @@
 package wit
 
 import (
-	"testing"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"fmt"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -35,8 +35,8 @@ func TestWit(t *testing.T) {
 		defer server.Close()
 
 		witAi := WitAi{
-			Token: "witAiToken",
-			BaseUrl: server.URL,
+			Token:      "witAiToken",
+			BaseUrl:    server.URL,
 			ApiVersion: "20180128",
 		}
 
@@ -49,8 +49,8 @@ func TestWit(t *testing.T) {
 		defer server.Close()
 
 		witAi := WitAi{
-			Token: "witAiToken",
-			BaseUrl: server.URL,
+			Token:      "witAiToken",
+			BaseUrl:    server.URL,
 			ApiVersion: "20180128",
 		}
 

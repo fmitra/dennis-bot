@@ -1,8 +1,8 @@
 package wit
 
 import (
-	"log"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/fmitra/dennis/utils"
@@ -10,15 +10,15 @@ import (
 
 // Wit.ai Entity
 type WitEntity []struct {
-	Value string `json:"value"`
+	Value      string  `json:"value"`
 	Confidence float64 `json:"confidence"`
 }
 
 // Wit.ai API Response
 type WitResponse struct {
 	Entities struct {
-		Amount WitEntity `json:"amount"`
-		DateTime WitEntity `json:"datetime"`
+		Amount      WitEntity `json:"amount"`
+		DateTime    WitEntity `json:"datetime"`
 		Description WitEntity `json:"description"`
 	} `json:"entities"`
 }
@@ -55,7 +55,7 @@ func (w WitResponse) GetDescription() (string, error) {
 // Checks if Wit.ai was able to infer a valid
 // Date Entity from the IncomingMessage.getMessage()
 // If no date is provided, it will always default to today
-func (w WitResponse) GetDate() (time.Time) {
+func (w WitResponse) GetDate() time.Time {
 	dateTime := w.Entities.DateTime
 	stringDate := ""
 	if len(dateTime) != 0 {

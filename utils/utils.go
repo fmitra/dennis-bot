@@ -1,15 +1,15 @@
 package utils
 
 import (
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/kierdavis/dateparser"
 )
 
 // Checks if an input string is a currency ISO
-func isISO(s string) (bool) {
+func isISO(s string) bool {
 	cleanString := strings.Replace(s, " ", "", -1)
 	upperS := strings.ToUpper(cleanString)
 	for _, iso := range CURRENCIES {

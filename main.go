@@ -1,37 +1,37 @@
 package main
 
 import (
-	"log"
-	"net/http"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"encoding/json"
+	"log"
+	"net/http"
 	"os"
 
+	"github.com/fmitra/dennis/alphapoint"
+	"github.com/fmitra/dennis/expenses"
 	"github.com/fmitra/dennis/postgres"
 	"github.com/fmitra/dennis/sessions"
-	"github.com/fmitra/dennis/expenses"
-	"github.com/fmitra/dennis/wit"
 	"github.com/fmitra/dennis/telegram"
-	"github.com/fmitra/dennis/alphapoint"
+	"github.com/fmitra/dennis/wit"
 )
 
 type Config struct {
 	Database struct {
-		Host string `json:"host"`
-		Port int32 `json:"port"`
-		User string `json:"user"`
+		Host     string `json:"host"`
+		Port     int32  `json:"port"`
+		User     string `json:"user"`
 		Password string `json:"password"`
-		Name string `json:"name"`
-		SSLMode string `json:"ssl_mode"`
+		Name     string `json:"name"`
+		SSLMode  string `json:"ssl_mode"`
 	} `json:"database"`
 	Redis struct {
-		Host string `json:"host"`
-		Port int32 `json:"port"`
+		Host     string `json:"host"`
+		Port     int32  `json:"port"`
 		Password string `json:"password"`
-		Db int `json:"db"`
+		Db       int    `json:"db"`
 	} `json:"redis"`
-	BotDomain string `json:"bot_domain"`
+	BotDomain  string `json:"bot_domain"`
 	AlphaPoint struct {
 		Token string `json:"token"`
 	} `json:"alphapoint"`

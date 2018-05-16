@@ -1,8 +1,8 @@
 package wit
 
 import (
-	"testing"
 	"encoding/json"
+	"testing"
 	"time"
 
 	"github.com/kierdavis/dateparser"
@@ -172,7 +172,7 @@ func TestWitParser(t *testing.T) {
 		assert.IsType(t, time.Time{}, date)
 	})
 
-	t.Run("Infers tracking", func(t * testing.T) {
+	t.Run("Infers tracking", func(t *testing.T) {
 		witResponse := getWitResponse([]byte(`
 			{
 				"entities": {

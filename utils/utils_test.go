@@ -10,7 +10,7 @@ import (
 
 func TestIsISO(t *testing.T) {
 	var isoTests = []struct {
-		input string
+		input    string
 		expected bool
 	}{
 		{"USD", true},
@@ -30,11 +30,11 @@ func TestIsISO(t *testing.T) {
 
 func TestParseAmount(t *testing.T) {
 	type output struct {
-		amount float64
+		amount   float64
 		currency string
 	}
 	var parseAmountTests = []struct {
-		input string
+		input    string
 		expected output
 	}{
 		{"PHP", output{0, "PHP"}},
@@ -56,7 +56,7 @@ func TestDateParser(t *testing.T) {
 	parser := &dateparser.Parser{}
 	date, _ := parser.Parse("2017/11/10")
 	var parseDateTests = []struct {
-		input string
+		input    string
 		expected time.Time
 	}{
 		{"I paid 0.0023BTC on 2017-11-10", date},
@@ -72,7 +72,7 @@ func TestDateParser(t *testing.T) {
 
 func TestParseDescription(t *testing.T) {
 	var parseDescriptionTests = []struct {
-		input string
+		input    string
 		expected string
 	}{
 		{"for bananas", "bananas"},

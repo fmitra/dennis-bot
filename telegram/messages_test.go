@@ -10,19 +10,19 @@ var incomingMessage = IncomingMessage{
 	UpdateId: 1,
 	Message: Message{
 		MessageId: 2,
-		Date: 1521367820,
-		Text: "Hello world",
+		Date:      1521367820,
+		Text:      "Hello world",
 		From: User{
-			Id: 123,
+			Id:        123,
 			FirstName: "Jane",
-			LastName: "Doe",
-			UserName: "janedoe123",
+			LastName:  "Doe",
+			UserName:  "janedoe123",
 		},
 		Chat: Chat{
-			Id: 3,
+			Id:        3,
 			FirstName: "John",
-			LastName: "Doe",
-			UserName: "johndoe456",
+			LastName:  "Doe",
+			UserName:  "johndoe456",
 		},
 	},
 }
@@ -34,10 +34,10 @@ func TestMessages(t *testing.T) {
 
 	t.Run("Gets User", func(t *testing.T) {
 		user := User{
-			Id: 123,
+			Id:        123,
 			FirstName: "Jane",
-			LastName: "Doe",
-			UserName: "janedoe123",
+			LastName:  "Doe",
+			UserName:  "janedoe123",
 		}
 		assert.Equal(t, user, incomingMessage.GetUser())
 	})

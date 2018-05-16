@@ -1,12 +1,12 @@
 package wit
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"io/ioutil"
-	"encoding/json"
-	"fmt"
 )
 
 const (
@@ -20,8 +20,8 @@ const (
 var Client WitAi
 
 type WitAi struct {
-	Token string
-	BaseUrl string
+	Token      string
+	BaseUrl    string
 	ApiVersion string
 }
 
@@ -34,7 +34,7 @@ func Init(token string) {
 	}
 }
 
-func (w WitAi) ParseMessage(message string) (WitResponse) {
+func (w WitAi) ParseMessage(message string) WitResponse {
 	witBaseUrl := fmt.Sprintf("%s/message?v=%s", w.BaseUrl, w.ApiVersion)
 	queryString := url.QueryEscape(message)
 	queryUrl := fmt.Sprintf("%s&q=%s", witBaseUrl, queryString)

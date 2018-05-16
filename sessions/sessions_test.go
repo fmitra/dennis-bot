@@ -1,12 +1,12 @@
 package sessions
 
 import (
-	"testing"
-	"os"
 	"encoding/json"
+	"os"
+	"testing"
 
-	"github.com/stretchr/testify/suite"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type SessionsTestSuite struct {
@@ -15,14 +15,14 @@ type SessionsTestSuite struct {
 
 type LocalConfig struct {
 	Redis struct {
-		Host string `json:"host"`
-		Port int32 `json:"port"`
+		Host     string `json:"host"`
+		Port     int32  `json:"port"`
 		Password string `json:"password"`
-		Db int `json:"db"`
+		Db       int    `json:"db"`
 	} `json:"redis"`
 }
 
-func (suite * SessionsTestSuite) SetupAllSuite() {
+func (suite *SessionsTestSuite) SetupAllSuite() {
 	var config LocalConfig
 	file := "../config.json"
 	configFile, err := os.Open(file)
@@ -43,7 +43,7 @@ func (suite * SessionsTestSuite) SetupAllSuite() {
 
 func (suite *SessionsTestSuite) SetsAndGetsFromSession() {
 	type UserMock struct {
-		UserId string
+		UserId    string
 		UserEmail string
 	}
 
@@ -60,7 +60,7 @@ func (suite *SessionsTestSuite) SetsAndGetsFromSession() {
 
 func (suite *SessionsTestSuite) ReturnsErrorIfNotFound() {
 	type UserMock struct {
-		UserId string
+		UserId    string
 		UserEmail string
 	}
 
