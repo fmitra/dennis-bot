@@ -9,16 +9,15 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
-	"github.com/fmitra/dennis/alphapoint"
 	"github.com/fmitra/dennis/sessions"
 	"github.com/fmitra/dennis/telegram"
-	"github.com/fmitra/dennis/wit"
 	"github.com/fmitra/dennis/config"
 )
 
 // Working environment for the application
 type Env struct {
 	db *gorm.DB
+	cache *sessions.Session
 	config config.AppConfig
 }
 
@@ -68,6 +67,13 @@ func LoadEnv(config config.AppConfig) *Env {
 		),
 	)
 
+	cache := sessions.New(sessions.Config{
+		config.Redis.Host,
+		config.Redis.Port,
+		config.Redis.Password,
+		config.Redis.Db,
+	})
+
 	db.AutoMigrate(&Expense{})
 
 	if err != nil {
@@ -77,28 +83,21 @@ func LoadEnv(config config.AppConfig) *Env {
 
 	return &Env{
 		db: db,
+		cache: cache,
 		config: config,
 	}
 }
 
 func main() {
 	// Set up the environment
-	config := config.LoadConfig()
-	env := LoadEnv(config)
+	env := LoadEnv(config.LoadConfig())
 
-	// Set up dependencies
-	sessions.Init(sessions.Config{
-		env.config.Redis.Host,
-		env.config.Redis.Port,
-		env.config.Redis.Password,
-		env.config.Redis.Db,
-	})
-
-	alphapoint.Init(env.config.AlphaPoint.Token, &http.Client{})
-
-	wit.Init(env.config.Wit.Token)
-
-	<-telegram.Init(env.config.Telegram.Token, env.config.BotDomain, &http.Client{})
+	t := telegram.Client(
+		env.config.Telegram.Token,
+		env.config.BotDomain,
+		&http.Client{},
+	)
+	go t.SetWebhook()
 
 	// Start the application
 	env.Start()

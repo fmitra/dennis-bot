@@ -10,46 +10,34 @@ import (
 	"net/http"
 )
 
-var Client Telegram
-
-const baseUrl = "https://api.telegram.org/bot"
+const BaseUrl = "https://api.telegram.org/bot"
 
 type HttpLib interface {
 	Get(url string) (resp *http.Response, err error)
 	Post(url, contentType string, body io.Reader) (resp *http.Response, err error)
 }
 
-type Telegram struct {
-	Token   string
-	Domain  string
+type client struct {
+	Token string
+	Domain string
 	BaseUrl string
 	Http    HttpLib
 }
 
-// Set up client to run with Telegram token
-func Init(token string, domain string, httpLib HttpLib) chan bool {
-	Client = Telegram{
-		token,
-		domain,
-		baseUrl,
-		httpLib,
+func Client(token string, domain string, httpLib HttpLib) *client {
+	return &client{
+		Token: token,
+		Domain: domain,
+		BaseUrl: BaseUrl,
+		Http: httpLib,
 	}
-	channel := make(chan bool)
-
-	go func() {
-		Client.SetWebhook()
-		channel <- true
-		close(channel)
-	}()
-
-	return channel
 }
 
 // Sets the bot domain webhook with Telegram
-func (t Telegram) SetWebhook() {
-	webhook := fmt.Sprintf("%s/%s", t.Domain, t.Token)
-	url := fmt.Sprintf("%s%s/setWebhook?url=%s", t.BaseUrl, t.Token, webhook)
-	resp, err := t.Http.Get(url)
+func (c client) SetWebhook() {
+	webhook := fmt.Sprintf("%s/%s", c.Domain, c.Token)
+	url := fmt.Sprintf("%s%s/setWebhook?url=%s", c.BaseUrl, c.Token, webhook)
+	resp, err := c.Http.Get(url)
 	defer resp.Body.Close()
 
 	if err != nil {
@@ -60,12 +48,12 @@ func (t Telegram) SetWebhook() {
 // Sends a message to Telegram. Sending a message
 // requires the ID of a chat log (received from an IncomingMessage)
 // and the text we are sending to the user.
-func (t Telegram) Send(chatId int, message string) {
-	url := fmt.Sprintf("%s%s/sendMessage", t.BaseUrl, t.Token)
+func (c client) Send(chatId int, message string) {
+	url := fmt.Sprintf("%s%s/sendMessage", c.BaseUrl, c.Token)
 	contentType := "application/json"
 	outMessage := OutgoingMessage{chatId, message}
 	payload, _ := json.Marshal(outMessage)
-	resp, err := t.Http.Post(url, contentType, bytes.NewReader(payload))
+	resp, err := c.Http.Post(url, contentType, bytes.NewReader(payload))
 	defer resp.Body.Close()
 
 	if err != nil {

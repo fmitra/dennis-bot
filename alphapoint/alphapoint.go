@@ -10,19 +10,11 @@ import (
 	"strconv"
 )
 
-var Client AlphaPoint
-
-const baseUrl = "https://www.alphavantage.co/query"
+const BaseUrl = "https://www.alphavantage.co/query"
 
 type HttpLib interface {
 	Get(url string) (resp *http.Response, err error)
 	Post(url, contentType string, body io.Reader) (resp *http.Response, err error)
-}
-
-type AlphaPoint struct {
-	Token   string
-	BaseUrl string
-	Http    HttpLib
 }
 
 type CurrencyDetails struct {
@@ -31,26 +23,32 @@ type CurrencyDetails struct {
 	} `json:"Realtime Currency Exchange Rate"`
 }
 
+type client struct {
+	Token   string
+	BaseUrl string
+	Http    HttpLib
+}
+
 // Sets up client to run with AlphaPoint token
-func Init(token string, httpLib HttpLib) {
-	Client = AlphaPoint{
-		token,
-		baseUrl,
-		httpLib,
+func Client(token string, httpLib HttpLib) *client {
+	return &client{
+		Token: token,
+		BaseUrl: BaseUrl,
+		Http: httpLib,
 	}
 }
 
 // Converts from one currency to another using AlphaPoints' API
-func (a AlphaPoint) Convert(fromISO string, toISO string, total float64) float64 {
+func (c client) Convert(fromISO string, toISO string, total float64) float64 {
 	currencyBase := fmt.Sprintf(
 		"%s?function=CURRENCY_EXCHANGE_RATE&from_currency=%s&to_currency=%s",
-		a.BaseUrl,
+		c.BaseUrl,
 		fromISO,
 		toISO,
 	)
-	url := fmt.Sprintf("%s&apikey=%s", currencyBase, a.Token)
+	url := fmt.Sprintf("%s&apikey=%s", currencyBase, c.Token)
 
-	resp, err := a.Http.Get(url)
+	resp, err := c.Http.Get(url)
 	if err != nil {
 		panic(err)
 	}

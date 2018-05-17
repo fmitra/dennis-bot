@@ -5,9 +5,9 @@ import (
 	"log"
 	"strconv"
 	"math/rand"
+	"net/http"
 
 	"github.com/fmitra/dennis/alphapoint"
-	"github.com/fmitra/dennis/sessions"
 	"github.com/fmitra/dennis/telegram"
 	"github.com/fmitra/dennis/wit"
 )
@@ -26,7 +26,7 @@ func (bot *Bot) Converse(payload []byte) {
 		panic(err)
 	}
 	user := incMessage.GetUser()
-	sessions.Set(strconv.Itoa(user.Id), user)
+	bot.env.cache.Set(strconv.Itoa(user.Id), user)
 	keyword := bot.MapToKeyword(incMessage)
 	bot.SendMessage(keyword, incMessage)
 }
@@ -47,7 +47,14 @@ func (bot *Bot) ReceiveMessage(payload []byte) (telegram.IncomingMessage, error)
 func (bot *Bot) SendMessage(keyword string, incMessage telegram.IncomingMessage) {
 	message := bot.GetResponse(keyword)
 	chatId := incMessage.GetChatId()
-	go telegram.Client.Send(chatId, message)
+
+	t := telegram.Client(
+		bot.env.config.Telegram.Token,
+		bot.env.config.BotDomain,
+		&http.Client{},
+	)
+
+	go t.Send(chatId, message)
 }
 
 // Returns a message based on a message key. Messages are stored
@@ -62,7 +69,8 @@ func (bot *Bot) GetResponse(messageKey string) string {
 // IncomingMessages are mapped to keywords to trigger the approriate
 // message for a user's intent.
 func (bot *Bot) MapToKeyword(incMessage telegram.IncomingMessage) string {
-	witResponse := wit.Client.ParseMessage(incMessage.GetMessage())
+	w := wit.Client(bot.env.config.Wit.Token)
+	witResponse := w.ParseMessage(incMessage.GetMessage())
 	isTracking, err := witResponse.IsTracking()
 	if isTracking == true && err == nil {
 		log.Printf("%s", witResponse)
@@ -82,7 +90,9 @@ func (bot *Bot) NewExpense(w wit.WitResponse, userId int) {
 	date := w.GetDate()
 	amount, currency, _ := w.GetAmount()
 	description, _ := w.GetDescription()
-	historical := alphapoint.Client.Convert(
+
+	a := alphapoint.Client(bot.env.config.AlphaPoint.Token, &http.Client{})
+	historical := a.Convert(
 		currency,
 		"USD",
 		amount,

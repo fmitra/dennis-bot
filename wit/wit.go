@@ -11,37 +11,35 @@ import (
 
 const (
 	// Base URL for Wit.ai
-	baseUrl = "https://api.wit.ai"
+	BaseUrl = "https://api.wit.ai"
 
 	// Wit.ai API Version
-	apiVersion = "20180128"
+	ApiVersion = "20180128"
 )
 
-var Client WitAi
-
-type WitAi struct {
+type client struct {
 	Token      string
 	BaseUrl    string
 	ApiVersion string
 }
 
 // Set up client to run with Wit.ai token
-func Init(token string) {
-	Client = WitAi{
-		token,
-		baseUrl,
-		apiVersion,
+func Client(token string) *client {
+	return &client{
+		Token: token,
+		BaseUrl: BaseUrl,
+		ApiVersion: ApiVersion,
 	}
 }
 
-func (w WitAi) ParseMessage(message string) WitResponse {
-	witBaseUrl := fmt.Sprintf("%s/message?v=%s", w.BaseUrl, w.ApiVersion)
+func (c client) ParseMessage(message string) WitResponse {
+	witBaseUrl := fmt.Sprintf("%s/message?v=%s", c.BaseUrl, c.ApiVersion)
 	queryString := url.QueryEscape(message)
 	queryUrl := fmt.Sprintf("%s&q=%s", witBaseUrl, queryString)
 
 	log.Printf("%s", queryUrl)
 	req, _ := http.NewRequest("GET", queryUrl, nil)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", w.Token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

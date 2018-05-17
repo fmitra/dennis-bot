@@ -11,8 +11,6 @@ import (
 	"github.com/vmihailenco/msgpack"
 )
 
-var codec cache.Codec
-
 type Config struct {
 	Host     string
 	Port     int32
@@ -20,7 +18,11 @@ type Config struct {
 	Db       int
 }
 
-func Init(config Config) {
+type Session struct {
+	codec *cache.Codec
+}
+
+func New(config Config) *Session {
 	address := fmt.Sprintf("%s:%s", config.Host, strconv.Itoa(int(config.Port)))
 	client := redis.NewClient(&redis.Options{
 		Addr:     address,
@@ -28,7 +30,7 @@ func Init(config Config) {
 		DB:       config.Db,
 	})
 
-	codec = cache.Codec{
+	codec := &cache.Codec{
 		Redis: client,
 		Marshal: func(v interface{}) ([]byte, error) {
 			return msgpack.Marshal(v)
@@ -37,21 +39,23 @@ func Init(config Config) {
 			return msgpack.Unmarshal(b, v)
 		},
 	}
+
+	return &Session{codec}
 }
 
-func Set(cacheKey string, v interface{}) {
+func (s *Session) Set(cacheKey string, v interface{}) {
 	oneWeek := 25200 * time.Millisecond
 	expireIn := time.Duration(oneWeek)
-	codec.Set(&cache.Item{
+	s.codec.Set(&cache.Item{
 		Key:        cacheKey,
 		Object:     v,
 		Expiration: expireIn,
 	})
 }
 
-func Get(cacheKey string) (interface{}, error) {
+func (s *Session) Get(cacheKey string) (interface{}, error) {
 	var v interface{}
-	err := codec.Get(cacheKey, &v)
+	err := s.codec.Get(cacheKey, &v)
 	if err != nil {
 		return v, errors.New("No session found")
 	}
