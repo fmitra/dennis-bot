@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-const BaseUrl = "https://www.alphavantage.co/query"
+var BaseUrl = "https://www.alphavantage.co/query"
 
 type HttpLib interface {
 	Get(url string) (resp *http.Response, err error)
@@ -32,9 +32,9 @@ type client struct {
 // Sets up client to run with AlphaPoint token
 func Client(token string, httpLib HttpLib) *client {
 	return &client{
-		Token: token,
+		Token:   token,
 		BaseUrl: BaseUrl,
-		Http: httpLib,
+		Http:    httpLib,
 	}
 }
 

@@ -6,12 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 )
-
-type SessionsTestSuite struct {
-	suite.Suite
-}
 
 type LocalConfig struct {
 	Redis struct {
@@ -22,9 +17,9 @@ type LocalConfig struct {
 	} `json:"redis"`
 }
 
-func (suite *SessionsTestSuite) SetupAllSuite() {
+func GetSession() *Session {
 	var config LocalConfig
-	file := "../config.json"
+	file := "../config/config.json"
 	configFile, err := os.Open(file)
 	defer configFile.Close()
 	if err != nil {
@@ -33,7 +28,7 @@ func (suite *SessionsTestSuite) SetupAllSuite() {
 	jsonParser := json.NewDecoder(configFile)
 	jsonParser.Decode(&config)
 
-	Init(Config{
+	return New(Config{
 		config.Redis.Host,
 		config.Redis.Port,
 		config.Redis.Password,
@@ -41,41 +36,42 @@ func (suite *SessionsTestSuite) SetupAllSuite() {
 	})
 }
 
-func (suite *SessionsTestSuite) SetsAndGetsFromSession() {
-	type UserMock struct {
-		UserId    string
-		UserEmail string
-	}
+func TestSessions(t *testing.T) {
+	t.Run("Sets and gets from session", func(t *testing.T) {
+		type UserMock struct {
+			UserId    string
+			UserEmail string
+		}
 
-	userMock := UserMock{
-		"userId",
-		"userEmail",
-	}
+		session := GetSession()
+		userMock := UserMock{
+			"userId",
+			"userEmail",
+		}
 
-	Set("userId", userMock)
-	cachedUser, _ := Get("userId")
+		var cachedUser UserMock
+		session.Set("userId", userMock)
+		session.Get("userId", &cachedUser)
 
-	assert.Equal(suite.T(), cachedUser, userMock)
-}
+		assert.Equal(t, userMock, cachedUser)
+	})
 
-func (suite *SessionsTestSuite) ReturnsErrorIfNotFound() {
-	type UserMock struct {
-		UserId    string
-		UserEmail string
-	}
+	t.Run("Returns error if not found", func(t *testing.T) {
+		type UserMock struct {
+			UserId    string
+			UserEmail string
+		}
 
-	userMock := UserMock{
-		"userId",
-		"userEmail",
-	}
+		session := GetSession()
+		userMock := UserMock{
+			"userId",
+			"userEmail",
+		}
 
-	Set("userId", userMock)
-	_, err := Get("nonExistentUser")
+		var wanted UserMock
+		session.Set("userId", userMock)
+		err := session.Get("nonExistentUser", &wanted)
 
-	assert.EqualError(suite.T(), err, "No session found")
-
-}
-
-func TestSessionsTestSuite(t *testing.T) {
-	suite.Run(t, new(SessionsTestSuite))
+		assert.EqualError(t, err, "No session found")
+	})
 }

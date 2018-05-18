@@ -9,15 +9,15 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
+	"github.com/fmitra/dennis/config"
 	"github.com/fmitra/dennis/sessions"
 	"github.com/fmitra/dennis/telegram"
-	"github.com/fmitra/dennis/config"
 )
 
 // Working environment for the application
 type Env struct {
-	db *gorm.DB
-	cache *sessions.Session
+	db     *gorm.DB
+	cache  *sessions.Session
 	config config.AppConfig
 }
 
@@ -82,8 +82,8 @@ func LoadEnv(config config.AppConfig) *Env {
 	}
 
 	return &Env{
-		db: db,
-		cache: cache,
+		db:     db,
+		cache:  cache,
 		config: config,
 	}
 }

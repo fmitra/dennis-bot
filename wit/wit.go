@@ -9,7 +9,7 @@ import (
 	"net/url"
 )
 
-const (
+var (
 	// Base URL for Wit.ai
 	BaseUrl = "https://api.wit.ai"
 
@@ -23,15 +23,18 @@ type client struct {
 	ApiVersion string
 }
 
-// Set up client to run with Wit.ai token
+// Convenience function to return an API client with default
+// base URL and API version declared.
 func Client(token string) *client {
 	return &client{
-		Token: token,
-		BaseUrl: BaseUrl,
+		Token:      token,
+		BaseUrl:    BaseUrl,
 		ApiVersion: ApiVersion,
 	}
 }
 
+// Sends a message to Wit.Ai for parsing. Wit.Ai helps parse
+// context (ex. What does a user want?) out of a message
 func (c client) ParseMessage(message string) WitResponse {
 	witBaseUrl := fmt.Sprintf("%s/message?v=%s", c.BaseUrl, c.ApiVersion)
 	queryString := url.QueryEscape(message)

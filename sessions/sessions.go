@@ -19,7 +19,7 @@ type Config struct {
 }
 
 type Session struct {
-	codec *cache.Codec
+	codec cache.Codec
 }
 
 func New(config Config) *Session {
@@ -30,7 +30,7 @@ func New(config Config) *Session {
 		DB:       config.Db,
 	})
 
-	codec := &cache.Codec{
+	codec := cache.Codec{
 		Redis: client,
 		Marshal: func(v interface{}) ([]byte, error) {
 			return msgpack.Marshal(v)
@@ -46,6 +46,7 @@ func New(config Config) *Session {
 func (s *Session) Set(cacheKey string, v interface{}) {
 	oneWeek := 25200 * time.Millisecond
 	expireIn := time.Duration(oneWeek)
+	fmt.Printf("setting %v", v)
 	s.codec.Set(&cache.Item{
 		Key:        cacheKey,
 		Object:     v,
@@ -53,11 +54,10 @@ func (s *Session) Set(cacheKey string, v interface{}) {
 	})
 }
 
-func (s *Session) Get(cacheKey string) (interface{}, error) {
-	var v interface{}
+func (s *Session) Get(cacheKey string, v interface{}) error {
 	err := s.codec.Get(cacheKey, &v)
 	if err != nil {
-		return v, errors.New("No session found")
+		return errors.New("No session found")
 	}
-	return v, nil
+	return nil
 }

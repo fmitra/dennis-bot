@@ -17,14 +17,14 @@ func makeTestServer(response string) *httptest.Server {
 }
 
 func TestAlphapoint(t *testing.T) {
-	t.Run("Sets Client on init", func(t *testing.T) {
+	t.Run("Returns client with default config", func(t *testing.T) {
 		token := "alphapointToken"
 		httpLib := &http.Client{}
-		Init(token, httpLib)
+		alphapoint := Client(token, httpLib)
 
-		assert.Equal(t, "alphapointToken", Client.Token)
-		assert.Equal(t, "https://www.alphavantage.co/query", Client.BaseUrl)
-		assert.Equal(t, httpLib, Client.Http)
+		assert.Equal(t, "alphapointToken", alphapoint.Token)
+		assert.Equal(t, BaseUrl, alphapoint.BaseUrl)
+		assert.Equal(t, httpLib, alphapoint.Http)
 	})
 
 	t.Run("Converts currency", func(t *testing.T) {
@@ -37,7 +37,7 @@ func TestAlphapoint(t *testing.T) {
 		server := makeTestServer(response)
 		defer server.Close()
 
-		alphapoint := AlphaPoint{
+		alphapoint := client{
 			Token:   "alphapointToken",
 			BaseUrl: server.URL,
 			Http:    &http.Client{},

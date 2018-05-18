@@ -17,6 +17,13 @@ func makeTestServer(response string) *httptest.Server {
 }
 
 func TestWit(t *testing.T) {
+	t.Run("Returns client with default config", func(t *testing.T) {
+		witAi := Client("witAiToken")
+
+		assert.Equal(t, BaseUrl, witAi.BaseUrl)
+		assert.Equal(t, ApiVersion, witAi.ApiVersion)
+	})
+
 	t.Run("Returns WitResponse", func(t *testing.T) {
 		response := `{
 			"entities": {
@@ -34,7 +41,7 @@ func TestWit(t *testing.T) {
 		server := makeTestServer(response)
 		defer server.Close()
 
-		witAi := WitAi{
+		witAi := client{
 			Token:      "witAiToken",
 			BaseUrl:    server.URL,
 			ApiVersion: "20180128",
@@ -48,7 +55,7 @@ func TestWit(t *testing.T) {
 		server := makeTestServer(`{not valid json}`)
 		defer server.Close()
 
-		witAi := WitAi{
+		witAi := client{
 			Token:      "witAiToken",
 			BaseUrl:    server.URL,
 			ApiVersion: "20180128",

@@ -34,30 +34,16 @@ func (h *HttpMock) Post(url, contentType string, body io.Reader) (*http.Response
 }
 
 func TestTelegram(t *testing.T) {
-//	t.Run("Sets Client on init", func(t *testing.T) {
-//		token := "telegramToken"
-//		domain := "https://localhost"
-//		mockHttpLib := &HttpMock{}
-//
-//		<-Init(token, domain, mockHttpLib)
-//
-//		assert.Equal(t, 1, mockHttpLib.Calls.Get)
-//	})
-//
-//	t.Run("Sets webhook on init", func(t *testing.T) {
-//		token := "telegramToken"
-//		domain := "https://localhost"
-//		mockHttpLib := &HttpMock{}
-//		Init(token, domain, mockHttpLib)
-//
-//		assert.Equal(t, "telegramToken", Client.Token)
-//		assert.Equal(t, "https://localhost", Client.Domain)
-//		assert.Equal(t, mockHttpLib, Client.Http)
-//	})
+	t.Run("Returns client with default config", func(t *testing.T) {
+		mock := &HttpMock{}
+		telegram := Client("telegramToken", "https://localhost", mock)
+
+		assert.Equal(t, BaseUrl, telegram.BaseUrl)
+	})
 
 	t.Run("Sets webhook", func(t *testing.T) {
 		mock := &HttpMock{}
-		telegram := Telegram{
+		telegram := client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
 			BaseUrl: "https://api.telegram.org/bot",
@@ -70,7 +56,7 @@ func TestTelegram(t *testing.T) {
 
 	t.Run("Sends telegram message", func(t *testing.T) {
 		mock := &HttpMock{}
-		telegram := Telegram{
+		telegram := client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
 			BaseUrl: "https://api.telegram.org/bot",

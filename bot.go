@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"log"
-	"strconv"
 	"math/rand"
 	"net/http"
+	"strconv"
 
 	"github.com/fmitra/dennis/alphapoint"
 	"github.com/fmitra/dennis/telegram"

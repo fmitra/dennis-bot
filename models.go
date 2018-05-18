@@ -18,4 +18,3 @@ type Expense struct {
 	Category    string    // Category of the expense
 	UserId      int       // Telegram UserId of the expense owner
 }
-

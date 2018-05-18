@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-const BaseUrl = "https://api.telegram.org/bot"
+var BaseUrl = "https://api.telegram.org/bot"
 
 type HttpLib interface {
 	Get(url string) (resp *http.Response, err error)
@@ -18,18 +18,20 @@ type HttpLib interface {
 }
 
 type client struct {
-	Token string
-	Domain string
+	Token   string
+	Domain  string
 	BaseUrl string
 	Http    HttpLib
 }
 
+// Convenience function to return an API client with default
+// base URL
 func Client(token string, domain string, httpLib HttpLib) *client {
 	return &client{
-		Token: token,
-		Domain: domain,
+		Token:   token,
+		Domain:  domain,
 		BaseUrl: BaseUrl,
-		Http: httpLib,
+		Http:    httpLib,
 	}
 }
 
