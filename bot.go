@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"math/rand"
-	"net/http"
 	"strconv"
 
 	"github.com/fmitra/dennis/alphapoint"
@@ -90,7 +89,7 @@ func (bot *Bot) NewExpense(w wit.WitResponse, userId int) {
 	amount, currency, _ := w.GetAmount()
 	description, _ := w.GetDescription()
 
-	a := alphapoint.Client(bot.env.config.AlphaPoint.Token, &http.Client{})
+	a := alphapoint.Client(bot.env.config.AlphaPoint.Token)
 	historical := a.Convert(
 		currency,
 		"USD",

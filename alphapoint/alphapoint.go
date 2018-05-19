@@ -3,7 +3,6 @@ package alphapoint
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,11 +10,6 @@ import (
 )
 
 var BaseUrl = "https://www.alphavantage.co/query"
-
-type HttpLib interface {
-	Get(url string) (resp *http.Response, err error)
-	Post(url, contentType string, body io.Reader) (resp *http.Response, err error)
-}
 
 type CurrencyDetails struct {
 	Details struct {
@@ -26,15 +20,13 @@ type CurrencyDetails struct {
 type client struct {
 	Token   string
 	BaseUrl string
-	Http    HttpLib
 }
 
 // Sets up client to run with AlphaPoint token
-func Client(token string, httpLib HttpLib) *client {
+func Client(token string) *client {
 	return &client{
 		Token:   token,
 		BaseUrl: BaseUrl,
-		Http:    httpLib,
 	}
 }
 
@@ -48,7 +40,7 @@ func (c client) Convert(fromISO string, toISO string, total float64) float64 {
 	)
 	url := fmt.Sprintf("%s&apikey=%s", currencyBase, c.Token)
 
-	resp, err := c.Http.Get(url)
+	resp, err := http.Get(url)
 	if err != nil {
 		panic(err)
 	}
