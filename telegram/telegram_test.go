@@ -1,71 +1,51 @@
 package telegram
 
 import (
-	"bytes"
-	"io"
-	"io/ioutil"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-type HttpMock struct {
-	Calls struct {
-		Post int
-		Get  int
-	}
-}
-
-func (h *HttpMock) Get(url string) (*http.Response, error) {
-	h.Calls.Get++
-	response := &http.Response{
-		Body: ioutil.NopCloser(bytes.NewBuffer([]byte("GET"))),
-	}
-	return response, nil
-}
-
-func (h *HttpMock) Post(url, contentType string, body io.Reader) (*http.Response, error) {
-	h.Calls.Post++
-	response := &http.Response{
-		Body: ioutil.NopCloser(bytes.NewBuffer([]byte("POST"))),
-	}
-	return response, nil
+func makeTestServer(response string) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintln(w, response)
+	}))
 }
 
 func TestTelegram(t *testing.T) {
 	t.Run("Returns client with default config", func(t *testing.T) {
-		mock := &HttpMock{}
-		telegram := Client("telegramToken", "https://localhost", mock)
+		telegram := Client("telegramToken", "https://localhost")
 
 		assert.Equal(t, BaseUrl, telegram.BaseUrl)
 	})
 
 	t.Run("Sets webhook", func(t *testing.T) {
-		mock := &HttpMock{}
+		server := makeTestServer("")
 		telegram := client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
-			BaseUrl: "https://api.telegram.org/bot",
-			Http:    mock,
+			BaseUrl: fmt.Sprintf("%s/", server.URL),
 		}
 
-		telegram.SetWebhook()
-		assert.Equal(t, 1, mock.Calls.Get)
+		statusCode := telegram.SetWebhook()
+		assert.Equal(t, int(200), statusCode)
 	})
 
 	t.Run("Sends telegram message", func(t *testing.T) {
-		mock := &HttpMock{}
+		server := makeTestServer("")
 		telegram := client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
-			BaseUrl: "https://api.telegram.org/bot",
-			Http:    mock,
+			BaseUrl: fmt.Sprintf("%s/", server.URL),
 		}
 
 		chatId := 5
 		message := "Hello world"
-		telegram.Send(chatId, message)
-		assert.Equal(t, 1, mock.Calls.Post)
+		statusCode := telegram.Send(chatId, message)
+		assert.Equal(t, int(200), statusCode)
 	})
 }

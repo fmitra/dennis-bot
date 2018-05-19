@@ -95,7 +95,6 @@ func main() {
 	t := telegram.Client(
 		env.config.Telegram.Token,
 		env.config.BotDomain,
-		&http.Client{},
 	)
 	go t.SetWebhook()
 

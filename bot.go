@@ -51,7 +51,6 @@ func (bot *Bot) SendMessage(keyword string, incMessage telegram.IncomingMessage)
 	t := telegram.Client(
 		bot.env.config.Telegram.Token,
 		bot.env.config.BotDomain,
-		&http.Client{},
 	)
 
 	go t.Send(chatId, message)

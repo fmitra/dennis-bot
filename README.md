@@ -17,37 +17,44 @@ You will need API key's for the following services to get started.
 * [Alphapoint API Key](https://www.alphapoint.com/api/index.html)
 * [Wit.ai API Key](https://wit.ai)
 
-#### Create your configuration files.
+#### 1. Set up development environment
+
+The test suite will expect Postgres and Redis to be set up as well as a valid
+configuraiton file. The `config.example.json` file is already prepared to use the
+default settings in the sample `docker-compose.example.yml`.
 
 ```
 make develop
-```
-
-#### Edit `config.json` with the following settings
-
-* Postgres DB settings
-* Telegram API token to respond to messages
-* Wit.ai auth token to parse user messages
-* Alphapoint API key to convert currency
-* Domain the bot will be receiving webhooks from. In development, this will be the Ngrok URL
-
-#### Start Postgres and Redis
-
-```
 docker-compose up -d
 ```
 
-#### Run Ngrok
+#### 2. Confirm tests are passing
+
+```
+dep ensure -vendor-only -v
+go test ./...
+```
+
+#### 3. Run Ngrok
+
+This step is not necessary if all you want to do is run the test suite.
 
 ```
 ./ngrok http 8080
 ```
 
-#### Run the bot
+#### 4. Set up your local `config.json`
+
+* Postgres & Redis settings if you are not using the default test config
+* Telegram API token to respond to messages
+* Wit.ai auth token to parse user messages
+* Alphapoint API key to convert currency
+* Domain the bot will be receiving webhooks from. In development, this will be the Ngrok URL
+
+
+#### 5. Run the bot
 
 ```
-dep ensure -vendor-only -v
-go test ./...
 go build
 ./dennis
 ```
