@@ -15,6 +15,39 @@ import (
 	"github.com/fmitra/dennis/wit"
 )
 
+type TelegramMock struct {
+	Calls struct {
+		SetWebhook int
+		Send int
+	}
+}
+
+type SessionMock struct {
+	Calls struct {
+		Get int
+		Set int
+	}
+}
+
+func (s *SessionMock) Set(cacheKey string, v interface{}) {
+	s.Calls.Set++
+}
+
+func (s *SessionMock) Get(cacheKey string, v interface{}) error {
+	s.Calls.Get++
+	return nil
+}
+
+func (t *TelegramMock) SetWebhook() int {
+	t.Calls.SetWebhook++
+	return int(200)
+}
+
+func (t *TelegramMock) Send(chatId int, message string) int {
+	t.Calls.Send++
+	return int(200)
+}
+
 func makeTestServer(response string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -48,7 +81,14 @@ func getMockMessage() []byte {
 
 func TestBot(t *testing.T) {
 	t.Run("Receives and responds through telegram", func(t *testing.T) {
-		env := LoadEnv(config.LoadConfig())
+		telegramMock := &TelegramMock{}
+		sessionMock := &SessionMock{}
+		env := &Env{
+			cache: sessionMock,
+			config: config.LoadConfig(),
+			telegram: telegramMock,
+		}
+
 		bot := &Bot{env}
 		message := getMockMessage()
 		witResponse := `{
@@ -63,7 +103,9 @@ func TestBot(t *testing.T) {
 		wit.BaseUrl = witServer.URL
 		telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
 
-		bot.Converse(message)
+		<- bot.Converse(message)
+		assert.Equal(t, 1, telegramMock.Calls.Send)
+		assert.Equal(t, 1, sessionMock.Calls.Set)
 	})
 
 	t.Run("Receives an incoming message", func(t *testing.T) {
@@ -94,7 +136,8 @@ func TestBot(t *testing.T) {
 		// format will be treated as an invalid port on the test server
 		telegram.BaseUrl = fmt.Sprintf("%s/", server.URL)
 
-		bot.SendMessage(keyword, incMessage)
+		statusCode := bot.SendMessage(keyword, incMessage)
+		assert.Equal(t, 200, statusCode)
 	})
 
 	t.Run("Retrieves a string response to send", func(t *testing.T) {

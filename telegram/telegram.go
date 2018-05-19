@@ -11,6 +11,11 @@ import (
 
 var BaseUrl = "https://api.telegram.org/bot"
 
+type Telegram interface {
+	SetWebhook() int
+	Send(chatId int, message string) int
+}
+
 type client struct {
 	Token   string
 	Domain  string

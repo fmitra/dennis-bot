@@ -32,7 +32,7 @@ func TestTelegram(t *testing.T) {
 		}
 
 		statusCode := telegram.SetWebhook()
-		assert.Equal(t, int(200), statusCode)
+		assert.Equal(t, 200, statusCode)
 	})
 
 	t.Run("Sends telegram message", func(t *testing.T) {
@@ -46,6 +46,6 @@ func TestTelegram(t *testing.T) {
 		chatId := 5
 		message := "Hello world"
 		statusCode := telegram.Send(chatId, message)
-		assert.Equal(t, int(200), statusCode)
+		assert.Equal(t, 200, statusCode)
 	})
 }

@@ -18,20 +18,25 @@ type Config struct {
 	Db       int
 }
 
-type Session struct {
+type Session interface {
+	Set(cacheKey string, v interface{})
+	Get(cacheKey string, v interface{}) error
+}
+
+type client struct {
 	codec cache.Codec
 }
 
-func New(config Config) *Session {
+func Client(config Config) *client {
 	address := fmt.Sprintf("%s:%s", config.Host, strconv.Itoa(int(config.Port)))
-	client := redis.NewClient(&redis.Options{
+	redisClient := redis.NewClient(&redis.Options{
 		Addr:     address,
 		Password: config.Password,
 		DB:       config.Db,
 	})
 
 	codec := cache.Codec{
-		Redis: client,
+		Redis: redisClient,
 		Marshal: func(v interface{}) ([]byte, error) {
 			return msgpack.Marshal(v)
 		},
@@ -40,22 +45,22 @@ func New(config Config) *Session {
 		},
 	}
 
-	return &Session{codec}
+	return &client{codec}
 }
 
-func (s *Session) Set(cacheKey string, v interface{}) {
+func (c *client) Set(cacheKey string, v interface{}) {
 	oneWeek := 25200 * time.Millisecond
 	expireIn := time.Duration(oneWeek)
 	fmt.Printf("setting %v", v)
-	s.codec.Set(&cache.Item{
+	c.codec.Set(&cache.Item{
 		Key:        cacheKey,
 		Object:     v,
 		Expiration: expireIn,
 	})
 }
 
-func (s *Session) Get(cacheKey string, v interface{}) error {
-	err := s.codec.Get(cacheKey, &v)
+func (c *client) Get(cacheKey string, v interface{}) error {
+	err := c.codec.Get(cacheKey, &v)
 	if err != nil {
 		return errors.New("No session found")
 	}

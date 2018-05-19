@@ -19,7 +19,7 @@ type Bot struct {
 
 // Entry point to communicate with the bot. We parse an incoming message
 // and map it to  to a key word trigger to determine a response
-func (bot *Bot) Converse(payload []byte) {
+func (bot *Bot) Converse(payload []byte) chan bool {
 	incMessage, err := bot.ReceiveMessage(payload)
 	if err != nil {
 		panic(err)
@@ -27,7 +27,16 @@ func (bot *Bot) Converse(payload []byte) {
 	user := incMessage.GetUser()
 	bot.env.cache.Set(strconv.Itoa(user.Id), user)
 	keyword := bot.MapToKeyword(incMessage)
-	bot.SendMessage(keyword, incMessage)
+
+	channel := make(chan bool)
+
+	go func() {
+		bot.SendMessage(keyword, incMessage)
+		channel <- true
+		close(channel)
+	}()
+
+	return channel
 }
 
 // Parses an incoming telegram message
@@ -43,16 +52,11 @@ func (bot *Bot) ReceiveMessage(payload []byte) (telegram.IncomingMessage, error)
 }
 
 // Sends a message back through telegram
-func (bot *Bot) SendMessage(keyword string, incMessage telegram.IncomingMessage) {
+func (bot *Bot) SendMessage(keyword string, incMessage telegram.IncomingMessage) int {
 	message := bot.GetResponse(keyword)
 	chatId := incMessage.GetChatId()
 
-	t := telegram.Client(
-		bot.env.config.Telegram.Token,
-		bot.env.config.BotDomain,
-	)
-
-	go t.Send(chatId, message)
+	return bot.env.telegram.Send(chatId, message)
 }
 
 // Returns a message based on a message key. Messages are stored

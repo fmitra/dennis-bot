@@ -16,9 +16,10 @@ import (
 
 // Working environment for the application
 type Env struct {
-	db     *gorm.DB
-	cache  *sessions.Session
-	config config.AppConfig
+	db       *gorm.DB
+	cache    sessions.Session
+	config   config.AppConfig
+	telegram telegram.Telegram
 }
 
 func (env *Env) HealthCheck() http.HandlerFunc {
@@ -67,7 +68,7 @@ func LoadEnv(config config.AppConfig) *Env {
 		),
 	)
 
-	cache := sessions.New(sessions.Config{
+	cache := sessions.Client(sessions.Config{
 		config.Redis.Host,
 		config.Redis.Port,
 		config.Redis.Password,
@@ -81,10 +82,16 @@ func LoadEnv(config config.AppConfig) *Env {
 		panic("Failed to connect to database")
 	}
 
+	telegram := telegram.Client(
+		config.Telegram.Token,
+		config.BotDomain,
+	)
+
 	return &Env{
 		db:     db,
 		cache:  cache,
 		config: config,
+		telegram: telegram,
 	}
 }
 
@@ -92,11 +99,7 @@ func main() {
 	// Set up the environment
 	env := LoadEnv(config.LoadConfig())
 
-	t := telegram.Client(
-		env.config.Telegram.Token,
-		env.config.BotDomain,
-	)
-	go t.SetWebhook()
+	go env.telegram.SetWebhook()
 
 	// Start the application
 	env.Start()
