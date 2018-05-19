@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,76 +11,13 @@ import (
 	"github.com/fmitra/dennis/config"
 	"github.com/fmitra/dennis/telegram"
 	"github.com/fmitra/dennis/wit"
+	"github.com/fmitra/dennis/mocks"
 )
-
-type TelegramMock struct {
-	Calls struct {
-		SetWebhook int
-		Send int
-	}
-}
-
-type SessionMock struct {
-	Calls struct {
-		Get int
-		Set int
-	}
-}
-
-func (s *SessionMock) Set(cacheKey string, v interface{}) {
-	s.Calls.Set++
-}
-
-func (s *SessionMock) Get(cacheKey string, v interface{}) error {
-	s.Calls.Get++
-	return nil
-}
-
-func (t *TelegramMock) SetWebhook() int {
-	t.Calls.SetWebhook++
-	return int(200)
-}
-
-func (t *TelegramMock) Send(chatId int, message string) int {
-	t.Calls.Send++
-	return int(200)
-}
-
-func makeTestServer(response string) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, response)
-	}))
-}
-
-func getMockMessage() []byte {
-	message := []byte(`{
-		"update_id": 123,
-		"message": {
-			"message_id": 123,
-			"date": 20180314,
-			"text": "Hello world",
-			"from": {
-				"id": 456,
-				"first_name": "Jane",
-				"last_name": "Doe",
-				"username": "janedoe"
-			},
-			"chat": {
-				"id": 456,
-				"first_name": "Jane",
-				"last_name": "Doe",
-				"username": "janedoe"
-			}
-		}
-	}`)
-	return message
-}
 
 func TestBot(t *testing.T) {
 	t.Run("Receives and responds through telegram", func(t *testing.T) {
-		telegramMock := &TelegramMock{}
-		sessionMock := &SessionMock{}
+		telegramMock := &mocks.TelegramMock{}
+		sessionMock := &mocks.SessionMock{}
 		env := &Env{
 			cache: sessionMock,
 			config: config.LoadConfig(),
@@ -90,7 +25,7 @@ func TestBot(t *testing.T) {
 		}
 
 		bot := &Bot{env}
-		message := getMockMessage()
+		message := mocks.GetMockMessage()
 		witResponse := `{
 			"entities": {
 				"amount": [],
@@ -98,8 +33,8 @@ func TestBot(t *testing.T) {
 				"description": []
 			}
 		}`
-		witServer := makeTestServer(witResponse)
-		telegramServer := makeTestServer("")
+		witServer := mocks.MakeTestServer(witResponse)
+		telegramServer := mocks.MakeTestServer("")
 		wit.BaseUrl = witServer.URL
 		telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
 
@@ -111,7 +46,7 @@ func TestBot(t *testing.T) {
 	t.Run("Receives an incoming message", func(t *testing.T) {
 		env := LoadEnv(config.LoadConfig())
 		bot := &Bot{env}
-		message := getMockMessage()
+		message := mocks.GetMockMessage()
 
 		var incMessage telegram.IncomingMessage
 		json.Unmarshal(message, &incMessage)
@@ -124,13 +59,13 @@ func TestBot(t *testing.T) {
 	t.Run("Sends an outgoing message", func(t *testing.T) {
 		env := LoadEnv(config.LoadConfig())
 		bot := &Bot{env}
-		message := getMockMessage()
+		message := mocks.GetMockMessage()
 		keyword := "track.success"
 
 		var incMessage telegram.IncomingMessage
 		json.Unmarshal(message, &incMessage)
 
-		server := makeTestServer("")
+		server := mocks.MakeTestServer("")
 
 		// We need to add a trailing slash because the telegram token
 		// format will be treated as an invalid port on the test server
@@ -171,7 +106,7 @@ func TestBot(t *testing.T) {
 	t.Run("Maps incoming message to tracking keyword", func(t *testing.T) {
 		env := LoadEnv(config.LoadConfig())
 		bot := &Bot{env}
-		message := getMockMessage()
+		message := mocks.GetMockMessage()
 		witResponse := `{
 			"entities": {
 				"amount": [
@@ -190,8 +125,8 @@ func TestBot(t *testing.T) {
 				"5. Exchange Rate": ".7"
 			}
 		}`
-		witServer := makeTestServer(witResponse)
-		alphapointServer := makeTestServer(alphapointResponse)
+		witServer := mocks.MakeTestServer(witResponse)
+		alphapointServer := mocks.MakeTestServer(alphapointResponse)
 
 		wit.BaseUrl = witServer.URL
 		alphapoint.BaseUrl = alphapointServer.URL
@@ -207,7 +142,7 @@ func TestBot(t *testing.T) {
 	t.Run("Maps incoming message to tracking error keyword", func(t *testing.T) {
 		env := LoadEnv(config.LoadConfig())
 		bot := &Bot{env}
-		message := getMockMessage()
+		message := mocks.GetMockMessage()
 		witResponse := `{
 			"entities": {
 				"amount": [
@@ -224,8 +159,8 @@ func TestBot(t *testing.T) {
 				"5. Exchange Rate": ".7"
 			}
 		}`
-		witServer := makeTestServer(witResponse)
-		alphapointServer := makeTestServer(alphapointResponse)
+		witServer := mocks.MakeTestServer(witResponse)
+		alphapointServer := mocks.MakeTestServer(alphapointResponse)
 
 		wit.BaseUrl = witServer.URL
 		alphapoint.BaseUrl = alphapointServer.URL
@@ -241,7 +176,7 @@ func TestBot(t *testing.T) {
 	t.Run("Maps incoming message to default keyword", func(t *testing.T) {
 		env := LoadEnv(config.LoadConfig())
 		bot := &Bot{env}
-		message := getMockMessage()
+		message := mocks.GetMockMessage()
 		witResponse := `{
 			"entities": {
 				"amount": [],
@@ -254,8 +189,8 @@ func TestBot(t *testing.T) {
 				"5. Exchange Rate": ".7"
 			}
 		}`
-		witServer := makeTestServer(witResponse)
-		alphapointServer := makeTestServer(alphapointResponse)
+		witServer := mocks.MakeTestServer(witResponse)
+		alphapointServer := mocks.MakeTestServer(alphapointResponse)
 
 		wit.BaseUrl = witServer.URL
 		alphapoint.BaseUrl = alphapointServer.URL
@@ -289,7 +224,7 @@ func TestBot(t *testing.T) {
 				"5. Exchange Rate": ".7"
 			}
 		}`
-		alphapointServer := makeTestServer(alphapointResponse)
+		alphapointServer := mocks.MakeTestServer(alphapointResponse)
 		userId := 123
 
 		var witResponse wit.WitResponse

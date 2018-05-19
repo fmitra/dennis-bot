@@ -1,20 +1,11 @@
 package alphapoint
 
 import (
-	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/fmitra/dennis/mocks"
 )
-
-func makeTestServer(response string) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, response)
-	}))
-}
 
 func TestAlphapoint(t *testing.T) {
 	t.Run("Returns client with default config", func(t *testing.T) {
@@ -32,7 +23,7 @@ func TestAlphapoint(t *testing.T) {
 			}
 		}`
 
-		server := makeTestServer(response)
+		server := mocks.MakeTestServer(response)
 		defer server.Close()
 
 		alphapoint := client{

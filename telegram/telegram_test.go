@@ -2,19 +2,11 @@ package telegram
 
 import (
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/fmitra/dennis/mocks"
 )
-
-func makeTestServer(response string) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, response)
-	}))
-}
 
 func TestTelegram(t *testing.T) {
 	t.Run("Returns client with default config", func(t *testing.T) {
@@ -24,7 +16,7 @@ func TestTelegram(t *testing.T) {
 	})
 
 	t.Run("Sets webhook", func(t *testing.T) {
-		server := makeTestServer("")
+		server := mocks.MakeTestServer("")
 		telegram := client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
@@ -36,7 +28,7 @@ func TestTelegram(t *testing.T) {
 	})
 
 	t.Run("Sends telegram message", func(t *testing.T) {
-		server := makeTestServer("")
+		server := mocks.MakeTestServer("")
 		telegram := client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
