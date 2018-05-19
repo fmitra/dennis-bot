@@ -9,18 +9,19 @@ import (
 
 	"github.com/fmitra/dennis/alphapoint"
 	"github.com/fmitra/dennis/config"
+	"github.com/fmitra/dennis/mocks"
 	"github.com/fmitra/dennis/telegram"
 	"github.com/fmitra/dennis/wit"
-	"github.com/fmitra/dennis/mocks"
 )
 
 func TestBot(t *testing.T) {
 	t.Run("Receives and responds through telegram", func(t *testing.T) {
+		configFile := "config/config.json"
 		telegramMock := &mocks.TelegramMock{}
 		sessionMock := &mocks.SessionMock{}
 		env := &Env{
-			cache: sessionMock,
-			config: config.LoadConfig(),
+			cache:    sessionMock,
+			config:   config.LoadConfig(configFile),
 			telegram: telegramMock,
 		}
 
@@ -38,13 +39,14 @@ func TestBot(t *testing.T) {
 		wit.BaseUrl = witServer.URL
 		telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
 
-		<- bot.Converse(message)
+		<-bot.Converse(message)
 		assert.Equal(t, 1, telegramMock.Calls.Send)
 		assert.Equal(t, 1, sessionMock.Calls.Set)
 	})
 
 	t.Run("Receives an incoming message", func(t *testing.T) {
-		env := LoadEnv(config.LoadConfig())
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		message := mocks.GetMockMessage()
 
@@ -57,7 +59,8 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("Sends an outgoing message", func(t *testing.T) {
-		env := LoadEnv(config.LoadConfig())
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		message := mocks.GetMockMessage()
 		keyword := "track.success"
@@ -76,7 +79,8 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("Retrieves a string response to send", func(t *testing.T) {
-		env := LoadEnv(config.LoadConfig())
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 
 		// messageMap var is setup with multiple possible responses.
@@ -104,7 +108,8 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("Maps incoming message to tracking keyword", func(t *testing.T) {
-		env := LoadEnv(config.LoadConfig())
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		message := mocks.GetMockMessage()
 		witResponse := `{
@@ -140,7 +145,8 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("Maps incoming message to tracking error keyword", func(t *testing.T) {
-		env := LoadEnv(config.LoadConfig())
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		message := mocks.GetMockMessage()
 		witResponse := `{
@@ -174,7 +180,8 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("Maps incoming message to default keyword", func(t *testing.T) {
-		env := LoadEnv(config.LoadConfig())
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		message := mocks.GetMockMessage()
 		witResponse := `{
@@ -204,7 +211,8 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("Creates a new expense", func(t *testing.T) {
-		env := LoadEnv(config.LoadConfig())
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		rawWitResponse := []byte(`{
 			"entities": {

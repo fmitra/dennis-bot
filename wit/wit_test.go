@@ -3,8 +3,8 @@ package wit
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/fmitra/dennis/mocks"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWit(t *testing.T) {

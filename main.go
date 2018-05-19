@@ -88,16 +88,17 @@ func LoadEnv(config config.AppConfig) *Env {
 	)
 
 	return &Env{
-		db:     db,
-		cache:  cache,
-		config: config,
+		db:       db,
+		cache:    cache,
+		config:   config,
 		telegram: telegram,
 	}
 }
 
 func main() {
 	// Set up the environment
-	env := LoadEnv(config.LoadConfig())
+	configFile := "config/config.json"
+	env := LoadEnv(config.LoadConfig(configFile))
 
 	go env.telegram.SetWebhook()
 

@@ -32,10 +32,10 @@ type AppConfig struct {
 	} `json:"wit"`
 }
 
-func LoadConfig() AppConfig {
+// Loads JSON config from file (ex. config/config.json)
+func LoadConfig(file string) AppConfig {
 	var config AppConfig
 
-	file := "config/config.json"
 	configFile, err := os.Open(file)
 	defer configFile.Close()
 

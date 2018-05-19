@@ -9,7 +9,7 @@ import (
 type TelegramMock struct {
 	Calls struct {
 		SetWebhook int
-		Send int
+		Send       int
 	}
 }
 

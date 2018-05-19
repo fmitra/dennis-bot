@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/fmitra/dennis/mocks"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTelegram(t *testing.T) {
