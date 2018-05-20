@@ -3,8 +3,8 @@ package telegram
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/fmitra/dennis/mocks"
+	"github.com/stretchr/testify/assert"
 )
 
 var incomingMessage = IncomingMessage{

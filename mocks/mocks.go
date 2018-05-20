@@ -1,10 +1,10 @@
 package mocks
 
 import (
-	"time"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"time"
 )
 
 const TestUserId = 12345

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"time"
 	"errors"
-	"log"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -12,40 +12,30 @@ import (
 
 const (
 	MONTH = "month"
-	WEEK = "week"
+	WEEK  = "week"
 	TODAY = "today"
 )
 
 // Describes a tracked expense
 type Expense struct {
-	ID          int `gorm:"primary_key"` // Auto assigned ID
-	CreatedAt   time.Time // Timestamp of DB entry
-	UpdatedAt   time.Time // Timestamp of last save date
+	ID          int        `gorm:"primary_key"` // Auto assigned ID
+	CreatedAt   time.Time  // Timestamp of DB entry
+	UpdatedAt   time.Time  // Timestamp of last save date
 	DeletedAt   *time.Time // Timestamp for soft deletion
-	Date        time.Time // Date the expense was made
-	Description string    // Description of the expense
-	Total       float64   // Total amount paid for the expense
-	Historical  float64   // Historical USD value of the total
-	Currency    string    // Currency denomination of the total
-	Category    string    // Category of the expense
-	UserId      int       // Telegram UserId of the expense owner
-}
-
-func (e *Expense) Save(db *gorm.DB) bool {
-	if db.NewRecord(e) {
-		db.Create(e)
-		return true
-	}
-
-	log.Printf("models: attempting insert record with existing pk - %s", e)
-	return false
+	Date        time.Time  // Date the expense was made
+	Description string     // Description of the expense
+	Total       float64    // Total amount paid for the expense
+	Historical  float64    // Historical USD value of the total
+	Currency    string     // Currency denomination of the total
+	Category    string     // Category of the expense
+	UserId      int        // Telegram UserId of the expense owner
 }
 
 type Clock interface {
 	Now() time.Time
 }
 
-type ExpenseManagerClock struct {}
+type ExpenseManagerClock struct{}
 
 func (em *ExpenseManagerClock) Now() time.Time {
 	return time.Now()
@@ -53,14 +43,24 @@ func (em *ExpenseManagerClock) Now() time.Time {
 
 type ExpenseManager struct {
 	clock Clock
-	db *gorm.DB
+	db    *gorm.DB
 }
 
 func NewExpenseManager(db *gorm.DB) *ExpenseManager {
 	return &ExpenseManager{
-		db: db,
+		db:    db,
 		clock: &ExpenseManagerClock{},
 	}
+}
+
+func (e *ExpenseManager) Save(expense *Expense) bool {
+	if e.db.NewRecord(expense) {
+		e.db.Create(expense)
+		return true
+	}
+
+	log.Printf("models: attempting insert record with existing pk - %s", e)
+	return false
 }
 
 func (e *ExpenseManager) QueryByPeriod(period string, userId int) ([]Expense, error) {

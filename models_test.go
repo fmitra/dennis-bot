@@ -1,13 +1,13 @@
 package main
 
 import (
-	"time"
-	"testing"
 	"fmt"
+	"testing"
+	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/fmitra/dennis/config"
 	"github.com/fmitra/dennis/mocks"
@@ -82,7 +82,9 @@ func TestModels(t *testing.T) {
 		}
 		assert.True(t, db.NewRecord(expense))
 
-		isCreated := expense.Save(db)
+		expenseManager := NewExpenseManager(db)
+		isCreated := expenseManager.Save(expense)
+
 		assert.True(t, isCreated)
 		assert.False(t, db.NewRecord(expense))
 	})
@@ -100,15 +102,15 @@ func TestModels(t *testing.T) {
 			CurrentTime: currentTime,
 		}
 		expenseManager := &ExpenseManager{
-			db: db,
+			db:    db,
 			clock: mockTime,
 		}
 
 		firstEntryDate := time.Date(2018, 3, 8, 0, 0, 0, 0, time.UTC)
 		BatchCreateExpenses(db, firstEntryDate, 10)
 
-		var testCases = []struct{
-			input string
+		var testCases = []struct {
+			input    string
 			expected int
 		}{
 			{"month", 10},
@@ -136,7 +138,7 @@ func TestModels(t *testing.T) {
 			CurrentTime: currentTime,
 		}
 		expenseManager := &ExpenseManager{
-			db: db,
+			db:    db,
 			clock: mockTime,
 		}
 

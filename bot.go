@@ -108,5 +108,6 @@ func (bot *Bot) NewExpense(w wit.WitResponse, userId int) bool {
 		Currency:    currency,
 		UserId:      userId,
 	}
-	return expense.Save(bot.env.db)
+	expenseManager := NewExpenseManager(bot.env.db)
+	return expenseManager.Save(expense)
 }
