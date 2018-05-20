@@ -88,7 +88,7 @@ func (bot *Bot) MapToKeyword(incMessage telegram.IncomingMessage) string {
 }
 
 // Creates an expense item from a Wit.ai response
-func (bot *Bot) NewExpense(w wit.WitResponse, userId int) {
+func (bot *Bot) NewExpense(w wit.WitResponse, userId int) bool {
 	date := w.GetDate()
 	amount, currency, _ := w.GetAmount()
 	description, _ := w.GetDescription()
@@ -100,12 +100,13 @@ func (bot *Bot) NewExpense(w wit.WitResponse, userId int) {
 		amount,
 	)
 
-	bot.env.db.Create(&Expense{
+	expense := &Expense{
 		Date:        date,
 		Description: description,
 		Total:       amount,
 		Historical:  historical,
 		Currency:    currency,
 		UserId:      userId,
-	})
+	}
+	return expense.Save(bot.env.db)
 }

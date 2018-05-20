@@ -26,12 +26,12 @@ default settings in the sample `docker-compose.example.yml`.
 ```
 make develop
 docker-compose up -d
+dep ensure -vendor-only -v
 ```
 
 #### 2. Confirm tests are passing
 
 ```
-dep ensure -vendor-only -v
 go test ./...
 ```
 

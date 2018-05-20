@@ -233,13 +233,14 @@ func TestBot(t *testing.T) {
 			}
 		}`
 		alphapointServer := mocks.MakeTestServer(alphapointResponse)
-		userId := 123
+		userId := mocks.TestUserId
 
 		var witResponse wit.WitResponse
 		json.Unmarshal(rawWitResponse, &witResponse)
 
 		alphapoint.BaseUrl = alphapointServer.URL
 
-		bot.NewExpense(witResponse, userId)
+		isCreated := bot.NewExpense(witResponse, userId)
+		assert.True(t, isCreated)
 	})
 }

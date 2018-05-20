@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/fmitra/dennis/mocks"
 )
 
 var incomingMessage = IncomingMessage{
@@ -13,7 +14,7 @@ var incomingMessage = IncomingMessage{
 		Date:      1521367820,
 		Text:      "Hello world",
 		From: User{
-			Id:        123,
+			Id:        mocks.TestUserId,
 			FirstName: "Jane",
 			LastName:  "Doe",
 			UserName:  "janedoe123",
@@ -34,7 +35,7 @@ func TestMessages(t *testing.T) {
 
 	t.Run("Gets User", func(t *testing.T) {
 		user := User{
-			Id:        123,
+			Id:        mocks.TestUserId,
 			FirstName: "Jane",
 			LastName:  "Doe",
 			UserName:  "janedoe123",

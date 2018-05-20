@@ -1,10 +1,13 @@
 package mocks
 
 import (
+	"time"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 )
+
+const TestUserId = 12345
 
 type TelegramMock struct {
 	Calls struct {
@@ -56,7 +59,7 @@ func GetMockMessage() []byte {
 			"date": 20180314,
 			"text": "Hello world",
 			"from": {
-				"id": 456,
+				"id": 12345,
 				"first_name": "Jane",
 				"last_name": "Doe",
 				"username": "janedoe"
@@ -70,4 +73,12 @@ func GetMockMessage() []byte {
 		}
 	}`)
 	return message
+}
+
+type MockTime struct {
+	CurrentTime time.Time
+}
+
+func (m *MockTime) Now() time.Time {
+	return m.CurrentTime
 }
