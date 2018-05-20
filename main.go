@@ -10,6 +10,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"github.com/fmitra/dennis/config"
+	"github.com/fmitra/dennis/expenses"
 	"github.com/fmitra/dennis/sessions"
 	"github.com/fmitra/dennis/telegram"
 )
@@ -75,7 +76,7 @@ func LoadEnv(config config.AppConfig) *Env {
 		config.Redis.Db,
 	})
 
-	db.AutoMigrate(&Expense{})
+	db.AutoMigrate(&expenses.Expense{})
 
 	if err != nil {
 		log.Fatal(err)

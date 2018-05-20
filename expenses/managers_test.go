@@ -1,4 +1,4 @@
-package main
+package expenses
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ func DeleteTestUserExpenses(db *gorm.DB) {
 }
 
 func GetDb() (*gorm.DB, error) {
-	dbConfig := config.LoadConfig("config/config.json")
+	dbConfig := config.LoadConfig("../config/config.json")
 	db, err := gorm.Open(
 		"postgres",
 		fmt.Sprintf(

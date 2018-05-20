@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/fmitra/dennis/alphapoint"
+	"github.com/fmitra/dennis/expenses"
 	"github.com/fmitra/dennis/telegram"
 	"github.com/fmitra/dennis/wit"
 )
@@ -100,7 +101,7 @@ func (bot *Bot) NewExpense(w wit.WitResponse, userId int) bool {
 		amount,
 	)
 
-	expense := &Expense{
+	expense := &expenses.Expense{
 		Date:        date,
 		Description: description,
 		Total:       amount,
@@ -108,6 +109,6 @@ func (bot *Bot) NewExpense(w wit.WitResponse, userId int) bool {
 		Currency:    currency,
 		UserId:      userId,
 	}
-	expenseManager := NewExpenseManager(bot.env.db)
+	expenseManager := expenses.NewExpenseManager(bot.env.db)
 	return expenseManager.Save(expense)
 }
