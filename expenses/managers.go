@@ -48,41 +48,50 @@ func (e *ExpenseManager) Save(expense *Expense) bool {
 	return false
 }
 
-func (e *ExpenseManager) QueryByPeriod(period string, userId int) ([]Expense, error) {
-	var err error
-	var timePeriod time.Time
-	var expenses []Expense
-	var query string
-
+// Parses a descriptive time period (month, week) into a time.Time object
+// time.Time object
+func (e *ExpenseManager) ParseTimePeriod(period string) (time.Time, error) {
 	today := e.clock.Now()
 	weekday := int(today.Weekday())
 	year, month, day := today.Date()
 
 	switch period {
 	case MONTH:
-		timePeriod = time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
-		query = "user_id = ? AND created_at >= ?"
+		return time.Date(year, month, 1, 0, 0, 0, 0, time.UTC), nil
 	case WEEK:
-		delta := today.AddDate(0, 0, -weekday)
-		timePeriod = time.Date(year, delta.Month(), delta.Day(), 0, 0, 0, 0, time.UTC)
-		query = "user_id = ? AND created_at >= ?"
+		year, month, day := today.AddDate(0, 0, -weekday).Date()
+		return time.Date(year, month, day, 0, 0, 0, 0, time.UTC), nil
 	case TODAY:
-		timePeriod = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
-		query = "user_id = ? AND created_at = ?"
+		return time.Date(year, month, day, 0, 0, 0, 0, time.UTC), nil
 	default:
 		errorMessage := fmt.Sprintf("%s is an invalid period", period)
-		err = errors.New(errorMessage)
+		return time.Time{}, errors.New(errorMessage)
 	}
+}
 
+func (e *ExpenseManager) QueryByPeriod(period string, userId int) ([]Expense, error) {
+	var expenses []Expense
+	var query string
+
+	timePeriod, err := e.ParseTimePeriod(period)
 	if err != nil {
 		return expenses, err
 	}
 
-	result := e.db.Where(query, userId, timePeriod).Find(&expenses)
+	if period == TODAY {
+		query = "user_id = ? AND created_at = ?"
+	} else {
+		query = "user_id = ? AND created_at >= ?"
+	}
 
+	result := e.db.Where(query, userId, timePeriod).Find(&expenses)
 	if result.Error != nil {
 		return expenses, result.Error
 	}
 
 	return expenses, nil
 }
+
+func (e *ExpenseManager) TotalByPeriod(period string, userId int) float64 {
+}
+

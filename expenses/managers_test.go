@@ -100,9 +100,7 @@ func TestModels(t *testing.T) {
 		DeleteTestUserExpenses(db)
 
 		currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
-		mockTime := &mocks.MockTime{
-			CurrentTime: currentTime,
-		}
+		mockTime := &mocks.MockTime{currentTime}
 		expenseManager := &ExpenseManager{
 			db:    db,
 			clock: mockTime,
@@ -136,9 +134,7 @@ func TestModels(t *testing.T) {
 		DeleteTestUserExpenses(db)
 
 		currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
-		mockTime := &mocks.MockTime{
-			CurrentTime: currentTime,
-		}
+		mockTime := &mocks.MockTime{currentTime}
 		expenseManager := &ExpenseManager{
 			db:    db,
 			clock: mockTime,
@@ -148,5 +144,71 @@ func TestModels(t *testing.T) {
 		BatchCreateExpenses(db, firstEntryDate, 5)
 		_, errorMessage := expenseManager.QueryByPeriod("some-date", mocks.TestUserId)
 		assert.EqualError(t, errorMessage, "some-date is an invalid period")
+	})
+
+
+	t.Run("It should parse a string option to time", func(t *testing.T) {
+		db, err := GetDb()
+		defer db.Close()
+		assert.NoError(t, err)
+
+		// Clear out previous test data before we run any queries
+		DeleteTestUserExpenses(db)
+
+		currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
+		mockTime := &mocks.MockTime{currentTime}
+		expenseManager := &ExpenseManager{
+			db:    db,
+			clock: mockTime,
+		}
+
+		var testCases = []struct {
+			input    string
+			expected time.Time
+		}{
+			{"month", time.Date(2018, 3, 1, 0, 0, 0, 0, time.UTC)},
+			{"week", time.Date(2018, 3, 11, 0, 0, 0, 0, time.UTC)},
+			{"today", time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)},
+		}
+
+		for _, test := range testCases {
+			timePeriod, err := expenseManager.ParseTimePeriod(test.input)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expected, timePeriod)
+		}
+	})
+
+	t.Run("It should sum historical totals by period", func(t *testing.T) {
+		db, err := GetDb()
+		defer db.Close()
+		assert.NoError(t, err)
+
+		// Clear out previous test data before we run any queries
+		DeleteTestUserExpenses(db)
+
+		currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
+		mockTime := &mocks.MockTime{currentTime}
+		expenseManager := &ExpenseManager{
+			db:    db,
+			clock: mockTime,
+		}
+
+		firstEntryDate := time.Date(2018, 3, 8, 0, 0, 0, 0, time.UTC)
+		BatchCreateExpenses(db, firstEntryDate, 10)
+
+		var testCases = []struct {
+			input    string
+			expected float64
+		}{
+			{"month", 202.5},
+			{"week", 162.0},
+			{"today", 20.25},
+		}
+
+		for _, test := range testCases {
+			expenses, err := expenseManager.TotalByPeriod(test.input, mocks.TestUserId)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expected, len(expenses))
+		}
 	})
 }
