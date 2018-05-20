@@ -31,6 +31,8 @@ func GetDb() (*gorm.DB, error) {
 			dbConfig.Database.SSLMode,
 		),
 	)
+	// TODO Set up proper teardown/setup handling for DB related tests
+	db.AutoMigrate(&Expense{})
 
 	return db, err
 }
