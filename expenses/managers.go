@@ -16,6 +16,10 @@ const (
 	TODAY = "today"
 )
 
+type ExpenseTotal struct {
+	Total float64
+}
+
 type Clock interface {
 	Now() time.Time
 }
@@ -92,6 +96,29 @@ func (e *ExpenseManager) QueryByPeriod(period string, userId int) ([]Expense, er
 	return expenses, nil
 }
 
-func (e *ExpenseManager) TotalByPeriod(period string, userId int) float64 {
-}
+func (e *ExpenseManager) TotalByPeriod(period string, userId int) (float64, error) {
+	var query string
+	var expenseTotal ExpenseTotal
 
+	timePeriod, err := e.ParseTimePeriod(period)
+	if err != nil {
+		return expenseTotal.Total, err
+	}
+
+	if period == TODAY {
+		query = "user_id = ? AND created_at = ?"
+	} else {
+		query = "user_id = ? AND created_at >= ?"
+	}
+
+	result := e.db.Table("expenses").
+		Select("sum(historical) as total").
+		Where(query, userId, timePeriod).
+		Scan(&expenseTotal)
+
+	if result.Error != nil {
+		return expenseTotal.Total, err
+	}
+
+	return expenseTotal.Total, nil
+}

@@ -146,7 +146,6 @@ func TestModels(t *testing.T) {
 		assert.EqualError(t, errorMessage, "some-date is an invalid period")
 	})
 
-
 	t.Run("It should parse a string option to time", func(t *testing.T) {
 		db, err := GetDb()
 		defer db.Close()
@@ -206,9 +205,9 @@ func TestModels(t *testing.T) {
 		}
 
 		for _, test := range testCases {
-			expenses, err := expenseManager.TotalByPeriod(test.input, mocks.TestUserId)
+			total, err := expenseManager.TotalByPeriod(test.input, mocks.TestUserId)
 			assert.NoError(t, err)
-			assert.Equal(t, test.expected, len(expenses))
+			assert.Equal(t, test.expected, total)
 		}
 	})
 }
