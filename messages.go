@@ -18,13 +18,18 @@ var messageMap = map[string][]string{
 		"How much did you spend? You can say something like 20USD " +
 			"for Dinner",
 	},
-	"track.success": []string{
+	"tracking": []string{
 		"Ok got it!",
 
 		"Roger that!",
 	},
-	"track.error": []string{
+	"error": []string{
 		"I didn't understand that. You need to tell me exactly what " +
 			"what your expense is. For example '0.00012BTC for Rent'",
+
+		"I didn't get that. Try saying 'How much did I spend this week?'",
+	},
+	"period_total": []string{
+		"You spent {{var}}",
 	},
 }

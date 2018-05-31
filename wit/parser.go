@@ -8,6 +8,16 @@ import (
 	"github.com/fmitra/dennis/utils"
 )
 
+const (
+	TRACKING_SUCCESS = "tracking_success"
+
+	TRACKING_ERROR = "tracking_error"
+
+	PERIOD_TOTAL_SUCCESS = "period_total_success"
+
+	UNKNOWN_INTENT = "unknown_intent"
+)
+
 // Wit.ai Entity
 type WitEntity []struct {
 	Value      string  `json:"value"`
@@ -20,7 +30,18 @@ type WitResponse struct {
 		Amount      WitEntity `json:"amount"`
 		DateTime    WitEntity `json:"datetime"`
 		Description WitEntity `json:"description"`
+		TotalSpent  WitEntity `json:"total_spent"`
 	} `json:"entities"`
+}
+
+// Checks if Wit.ai was able to infer a total spent query
+func (w WitResponse) GetSpendPeriod() (string, error) {
+	totalSpent := w.Entities.TotalSpent
+	if len(totalSpent) == 0 {
+		return "", errors.New("No period specified")
+	}
+
+	return totalSpent[0].Value, nil
 }
 
 // Checks if Wit.ai was able to infer a valid
@@ -82,4 +103,30 @@ func (w WitResponse) IsTracking() (bool, error) {
 
 	log.Printf("Inferring tracking %s %s %s", amount, currency, description)
 	return true, nil
+}
+
+func (w WitResponse) IsRequestingTotal() (bool, error) {
+	spendPeriod, err := w.GetSpendPeriod()
+	if err != nil {
+		log.Printf("Cannot infer spend period")
+		return false, err
+	}
+
+	log.Printf("Inferring spend period %s", spendPeriod)
+	return true, nil
+}
+
+func (w WitResponse) GetIntent() (string) {
+	isTracking, trackingErr := w.IsTracking()
+	isRequestingTotal, totalErr := w.IsRequestingTotal()
+
+	if isTracking && trackingErr != nil {
+		return TRACKING_ERROR
+	} else if isTracking && trackingErr == nil {
+		return TRACKING_SUCCESS
+	} else if isRequestingTotal && totalErr == nil {
+		return PERIOD_TOTAL_SUCCESS
+	} else {
+		return UNKNOWN_INTENT
+	}
 }

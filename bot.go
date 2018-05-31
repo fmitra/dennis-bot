@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"math/rand"
+	"strings"
 	"strconv"
 
 	"github.com/fmitra/dennis/alphapoint"
@@ -27,12 +28,12 @@ func (bot *Bot) Converse(payload []byte) chan bool {
 	}
 	user := incMessage.GetUser()
 	bot.env.cache.Set(strconv.Itoa(user.Id), user)
-	keyword := bot.MapToKeyword(incMessage)
+	response := bot.BuildResponse(incMessage)
 
 	channel := make(chan bool)
 
 	go func() {
-		bot.SendMessage(keyword, incMessage)
+		bot.SendMessage(response, incMessage)
 		channel <- true
 		close(channel)
 	}()
@@ -53,39 +54,55 @@ func (bot *Bot) ReceiveMessage(payload []byte) (telegram.IncomingMessage, error)
 }
 
 // Sends a message back through telegram
-func (bot *Bot) SendMessage(keyword string, incMessage telegram.IncomingMessage) int {
-	message := bot.GetResponse(keyword)
+func (bot *Bot) SendMessage(response string, incMessage telegram.IncomingMessage) int {
 	chatId := incMessage.GetChatId()
 
-	return bot.env.telegram.Send(chatId, message)
+	return bot.env.telegram.Send(chatId, response)
 }
 
 // Returns a message based on a message key. Messages are stored
 // as slices for each key and are randomly selected.
-func (bot *Bot) GetResponse(messageKey string) string {
+func (bot *Bot) GetMessage(messageKey string, messageVar string) string {
 	messages := messageMap[messageKey]
 	totalMessages := len(messages)
 	random := rand.Intn(totalMessages)
-	return messages[random]
+
+	var parsedMessage string
+	message := mesages[random]
+	if messageVar != "" && strings.Contains(message, "{{var}}") {
+		parsedMessage = strings.Replace(message, "{{var}}", messageVar, -1)
+	} else {
+		parsedMessage = message
+	}
+
+	return parsedMessage
 }
 
-// IncomingMessages are mapped to keywords to trigger the approriate
-// message for a user's intent.
-func (bot *Bot) MapToKeyword(incMessage telegram.IncomingMessage) string {
+func (bot *Bot) BuildResponse(incMessage telegram.IncomingMessage) string {
 	w := wit.Client(bot.env.config.Wit.Token)
 	witResponse := w.ParseMessage(incMessage.GetMessage())
-	isTracking, err := witResponse.IsTracking()
-	if isTracking == true && err == nil {
-		log.Printf("%s", witResponse)
-		go bot.NewExpense(witResponse, incMessage.GetUser().Id)
-		return "track.success"
+	userId := incMessage.GetUser().Id
+
+	intent := witResponse.GetIntent()
+
+	var err error
+	var messageVar string
+	var keyword string
+
+	switch intent {
+		case wit.TRACKING_SUCCESS:
+			go bot.NewExpense(witResponse, userId)
+		case wit.PERIOD_TOTAL_SUCCESS:
+			messageVar, err = bot.GetTotalByPeriod(witResponse, userId)
 	}
 
-	if isTracking == true && err != nil {
-		return "track.error"
+	if err != nil {
+		keyword = "error"
+	} else {
+		keyword = intent
 	}
 
-	return "default"
+	return bot.GetMessage(keyword, messageVar)
 }
 
 // Creates an expense item from a Wit.ai response
@@ -111,4 +128,12 @@ func (bot *Bot) NewExpense(w wit.WitResponse, userId int) bool {
 	}
 	expenseManager := expenses.NewExpenseManager(bot.env.db)
 	return expenseManager.Save(expense)
+}
+
+func (bot *Bot) GetTotalByPeriod(response wit.WitResponse, userId int) (string, error) {
+	expenseManager := expenses.NewExpenseManager(bot.env.db)
+	period, err := response.GetSpendPeriod()
+	total, err := expenseManager.TotalByPeriod(period, userId)
+
+	return strconv.FormatFloat(total, 'f', 2, 64), err
 }

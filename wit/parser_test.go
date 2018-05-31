@@ -233,4 +233,78 @@ func TestWitParser(t *testing.T) {
 		assert.True(t, isTracking)
 		assert.EqualError(t, err, "No description")
 	})
+
+	t.Run("Returns tracking error", func(t *testing.T) {
+		witResponse := getWitResponse([]byte(`
+			{
+				"entities": {
+					"amount": [
+						{ "value": "20 USD", "confidence": 100.00 }
+					],
+					"datetime": [
+						{ "value": "", "confidence": 100.00 }
+					],
+					"description": []
+				}
+			}
+		`))
+
+		intent := witResponse.GetIntent()
+		assert.Equal(t, intent, TRACKING_ERROR)
+	})
+
+	t.Run("Returns tracking success", func(t *testing.T) {
+		witResponse := getWitResponse([]byte(`
+			{
+				"entities": {
+					"amount": [
+						{ "value": "20 USD", "confidence": 100.00 }
+					],
+					"datetime": [
+						{ "value": "", "confidence": 100.00 }
+					],
+					"description": [
+						{ "value": "Food", "confidence": 100.00 }
+					]
+				}
+			}
+		`))
+
+		intent := witResponse.GetIntent()
+		assert.Equal(t, TRACKING_SUCCESS, intent)
+	})
+
+	t.Run("Returns period success", func(t *testing.T) {
+		witResponse := getWitResponse([]byte(`
+			{
+				"entities": {
+					"amount": [],
+					"datetime": [],
+					"description": [],
+					"total_spent": [
+						{ "value": "monthly", "confidence": 100.00 }
+					]
+				}
+			}
+		`))
+
+		intent := witResponse.GetIntent()
+		assert.Equal(t, PERIOD_TOTAL_SUCCESS, intent)
+	})
+
+	t.Run("Returns unknown intent", func(t *testing.T) {
+		witResponse := getWitResponse([]byte(`
+			{
+				"entities": {
+					"amount": [],
+					"datetime": [],
+					"description": [],
+					"total_spent": []
+				}
+			}
+		`))
+
+		intent := witResponse.GetIntent()
+		assert.Equal(t, UNKNOWN_INTENT, intent)
+	})
 }
