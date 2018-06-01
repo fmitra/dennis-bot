@@ -10,14 +10,14 @@ import (
 
 func TestTelegram(t *testing.T) {
 	t.Run("Returns client with default config", func(t *testing.T) {
-		telegram := Client("telegramToken", "https://localhost")
+		telegram := NewClient("telegramToken", "https://localhost")
 
 		assert.Equal(t, BaseUrl, telegram.BaseUrl)
 	})
 
 	t.Run("Sets webhook", func(t *testing.T) {
 		server := mocks.MakeTestServer("")
-		telegram := client{
+		telegram := Client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
 			BaseUrl: fmt.Sprintf("%s/", server.URL),
@@ -29,7 +29,7 @@ func TestTelegram(t *testing.T) {
 
 	t.Run("Sends telegram message", func(t *testing.T) {
 		server := mocks.MakeTestServer("")
-		telegram := client{
+		telegram := Client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
 			BaseUrl: fmt.Sprintf("%s/", server.URL),

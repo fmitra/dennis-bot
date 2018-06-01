@@ -10,7 +10,7 @@ import (
 func TestAlphapoint(t *testing.T) {
 	t.Run("Returns client with default config", func(t *testing.T) {
 		token := "alphapointToken"
-		alphapoint := Client(token)
+		alphapoint := NewClient(token)
 
 		assert.Equal(t, "alphapointToken", alphapoint.Token)
 		assert.Equal(t, BaseUrl, alphapoint.BaseUrl)
@@ -26,7 +26,7 @@ func TestAlphapoint(t *testing.T) {
 		server := mocks.MakeTestServer(response)
 		defer server.Close()
 
-		alphapoint := client{
+		alphapoint := Client{
 			Token:   "alphapointToken",
 			BaseUrl: server.URL,
 		}

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"math/rand"
-	"strings"
 	"strconv"
+	"strings"
 
 	"github.com/fmitra/dennis/alphapoint"
 	"github.com/fmitra/dennis/expenses"
@@ -63,12 +63,12 @@ func (bot *Bot) SendMessage(response string, incMessage telegram.IncomingMessage
 // Returns a message based on a message key. Messages are stored
 // as slices for each key and are randomly selected.
 func (bot *Bot) GetMessage(messageKey string, messageVar string) string {
-	messages := messageMap[messageKey]
+	messages := MessageMap[messageKey]
 	totalMessages := len(messages)
 	random := rand.Intn(totalMessages)
 
 	var parsedMessage string
-	message := mesages[random]
+	message := messages[random]
 	if messageVar != "" && strings.Contains(message, "{{var}}") {
 		parsedMessage = strings.Replace(message, "{{var}}", messageVar, -1)
 	} else {
@@ -79,7 +79,7 @@ func (bot *Bot) GetMessage(messageKey string, messageVar string) string {
 }
 
 func (bot *Bot) BuildResponse(incMessage telegram.IncomingMessage) string {
-	w := wit.Client(bot.env.config.Wit.Token)
+	w := wit.NewClient(bot.env.config.Wit.Token)
 	witResponse := w.ParseMessage(incMessage.GetMessage())
 	userId := incMessage.GetUser().Id
 
@@ -90,10 +90,10 @@ func (bot *Bot) BuildResponse(incMessage telegram.IncomingMessage) string {
 	var keyword string
 
 	switch intent {
-		case wit.TRACKING_SUCCESS:
-			go bot.NewExpense(witResponse, userId)
-		case wit.PERIOD_TOTAL_SUCCESS:
-			messageVar, err = bot.GetTotalByPeriod(witResponse, userId)
+	case wit.TRACKING_SUCCESS:
+		go bot.NewExpense(witResponse, userId)
+	case wit.PERIOD_TOTAL_SUCCESS:
+		messageVar, err = bot.GetTotalByPeriod(witResponse, userId)
 	}
 
 	if err != nil {
@@ -111,7 +111,7 @@ func (bot *Bot) NewExpense(w wit.WitResponse, userId int) bool {
 	amount, currency, _ := w.GetAmount()
 	description, _ := w.GetDescription()
 
-	a := alphapoint.Client(bot.env.config.AlphaPoint.Token)
+	a := alphapoint.NewClient(bot.env.config.AlphaPoint.Token)
 	historical := a.Convert(
 		currency,
 		"USD",

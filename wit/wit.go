@@ -17,7 +17,7 @@ var (
 	ApiVersion = "20180128"
 )
 
-type client struct {
+type Client struct {
 	Token      string
 	BaseUrl    string
 	ApiVersion string
@@ -25,8 +25,8 @@ type client struct {
 
 // Convenience function to return an API client with default
 // base URL and API version declared.
-func Client(token string) *client {
-	return &client{
+func NewClient(token string) *Client {
+	return &Client{
 		Token:      token,
 		BaseUrl:    BaseUrl,
 		ApiVersion: ApiVersion,
@@ -35,7 +35,7 @@ func Client(token string) *client {
 
 // Sends a message to Wit.Ai for parsing. Wit.Ai helps parse
 // context (ex. What does a user want?) out of a message
-func (c client) ParseMessage(message string) WitResponse {
+func (c Client) ParseMessage(message string) WitResponse {
 	witBaseUrl := fmt.Sprintf("%s/message?v=%s", c.BaseUrl, c.ApiVersion)
 	queryString := url.QueryEscape(message)
 	queryUrl := fmt.Sprintf("%s&q=%s", witBaseUrl, queryString)

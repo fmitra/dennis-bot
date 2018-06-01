@@ -9,7 +9,7 @@ import (
 
 func TestWit(t *testing.T) {
 	t.Run("Returns client with default config", func(t *testing.T) {
-		witAi := Client("witAiToken")
+		witAi := NewClient("witAiToken")
 
 		assert.Equal(t, BaseUrl, witAi.BaseUrl)
 		assert.Equal(t, ApiVersion, witAi.ApiVersion)
@@ -32,7 +32,7 @@ func TestWit(t *testing.T) {
 		server := mocks.MakeTestServer(response)
 		defer server.Close()
 
-		witAi := client{
+		witAi := Client{
 			Token:      "witAiToken",
 			BaseUrl:    server.URL,
 			ApiVersion: "20180128",
@@ -46,7 +46,7 @@ func TestWit(t *testing.T) {
 		server := mocks.MakeTestServer(`{not valid json}`)
 		defer server.Close()
 
-		witAi := client{
+		witAi := Client{
 			Token:      "witAiToken",
 			BaseUrl:    server.URL,
 			ApiVersion: "20180128",

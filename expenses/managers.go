@@ -83,9 +83,9 @@ func (e *ExpenseManager) QueryByPeriod(period string, userId int) ([]Expense, er
 	}
 
 	if period == TODAY {
-		query = "user_id = ? AND created_at = ?"
+		query = "user_id = ? AND date = ?"
 	} else {
-		query = "user_id = ? AND created_at >= ?"
+		query = "user_id = ? AND date >= ?"
 	}
 
 	result := e.db.Where(query, userId, timePeriod).Find(&expenses)
@@ -106,9 +106,9 @@ func (e *ExpenseManager) TotalByPeriod(period string, userId int) (float64, erro
 	}
 
 	if period == TODAY {
-		query = "user_id = ? AND created_at = ?"
+		query = "user_id = ? AND date = ?"
 	} else {
-		query = "user_id = ? AND created_at >= ?"
+		query = "user_id = ? AND date >= ?"
 	}
 
 	result := e.db.Table("expenses").

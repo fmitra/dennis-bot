@@ -17,21 +17,21 @@ type CurrencyDetails struct {
 	} `json:"Realtime Currency Exchange Rate"`
 }
 
-type client struct {
+type Client struct {
 	Token   string
 	BaseUrl string
 }
 
 // Sets up client to run with AlphaPoint token
-func Client(token string) *client {
-	return &client{
+func NewClient(token string) *Client {
+	return &Client{
 		Token:   token,
 		BaseUrl: BaseUrl,
 	}
 }
 
 // Converts from one currency to another using AlphaPoints' API
-func (c client) Convert(fromISO string, toISO string, total float64) float64 {
+func (c Client) Convert(fromISO string, toISO string, total float64) float64 {
 	currencyBase := fmt.Sprintf(
 		"%s?function=CURRENCY_EXCHANGE_RATE&from_currency=%s&to_currency=%s",
 		c.BaseUrl,

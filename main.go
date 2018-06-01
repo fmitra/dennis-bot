@@ -69,7 +69,7 @@ func LoadEnv(config config.AppConfig) *Env {
 		),
 	)
 
-	cache := sessions.Client(sessions.Config{
+	cache := sessions.NewClient(sessions.Config{
 		config.Redis.Host,
 		config.Redis.Port,
 		config.Redis.Password,
@@ -83,7 +83,7 @@ func LoadEnv(config config.AppConfig) *Env {
 		panic("Failed to connect to database")
 	}
 
-	telegram := telegram.Client(
+	telegram := telegram.NewClient(
 		config.Telegram.Token,
 		config.BotDomain,
 	)

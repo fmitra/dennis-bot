@@ -15,7 +15,7 @@ const (
 
 	PERIOD_TOTAL_SUCCESS = "period_total_success"
 
-	UNKNOWN_INTENT = "unknown_intent"
+	UNKNOWN_INTENT = "default"
 )
 
 // Wit.ai Entity
@@ -116,7 +116,7 @@ func (w WitResponse) IsRequestingTotal() (bool, error) {
 	return true, nil
 }
 
-func (w WitResponse) GetIntent() (string) {
+func (w WitResponse) GetIntent() string {
 	isTracking, trackingErr := w.IsTracking()
 	isRequestingTotal, totalErr := w.IsRequestingTotal()
 

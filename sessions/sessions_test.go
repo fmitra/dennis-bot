@@ -17,7 +17,7 @@ type LocalConfig struct {
 	} `json:"redis"`
 }
 
-func GetSession() *client {
+func GetSession() *Client {
 	var config LocalConfig
 	file := "../config/config.json"
 	configFile, err := os.Open(file)
@@ -28,7 +28,7 @@ func GetSession() *client {
 	jsonParser := json.NewDecoder(configFile)
 	jsonParser.Decode(&config)
 
-	return Client(Config{
+	return NewClient(Config{
 		config.Redis.Host,
 		config.Redis.Port,
 		config.Redis.Password,

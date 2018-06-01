@@ -41,7 +41,7 @@ func BatchCreateExpenses(db *gorm.DB, firstEntryDate time.Time, totalEntries int
 	for days := 1; days <= 10; days++ {
 		createdAt := firstEntryDate.AddDate(0, 0, days)
 		expense := &Expense{
-			Date:        time.Now(),
+			Date:        createdAt,
 			Description: "Food",
 			Total:       26.31,
 			Historical:  20.25,

@@ -1,6 +1,6 @@
 package main
 
-var messageMap = map[string][]string{
+var MessageMap = map[string][]string{
 	"default": []string{
 		"Hi! Tell Dennis what you want to do!",
 
@@ -18,18 +18,18 @@ var messageMap = map[string][]string{
 		"How much did you spend? You can say something like 20USD " +
 			"for Dinner",
 	},
-	"tracking": []string{
+	"tracking_success": []string{
 		"Ok got it!",
 
 		"Roger that!",
 	},
-	"error": []string{
+	"tracking_error": []string{
 		"I didn't understand that. You need to tell me exactly what " +
 			"what your expense is. For example '0.00012BTC for Rent'",
 
 		"I didn't get that. Try saying 'How much did I spend this week?'",
 	},
-	"period_total": []string{
+	"period_total_success": []string{
 		"You spent {{var}}",
 	},
 }

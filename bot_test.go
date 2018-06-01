@@ -9,6 +9,7 @@ import (
 
 	"github.com/fmitra/dennis/alphapoint"
 	"github.com/fmitra/dennis/config"
+	"github.com/fmitra/dennis/expenses"
 	"github.com/fmitra/dennis/mocks"
 	"github.com/fmitra/dennis/telegram"
 	"github.com/fmitra/dennis/wit"
@@ -16,15 +17,162 @@ import (
 
 func TestBot(t *testing.T) {
 	t.Run("It should generate a message with optional message var", func(t *testing.T) {
-		assert.Equal(t, 0, 1)
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
+		bot := &Bot{env}
+		var message string
+		MessageMap = mocks.MessageMapMock
+
+		message = bot.GetMessage("tracking_success", "")
+		assert.Equal(t, "Roger that!", message)
+
+		message = bot.GetMessage("period_total_success", "20")
+		assert.Equal(t, "You spent 20", message)
 	})
 
-	t.Run("It should generate a response based on wit.ai intent", func(t *testing.T) {
-		assert.Equal(t, 0, 1)
+	t.Run("Should handle tracking intent from Wit.ai", func(t *testing.T) {
+		var incMessage telegram.IncomingMessage
+		message := mocks.GetMockMessage()
+		json.Unmarshal(message, &incMessage)
+		MessageMap = mocks.MessageMapMock
+
+		witResponse := `{
+			"entities": {
+				"amount": [
+					{ "value": "20 USD", "confidence": 100.00 }
+				],
+				"datetime": [
+					{ "value": "", "confidence": 100.00 }
+				],
+				"description": [
+					{ "value": "Food", "confidence": 100.00 }
+				]
+			}
+		}`
+		alphapointResponse := `{
+			"Realtime Currency Exchange Rate": {
+				"5. Exchange Rate": ".7"
+			}
+		}`
+		witServer := mocks.MakeTestServer(witResponse)
+		alphapointServer := mocks.MakeTestServer(alphapointResponse)
+
+		wit.BaseUrl = witServer.URL
+		alphapoint.BaseUrl = alphapointServer.URL
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
+		bot := &Bot{env}
+
+		response := bot.BuildResponse(incMessage)
+		assert.Equal(t, "Roger that!", response)
+	})
+
+	t.Run("Should handle period query intent from Wit.ai", func(t *testing.T) {
+		var incMessage telegram.IncomingMessage
+		message := mocks.GetMockMessage()
+		json.Unmarshal(message, &incMessage)
+
+		witResponse := `{
+			"entities": {
+				"amount": [],
+				"datetime": [],
+				"description": [],
+				"total_spent": [
+					{ "value": "month", "confidence": 100.00 }
+				]
+			}
+		}`
+		witServer := mocks.MakeTestServer(witResponse)
+		wit.BaseUrl = witServer.URL
+
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
+		bot := &Bot{env}
+		bot.env.db.Where("user_id = ?", mocks.TestUserId).
+			Unscoped().
+			Delete(expenses.Expense{})
+
+		response := bot.BuildResponse(incMessage)
+		assert.Equal(t, "You spent 0.00", response)
+	})
+
+	t.Run("Should return a default message", func(t *testing.T) {
+		var incMessage telegram.IncomingMessage
+		message := mocks.GetMockMessage()
+		json.Unmarshal(message, &incMessage)
+		MessageMap = mocks.MessageMapMock
+
+		witResponse := `{
+			"entities": {
+				"amount": [],
+				"datetime": [],
+				"description": [],
+				"total_spent": []
+			}
+		}`
+		witServer := mocks.MakeTestServer(witResponse)
+		wit.BaseUrl = witServer.URL
+
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
+		bot := &Bot{env}
+
+		response := bot.BuildResponse(incMessage)
+		assert.Equal(t, "This is a default message", response)
 	})
 
 	t.Run("It should return a historical total by period", func(t *testing.T) {
-		assert.Equal(t, 0, 1)
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
+		bot := &Bot{env}
+		bot.env.db.Where("user_id = ?", mocks.TestUserId).
+			Unscoped().
+			Delete(expenses.Expense{})
+
+		rawWitResponse := []byte(`{
+			"entities": {
+				"amount": [],
+				"datetime": [],
+				"description": [],
+				"total_spent": [
+					{ "value": "month", "confidence": 100.00 }
+				]
+			}
+		}`)
+
+		var witResponse wit.WitResponse
+		json.Unmarshal(rawWitResponse, &witResponse)
+
+		strTotal, err := bot.GetTotalByPeriod(witResponse, mocks.TestUserId)
+		assert.Equal(t, "0.00", strTotal)
+		assert.NoError(t, err)
+	})
+
+	t.Run("It should return error for invalid period", func(t *testing.T) {
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
+		bot := &Bot{env}
+		bot.env.db.Where("user_id = ?", mocks.TestUserId).
+			Unscoped().
+			Delete(expenses.Expense{})
+
+		rawWitResponse := []byte(`{
+			"entities": {
+				"amount": [],
+				"datetime": [],
+				"description": [],
+				"total_spent": [
+					{ "value": "foo", "confidence": 100.00 }
+				]
+			}
+		}`)
+
+		var witResponse wit.WitResponse
+		json.Unmarshal(rawWitResponse, &witResponse)
+
+		strTotal, err := bot.GetTotalByPeriod(witResponse, mocks.TestUserId)
+		assert.Equal(t, "0.00", strTotal)
+		assert.EqualError(t, err, "foo is an invalid period")
 	})
 
 	t.Run("Receives and responds through telegram", func(t *testing.T) {
@@ -71,156 +219,21 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("Sends an outgoing message", func(t *testing.T) {
+		telegramServer := mocks.MakeTestServer("")
+		telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
+
 		configFile := "config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		message := mocks.GetMockMessage()
-		keyword := "track.success"
+		response := "Hello world"
 
 		var incMessage telegram.IncomingMessage
 		json.Unmarshal(message, &incMessage)
 
-		server := mocks.MakeTestServer("")
-
-		// We need to add a trailing slash because the telegram token
-		// format will be treated as an invalid port on the test server
-		telegram.BaseUrl = fmt.Sprintf("%s/", server.URL)
-
-		statusCode := bot.SendMessage(keyword, incMessage)
+		statusCode := bot.SendMessage(response, incMessage)
 		assert.Equal(t, 200, statusCode)
 	})
-
-	t.Run("Retrieves a string response to send", func(t *testing.T) {
-		configFile := "config/config.json"
-		env := LoadEnv(config.LoadConfig(configFile))
-		bot := &Bot{env}
-
-		// messageMap var is setup with multiple possible responses.
-		// We will instead replace it to only offer one response for
-		// simplicity
-		messageMap = map[string][]string{
-			"default": []string{
-				"This is a default message",
-			},
-			"track.success": []string{
-				"This is a successful tracking message",
-			},
-			"track.error": []string{
-				"This is a failed tracking message",
-			},
-		}
-
-		successMessage := bot.GetResponse("track.success", "")
-		errorMessage := bot.GetResponse("track.error", "")
-		defaultMessage := bot.GetResponse("default", "")
-
-		assert.Equal(t, defaultMessage, "This is a default message")
-		assert.Equal(t, successMessage, "This is a successful tracking message")
-		assert.Equal(t, errorMessage, "This is a failed tracking message")
-	})
-
-//	t.Run("Maps incoming message to tracking keyword", func(t *testing.T) {
-//		configFile := "config/config.json"
-//		env := LoadEnv(config.LoadConfig(configFile))
-//		bot := &Bot{env}
-//		message := mocks.GetMockMessage()
-//		witResponse := `{
-//			"entities": {
-//				"amount": [
-//					{ "value": "20 USD", "confidence": 100.00 }
-//				],
-//				"datetime": [
-//					{ "value": "", "confidence": 100.00 }
-//				],
-//				"description": [
-//					{ "value": "Food", "confidence": 100.00 }
-//				]
-//			}
-//		}`
-//		alphapointResponse := `{
-//			"Realtime Currency Exchange Rate": {
-//				"5. Exchange Rate": ".7"
-//			}
-//		}`
-//		witServer := mocks.MakeTestServer(witResponse)
-//		alphapointServer := mocks.MakeTestServer(alphapointResponse)
-//
-//		wit.BaseUrl = witServer.URL
-//		alphapoint.BaseUrl = alphapointServer.URL
-//
-//		var incMessage telegram.IncomingMessage
-//		json.Unmarshal(message, &incMessage)
-//
-//		keyword := bot.MapToKeyword(incMessage)
-//
-//		assert.Equal(t, "track.success", keyword)
-//	})
-//
-//	t.Run("Maps incoming message to tracking error keyword", func(t *testing.T) {
-//		configFile := "config/config.json"
-//		env := LoadEnv(config.LoadConfig(configFile))
-//		bot := &Bot{env}
-//		message := mocks.GetMockMessage()
-//		witResponse := `{
-//			"entities": {
-//				"amount": [
-//					{ "value": "20 USD", "confidence": 100.00 }
-//				],
-//				"datetime": [
-//					{ "value": "", "confidence": 100.00 }
-//				],
-//				"description": []
-//			}
-//		}`
-//		alphapointResponse := `{
-//			"Realtime Currency Exchange Rate": {
-//				"5. Exchange Rate": ".7"
-//			}
-//		}`
-//		witServer := mocks.MakeTestServer(witResponse)
-//		alphapointServer := mocks.MakeTestServer(alphapointResponse)
-//
-//		wit.BaseUrl = witServer.URL
-//		alphapoint.BaseUrl = alphapointServer.URL
-//
-//		var incMessage telegram.IncomingMessage
-//		json.Unmarshal(message, &incMessage)
-//
-//		keyword := bot.MapToKeyword(incMessage)
-//
-//		assert.Equal(t, "track.error", keyword)
-//	})
-//
-//	t.Run("Maps incoming message to default keyword", func(t *testing.T) {
-//		configFile := "config/config.json"
-//		env := LoadEnv(config.LoadConfig(configFile))
-//		bot := &Bot{env}
-//		message := mocks.GetMockMessage()
-//		witResponse := `{
-//			"entities": {
-//				"amount": [],
-//				"datetime": [],
-//				"description": []
-//			}
-//		}`
-//		alphapointResponse := `{
-//			"Realtime Currency Exchange Rate": {
-//				"5. Exchange Rate": ".7"
-//			}
-//		}`
-//		witServer := mocks.MakeTestServer(witResponse)
-//		alphapointServer := mocks.MakeTestServer(alphapointResponse)
-//
-//		wit.BaseUrl = witServer.URL
-//		alphapoint.BaseUrl = alphapointServer.URL
-//
-//		var incMessage telegram.IncomingMessage
-//		json.Unmarshal(message, &incMessage)
-//
-//		keyword := bot.MapToKeyword(incMessage)
-//
-//		assert.Equal(t, "default", keyword)
-//	})
 
 	t.Run("Creates a new expense", func(t *testing.T) {
 		configFile := "config/config.json"

@@ -82,3 +82,15 @@ type MockTime struct {
 func (m *MockTime) Now() time.Time {
 	return m.CurrentTime
 }
+
+var MessageMapMock = map[string][]string{
+	"default": []string{
+		"This is a default message",
+	},
+	"tracking_success": []string{
+		"Roger that!",
+	},
+	"period_total_success": []string{
+		"You spent {{var}}",
+	},
+}
