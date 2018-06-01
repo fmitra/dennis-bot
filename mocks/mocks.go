@@ -93,4 +93,7 @@ var MessageMapMock = map[string][]string{
 	"period_total_success": []string{
 		"You spent {{var}}",
 	},
+	"error": []string{
+		"Whoops!",
+	},
 }

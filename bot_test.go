@@ -121,6 +121,33 @@ func TestBot(t *testing.T) {
 		assert.Equal(t, "This is a default message", response)
 	})
 
+	t.Run("Should return a error message", func(t *testing.T) {
+		var incMessage telegram.IncomingMessage
+		message := mocks.GetMockMessage()
+		json.Unmarshal(message, &incMessage)
+		MessageMap = mocks.MessageMapMock
+
+		witResponse := `{
+			"entities": {
+				"amount": [],
+				"datetime": [],
+				"description": [],
+				"total_spent": [
+					{ "value": "foo", "confidence": 100.00 }
+				]
+			}
+		}`
+		witServer := mocks.MakeTestServer(witResponse)
+		wit.BaseUrl = witServer.URL
+
+		configFile := "config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
+		bot := &Bot{env}
+
+		response := bot.BuildResponse(incMessage)
+		assert.Equal(t, "Whoops!", response)
+	})
+
 	t.Run("It should return a historical total by period", func(t *testing.T) {
 		configFile := "config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))

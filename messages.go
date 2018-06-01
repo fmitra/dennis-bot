@@ -32,4 +32,9 @@ var MessageMap = map[string][]string{
 	"period_total_success": []string{
 		"You spent {{var}}",
 	},
+	"error": []string{
+		"Sorry can't answer. I'm going out for lunch",
+
+		"Ask me something later, Dennis is on vacation",
+	},
 }
