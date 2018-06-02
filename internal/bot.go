@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"strconv"
@@ -100,22 +101,34 @@ func (bot *Bot) BuildResponse(incMessage telegram.IncomingMessage) string {
 // Creates an expense item from a Wit.ai response
 func (bot *Bot) NewExpense(w wit.WitResponse, userId int) bool {
 	date := w.GetDate()
-	amount, currency, _ := w.GetAmount()
+	amount, fromCurrency, _ := w.GetAmount()
+	targetCurrency := "USD"
 	description, _ := w.GetDescription()
 
-	a := alphapoint.NewClient(bot.env.config.AlphaPoint.Token)
-	historical := a.Convert(
-		currency,
-		"USD",
-		amount,
-	)
+	var historicalAmount float64
+	var conversion alphapoint.Conversion
+	var newConversion *alphapoint.Conversion
+	cacheKey := fmt.Sprintf("%s_%s", fromCurrency, targetCurrency)
+	bot.env.cache.Get(cacheKey, &conversion)
+
+	if conversion.Rate == 0 {
+		a := alphapoint.NewClient(bot.env.config.AlphaPoint.Token)
+		historicalAmount, newConversion = a.Convert(
+			fromCurrency,
+			"USD",
+			amount,
+		)
+		bot.env.cache.Set(cacheKey, newConversion)
+	} else {
+		historicalAmount = conversion.Rate * amount
+	}
 
 	expense := &expenses.Expense{
 		Date:        date,
 		Description: description,
 		Total:       amount,
-		Historical:  historical,
-		Currency:    currency,
+		Historical:  historicalAmount,
+		Currency:    fromCurrency,
 		UserId:      userId,
 	}
 	expenseManager := expenses.NewExpenseManager(bot.env.db)

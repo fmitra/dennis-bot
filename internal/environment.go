@@ -71,6 +71,11 @@ func LoadEnv(config config.AppConfig) *Env {
 		),
 	)
 
+	if err != nil {
+		log.Fatal(err)
+		panic("Failed to connect to database")
+	}
+
 	cache := sessions.NewClient(sessions.Config{
 		config.Redis.Host,
 		config.Redis.Port,
@@ -79,11 +84,6 @@ func LoadEnv(config config.AppConfig) *Env {
 	})
 
 	db.AutoMigrate(&expenses.Expense{})
-
-	if err != nil {
-		log.Fatal(err)
-		panic("Failed to connect to database")
-	}
 
 	telegram := telegram.NewClient(
 		config.Telegram.Token,

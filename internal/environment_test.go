@@ -3,10 +3,10 @@ package internal
 import (
 	"bytes"
 	"fmt"
-	"time"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 

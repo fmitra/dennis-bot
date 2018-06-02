@@ -21,6 +21,7 @@ type Config struct {
 type Session interface {
 	Set(cacheKey string, v interface{})
 	Get(cacheKey string, v interface{}) error
+	Delete(cacheKey string) error
 }
 
 type Client struct {
@@ -46,6 +47,14 @@ func NewClient(config Config) *Client {
 	}
 
 	return &Client{codec}
+}
+
+func (c *Client) Delete(cacheKey string) error {
+	err := c.codec.Delete(cacheKey)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Client) Set(cacheKey string, v interface{}) {

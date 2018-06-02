@@ -18,13 +18,19 @@ type TelegramMock struct {
 
 type SessionMock struct {
 	Calls struct {
-		Get int
-		Set int
+		Get    int
+		Set    int
+		Delete int
 	}
 }
 
 func (s *SessionMock) Set(cacheKey string, v interface{}) {
 	s.Calls.Set++
+}
+
+func (s *SessionMock) Delete(cacheKey string) error {
+	s.Calls.Delete++
+	return nil
 }
 
 func (s *SessionMock) Get(cacheKey string, v interface{}) error {

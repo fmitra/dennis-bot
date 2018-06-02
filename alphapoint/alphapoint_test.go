@@ -35,7 +35,19 @@ func TestAlphapoint(t *testing.T) {
 		toISO := "SGD"
 		forConversion := 20.00
 
-		convertedAmount := alphapoint.Convert(fromISO, toISO, forConversion)
+		convertedAmount, conversion := alphapoint.Convert(
+			fromISO,
+			toISO,
+			forConversion,
+		)
+
+		expectedConversion := &Conversion{
+			fromISO,
+			toISO,
+			0.7,
+		}
+
+		assert.Equal(t, expectedConversion, conversion)
 		assert.Equal(t, 14.0, convertedAmount)
 	})
 }

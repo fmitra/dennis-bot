@@ -11,6 +11,10 @@ import (
 
 var BaseUrl = "https://www.alphavantage.co/query"
 
+type Alphapoint interface {
+	Convert(fromISO string, toISO string, total float64) (float64, *Conversion)
+}
+
 type CurrencyDetails struct {
 	Details struct {
 		ExchangeRate string `json:"5. Exchange Rate"`
@@ -22,6 +26,12 @@ type Client struct {
 	BaseUrl string
 }
 
+type Conversion struct {
+	FromCurrency string
+	ToCurrency   string
+	Rate         float64
+}
+
 // Sets up client to run with AlphaPoint token
 func NewClient(token string) *Client {
 	return &Client{
@@ -31,7 +41,7 @@ func NewClient(token string) *Client {
 }
 
 // Converts from one currency to another using AlphaPoints' API
-func (c Client) Convert(fromISO string, toISO string, total float64) float64 {
+func (c Client) Convert(fromISO string, toISO string, total float64) (float64, *Conversion) {
 	currencyBase := fmt.Sprintf(
 		"%s?function=CURRENCY_EXCHANGE_RATE&from_currency=%s&to_currency=%s",
 		c.BaseUrl,
@@ -54,6 +64,12 @@ func (c Client) Convert(fromISO string, toISO string, total float64) float64 {
 	}
 
 	exchangeRate, _ := strconv.ParseFloat(currencyDetails.Details.ExchangeRate, 64)
-	conversion := exchangeRate * total
-	return conversion
+	convertedValue := exchangeRate * total
+	conversion := &Conversion{
+		fromISO,
+		toISO,
+		exchangeRate,
+	}
+
+	return convertedValue, conversion
 }

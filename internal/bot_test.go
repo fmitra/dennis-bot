@@ -277,7 +277,7 @@ func TestBot(t *testing.T) {
 		rawWitResponse := []byte(`{
 			"entities": {
 				"amount": [
-					{ "value": "20 USD", "confidence": 100.00 }
+					{ "value": "20 SGD", "confidence": 100.00 }
 				],
 				"datetime": [
 					{ "value": "", "confidence": 100.00 }
@@ -301,6 +301,46 @@ func TestBot(t *testing.T) {
 
 		alphapoint.BaseUrl = alphapointServer.URL
 
+		isCreated := bot.NewExpense(witResponse, userId)
+		assert.True(t, isCreated)
+	})
+
+	t.Run("Creates a new expense from cache", func(t *testing.T) {
+		configFile := "../config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
+		env.cache.Delete("SGD_USD")
+		bot := &Bot{env}
+		rawWitResponse := []byte(`{
+			"entities": {
+				"amount": [
+					{ "value": "20 SGD", "confidence": 100.00 }
+				],
+				"datetime": [
+					{ "value": "", "confidence": 100.00 }
+				],
+				"description": [
+					{ "value": "Food", "confidence": 100.00 }
+				]
+			}
+		}`)
+		alphapointResponse := `{
+			"Realtime Currency Exchange Rate": {
+				"5. Exchange Rate": ".7"
+			}
+		}`
+		alphapointServer := mocks.MakeTestServer(alphapointResponse)
+		userId := mocks.TestUserId
+
+		var witResponse wit.WitResponse
+		json.Unmarshal(rawWitResponse, &witResponse)
+
+		alphapoint.BaseUrl = alphapointServer.URL
+
+		// Initial call without cache
+		bot.NewExpense(witResponse, userId)
+
+		// Second call should not hit server
+		alphapointServer.Close()
 		isCreated := bot.NewExpense(witResponse, userId)
 		assert.True(t, isCreated)
 	})

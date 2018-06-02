@@ -37,7 +37,7 @@ func GetSession() *Client {
 }
 
 func TestSessions(t *testing.T) {
-	t.Run("Sets and gets from session", func(t *testing.T) {
+	t.Run("Sets and gets and deletes from session", func(t *testing.T) {
 		type UserMock struct {
 			UserId    string
 			UserEmail string
@@ -54,6 +54,10 @@ func TestSessions(t *testing.T) {
 		session.Get("userId", &cachedUser)
 
 		assert.Equal(t, userMock, cachedUser)
+
+		session.Delete("userId")
+		err := session.Get("userId", &cachedUser)
+		assert.EqualError(t, err, "No session found")
 	})
 
 	t.Run("Returns error if not found", func(t *testing.T) {

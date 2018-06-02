@@ -17,6 +17,10 @@ var (
 	ApiVersion = "20180128"
 )
 
+type Wit interface {
+	ParseMessage(message string) WitResponse
+}
+
 type Client struct {
 	Token      string
 	BaseUrl    string
