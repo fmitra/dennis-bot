@@ -21,7 +21,7 @@ type Bot struct {
 
 // Entry point to communicate with the bot. We parse an incoming message
 // and map it to  to a key word trigger to determine a response
-func (bot *Bot) Converse(payload []byte) chan bool {
+func (bot *Bot) Converse(payload []byte) int {
 	incMessage, err := bot.ReceiveMessage(payload)
 	if err != nil {
 		panic(err)
@@ -30,15 +30,7 @@ func (bot *Bot) Converse(payload []byte) chan bool {
 	bot.env.cache.Set(strconv.Itoa(user.Id), user)
 	response := bot.BuildResponse(incMessage)
 
-	channel := make(chan bool)
-
-	go func() {
-		bot.SendMessage(response, incMessage)
-		channel <- true
-		close(channel)
-	}()
-
-	return channel
+	return bot.SendMessage(response, incMessage)
 }
 
 // Parses an incoming telegram message
@@ -91,7 +83,7 @@ func (bot *Bot) BuildResponse(incMessage telegram.IncomingMessage) string {
 
 	switch intent {
 	case wit.TRACKING_SUCCESS:
-		go bot.NewExpense(witResponse, userId)
+		bot.NewExpense(witResponse, userId)
 	case wit.PERIOD_TOTAL_SUCCESS:
 		messageVar, err = bot.GetTotalByPeriod(witResponse, userId)
 	}

@@ -56,6 +56,8 @@ func TestBot(t *testing.T) {
 		}`
 		witServer := mocks.MakeTestServer(witResponse)
 		alphapointServer := mocks.MakeTestServer(alphapointResponse)
+		defer witServer.Close()
+		defer alphapointServer.Close()
 
 		wit.BaseUrl = witServer.URL
 		alphapoint.BaseUrl = alphapointServer.URL
@@ -84,6 +86,7 @@ func TestBot(t *testing.T) {
 		}`
 		witServer := mocks.MakeTestServer(witResponse)
 		wit.BaseUrl = witServer.URL
+		defer witServer.Close()
 
 		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
@@ -112,6 +115,7 @@ func TestBot(t *testing.T) {
 		}`
 		witServer := mocks.MakeTestServer(witResponse)
 		wit.BaseUrl = witServer.URL
+		defer witServer.Close()
 
 		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
@@ -139,6 +143,7 @@ func TestBot(t *testing.T) {
 		}`
 		witServer := mocks.MakeTestServer(witResponse)
 		wit.BaseUrl = witServer.URL
+		defer witServer.Close()
 
 		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
@@ -225,8 +230,10 @@ func TestBot(t *testing.T) {
 		telegramServer := mocks.MakeTestServer("")
 		wit.BaseUrl = witServer.URL
 		telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
+		defer witServer.Close()
+		defer telegramServer.Close()
 
-		<-bot.Converse(message)
+		bot.Converse(message)
 		assert.Equal(t, 1, telegramMock.Calls.Send)
 		assert.Equal(t, 1, sessionMock.Calls.Set)
 	})
@@ -248,6 +255,7 @@ func TestBot(t *testing.T) {
 	t.Run("Sends an outgoing message", func(t *testing.T) {
 		telegramServer := mocks.MakeTestServer("")
 		telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
+		defer telegramServer.Close()
 
 		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
@@ -285,6 +293,7 @@ func TestBot(t *testing.T) {
 			}
 		}`
 		alphapointServer := mocks.MakeTestServer(alphapointResponse)
+		defer alphapointServer.Close()
 		userId := mocks.TestUserId
 
 		var witResponse wit.WitResponse
