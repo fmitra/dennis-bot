@@ -25,7 +25,7 @@ type Bot struct {
 func (bot *Bot) Converse(payload []byte) int {
 	incMessage, err := bot.ReceiveMessage(payload)
 	if err != nil {
-		panic(err)
+		log.Panicf("Cannot respond to unsupported payload - %s", err)
 	}
 	user := incMessage.GetUser()
 	bot.env.cache.Set(strconv.Itoa(user.Id), user)
