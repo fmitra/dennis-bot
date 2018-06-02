@@ -4,6 +4,8 @@
 
 A pet project to learn Go, Dennis is Telegram bot to manage expense tracking.
 
+![dennis](https://www.francismitra.com/static/misc/dennis/convo.jpg)
+
 ## Developer Dependencies
 
 * [Ngrok](https://ngrok.com/downlaod)
