@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"fmt"
+	"time"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -59,6 +60,12 @@ func TestEnvironment(t *testing.T) {
 
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, "received", rr.Body.String())
+
+		// Business logic is handled in a go routine, so we need
+		// to add a delay to close the test server
+		time.Sleep(time.Second * 1)
+		telegramServer.Close()
+		witServer.Close()
 	})
 
 	t.Run("Should load environment from config", func(t *testing.T) {
