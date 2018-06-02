@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"fmt"
@@ -43,6 +43,8 @@ func (env *Env) Webhook() http.HandlerFunc {
 }
 
 func (env *Env) Start() {
+	go env.telegram.SetWebhook()
+
 	// Telegram does not send authentication headers on each request
 	// and instead recommends we use their token as the webhook path
 	webhookPath := fmt.Sprintf("/%s", env.config.Telegram.Token)
@@ -94,15 +96,4 @@ func LoadEnv(config config.AppConfig) *Env {
 		config:   config,
 		telegram: telegram,
 	}
-}
-
-func main() {
-	// Set up the environment
-	configFile := "config/config.json"
-	env := LoadEnv(config.LoadConfig(configFile))
-
-	go env.telegram.SetWebhook()
-
-	// Start the application
-	env.Start()
 }

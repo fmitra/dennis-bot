@@ -55,7 +55,7 @@ This step is not necessary if all you want to do is run the test suite.
 #### 5. Run the bot
 
 ```
-go build
+go build ./cmd/dennis
 ./dennis
 ```
 

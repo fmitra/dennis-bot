@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ import (
 
 func TestBot(t *testing.T) {
 	t.Run("It should generate a message with optional message var", func(t *testing.T) {
-		configFile := "config/config.json"
+		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		var message string
@@ -59,7 +59,7 @@ func TestBot(t *testing.T) {
 
 		wit.BaseUrl = witServer.URL
 		alphapoint.BaseUrl = alphapointServer.URL
-		configFile := "config/config.json"
+		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 
@@ -85,7 +85,7 @@ func TestBot(t *testing.T) {
 		witServer := mocks.MakeTestServer(witResponse)
 		wit.BaseUrl = witServer.URL
 
-		configFile := "config/config.json"
+		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		bot.env.db.Where("user_id = ?", mocks.TestUserId).
@@ -113,7 +113,7 @@ func TestBot(t *testing.T) {
 		witServer := mocks.MakeTestServer(witResponse)
 		wit.BaseUrl = witServer.URL
 
-		configFile := "config/config.json"
+		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 
@@ -140,7 +140,7 @@ func TestBot(t *testing.T) {
 		witServer := mocks.MakeTestServer(witResponse)
 		wit.BaseUrl = witServer.URL
 
-		configFile := "config/config.json"
+		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 
@@ -149,7 +149,7 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("It should return a historical total by period", func(t *testing.T) {
-		configFile := "config/config.json"
+		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		bot.env.db.Where("user_id = ?", mocks.TestUserId).
@@ -176,7 +176,7 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("It should return error for invalid period", func(t *testing.T) {
-		configFile := "config/config.json"
+		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		bot.env.db.Where("user_id = ?", mocks.TestUserId).
@@ -203,7 +203,7 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("Receives and responds through telegram", func(t *testing.T) {
-		configFile := "config/config.json"
+		configFile := "../config/config.json"
 		telegramMock := &mocks.TelegramMock{}
 		sessionMock := &mocks.SessionMock{}
 		env := &Env{
@@ -232,7 +232,7 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("Receives an incoming message", func(t *testing.T) {
-		configFile := "config/config.json"
+		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		message := mocks.GetMockMessage()
@@ -249,7 +249,7 @@ func TestBot(t *testing.T) {
 		telegramServer := mocks.MakeTestServer("")
 		telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
 
-		configFile := "config/config.json"
+		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		message := mocks.GetMockMessage()
@@ -263,7 +263,7 @@ func TestBot(t *testing.T) {
 	})
 
 	t.Run("Creates a new expense", func(t *testing.T) {
-		configFile := "config/config.json"
+		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
 		rawWitResponse := []byte(`{
