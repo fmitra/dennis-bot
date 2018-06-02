@@ -1,8 +1,6 @@
 package expenses
 
-import (
-	"time"
-)
+import "time"
 
 // Describes a tracked expense
 type Expense struct {

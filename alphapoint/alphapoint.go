@@ -7,6 +7,11 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/Rican7/retry"
+	"github.com/Rican7/retry/backoff"
+	"github.com/Rican7/retry/strategy"
 )
 
 var BaseUrl = "https://www.alphavantage.co/query"
@@ -42,6 +47,8 @@ func NewClient(token string) *Client {
 
 // Converts from one currency to another using AlphaPoints' API
 func (c Client) Convert(fromISO string, toISO string, total float64) (float64, *Conversion) {
+	var currencyDetails CurrencyDetails
+
 	currencyBase := fmt.Sprintf(
 		"%s?function=CURRENCY_EXCHANGE_RATE&from_currency=%s&to_currency=%s",
 		c.BaseUrl,
@@ -49,18 +56,30 @@ func (c Client) Convert(fromISO string, toISO string, total float64) (float64, *
 		toISO,
 	)
 	url := fmt.Sprintf("%s&apikey=%s", currencyBase, c.Token)
+	request := func(attempt uint) error {
+		resp, err := http.Get(url)
+		if err != nil {
+			return err
+		}
 
-	resp, err := http.Get(url)
-	if err != nil {
-		panic(err)
+		body, _ := ioutil.ReadAll(resp.Body)
+		log.Printf("alphapoint: response - %s", body)
+		jsonErr := json.Unmarshal(body, &currencyDetails)
+		if jsonErr != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	var currencyDetails CurrencyDetails
-	body, _ := ioutil.ReadAll(resp.Body)
-	log.Printf("alphapoint: response - %s", body)
-	jsonErr := json.Unmarshal(body, &currencyDetails)
-	if jsonErr != nil {
-		panic(err)
+	err := retry.Retry(
+		request,
+		strategy.Limit(10),
+		strategy.Backoff(backoff.Exponential(time.Second, 2)),
+	)
+
+	if err != nil {
+		log.Panicf("alphapoint: unable to convert currency - %s", err)
 	}
 
 	exchangeRate, _ := strconv.ParseFloat(currencyDetails.Details.ExchangeRate, 64)

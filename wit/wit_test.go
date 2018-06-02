@@ -42,7 +42,7 @@ func TestWit(t *testing.T) {
 		assert.IsType(t, WitResponse{}, witResponse)
 	})
 
-	t.Run("Fails if JSON is not returned", func(t *testing.T) {
+	t.Run("Returns zero value WitResponse on error", func(t *testing.T) {
 		server := mocks.MakeTestServer(`{not valid json}`)
 		defer server.Close()
 
@@ -52,6 +52,7 @@ func TestWit(t *testing.T) {
 			ApiVersion: "20180128",
 		}
 
-		assert.Panics(t, func() { witAi.ParseMessage("Hello world") })
+		witResponse := witAi.ParseMessage("Hello world")
+		assert.Equal(t, WitResponse{}, witResponse)
 	})
 }

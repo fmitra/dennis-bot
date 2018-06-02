@@ -2,6 +2,17 @@
 
 
 [[projects]]
+  name = "github.com/Rican7/retry"
+  packages = [
+    ".",
+    "backoff",
+    "jitter",
+    "strategy"
+  ]
+  revision = "28d17f812805614e76f170aa3c8698155ea8e019"
+  version = "v0.1.0"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
@@ -88,6 +99,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9dd75ee0deef3c9dbbb29553cbcc2359131fd7f2e5368e828fde7707908c4b3d"
+  inputs-digest = "27161551c05f86fa0c2a2c73edd2e474c3df4e53204b9b211a150145b9e13f05"
   solver-name = "gps-cdcl"
   solver-version = 1

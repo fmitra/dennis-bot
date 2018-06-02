@@ -4,9 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/Rican7/retry"
+	"github.com/Rican7/retry/backoff"
+	"github.com/Rican7/retry/strategy"
 )
 
 var BaseUrl = "https://api.telegram.org/bot"
@@ -54,15 +60,33 @@ func (c Client) Send(chatId int, message string) int {
 	contentType := "application/json"
 	outMessage := OutgoingMessage{chatId, message}
 	payload, _ := json.Marshal(outMessage)
-	resp, err := http.Post(url, contentType, bytes.NewReader(payload))
-	defer resp.Body.Close()
 
-	if err != nil {
-		panic(err)
+	var respBody io.ReadCloser
+	var statusCode int
+	request := func(attempt uint) error {
+		resp, err := http.Post(url, contentType, bytes.NewReader(payload))
+		respBody = resp.Body
+		statusCode = resp.StatusCode
+
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	err := retry.Retry(
+		request,
+		strategy.Limit(10),
+		strategy.Backoff(backoff.Exponential(time.Second, 2)),
+	)
+	if err != nil {
+		log.Panicf("telegram: failed to send message")
+	}
+
+	body, _ := ioutil.ReadAll(respBody)
+	respBody.Close()
 	log.Printf("telegram: outgoing message - %s - %s", payload, body)
 
-	return resp.StatusCode
+	return statusCode
 }

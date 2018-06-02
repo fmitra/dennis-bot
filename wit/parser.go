@@ -91,28 +91,28 @@ func (w WitResponse) GetDate() time.Time {
 func (w WitResponse) IsTracking() (bool, error) {
 	amount, currency, err := w.GetAmount()
 	if err != nil {
-		log.Printf("Cannot infer without amount")
+		log.Printf("wit: cannot infer without amount")
 		return false, err
 	}
 
 	description, err := w.GetDescription()
 	if err != nil {
-		log.Printf("Cannot infer without description")
+		log.Printf("wit: cannot infer without description")
 		return true, err
 	}
 
-	log.Printf("Inferring tracking %s %s %s", amount, currency, description)
+	log.Printf("wit: inferring tracking %s %s %s", amount, currency, description)
 	return true, nil
 }
 
 func (w WitResponse) IsRequestingTotal() (bool, error) {
 	spendPeriod, err := w.GetSpendPeriod()
 	if err != nil {
-		log.Printf("Cannot infer spend period")
+		log.Printf("wit: cannot infer spend period")
 		return false, err
 	}
 
-	log.Printf("Inferring spend period %s", spendPeriod)
+	log.Printf("wit: inferring spend period %s", spendPeriod)
 	return true, nil
 }
 

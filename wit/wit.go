@@ -7,6 +7,11 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
+
+	"github.com/Rican7/retry"
+	"github.com/Rican7/retry/backoff"
+	"github.com/Rican7/retry/strategy"
 )
 
 var (
@@ -40,27 +45,39 @@ func NewClient(token string) *Client {
 // Sends a message to Wit.Ai for parsing. Wit.Ai helps parse
 // context (ex. What does a user want?) out of a message
 func (c Client) ParseMessage(message string) WitResponse {
+	var witResponse WitResponse
+
 	witBaseUrl := fmt.Sprintf("%s/message?v=%s", c.BaseUrl, c.ApiVersion)
 	queryString := url.QueryEscape(message)
 	queryUrl := fmt.Sprintf("%s&q=%s", witBaseUrl, queryString)
 
-	log.Printf("%s", queryUrl)
 	req, _ := http.NewRequest("GET", queryUrl, nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	request := func(attempt uint) error {
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
+		body, _ := ioutil.ReadAll(resp.Body)
+		log.Printf("witai: response - %s", body)
+		jsonErr := json.Unmarshal(body, &witResponse)
+		if jsonErr != nil {
+			return err
+		}
+		return nil
 	}
 
-	var witResponse WitResponse
+	err := retry.Retry(
+		request,
+		strategy.Limit(10),
+		strategy.Backoff(backoff.Exponential(time.Second, 2)),
+	)
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	log.Printf("witai: response - %s", body)
-	jsonErr := json.Unmarshal(body, &witResponse)
-	if jsonErr != nil {
-		panic(jsonErr)
+	if err != nil {
+		log.Printf("witai: Failed to retreive wit response")
+		witResponse = WitResponse{}
 	}
 
 	return witResponse

@@ -60,7 +60,6 @@ func (c *Client) Delete(cacheKey string) error {
 func (c *Client) Set(cacheKey string, v interface{}) {
 	oneWeek := 25200 * time.Millisecond
 	expireIn := time.Duration(oneWeek)
-	fmt.Printf("setting %v", v)
 	c.codec.Set(&cache.Item{
 		Key:        cacheKey,
 		Object:     v,

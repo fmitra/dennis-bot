@@ -16,6 +16,11 @@ func getWitResponse(raw []byte) WitResponse {
 }
 
 func TestWitParser(t *testing.T) {
+	t.Run("Returns unknown intent for empty response", func(t *testing.T) {
+		witResponse := &WitResponse{}
+		assert.Equal(t, "default", witResponse.GetIntent())
+	})
+
 	t.Run("Returns amount", func(t *testing.T) {
 		witResponse := getWitResponse([]byte(`
 			{
