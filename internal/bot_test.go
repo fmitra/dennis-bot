@@ -273,6 +273,7 @@ func TestBot(t *testing.T) {
 	t.Run("Creates a new expense", func(t *testing.T) {
 		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
+		env.cache.Delete("SGD_USD")
 		bot := &Bot{env}
 		rawWitResponse := []byte(`{
 			"entities": {

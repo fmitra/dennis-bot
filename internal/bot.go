@@ -84,7 +84,7 @@ func (bot *Bot) BuildResponse(incMessage telegram.IncomingMessage) string {
 
 	switch intent {
 	case wit.TRACKING_SUCCESS:
-		bot.NewExpense(witResponse, userId)
+		go bot.NewExpense(witResponse, userId)
 	case wit.PERIOD_TOTAL_SUCCESS:
 		messageVar, err = bot.GetTotalByPeriod(witResponse, userId)
 	}
