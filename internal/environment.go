@@ -72,7 +72,7 @@ func LoadEnv(config config.AppConfig) *Env {
 	)
 
 	if err != nil {
-		log.Panicf("Database connection failed - %s", err)
+		log.Panicf("environment: database connection failed - %s", err)
 	}
 
 	cache := sessions.NewClient(sessions.Config{
