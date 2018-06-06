@@ -65,12 +65,10 @@ func GetMessage(messageKey string, messageVar string) BotResponse {
 	totalMessages := len(messages)
 	random := rand.Intn(totalMessages)
 
-	var parsedMessage string
 	message := messages[random]
+	parsedMessage := message
 	if messageVar != "" && strings.Contains(message, "{{var}}") {
 		parsedMessage = strings.Replace(message, "{{var}}", messageVar, -1)
-	} else {
-		parsedMessage = message
 	}
 
 	return BotResponse(parsedMessage)

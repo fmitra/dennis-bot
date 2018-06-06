@@ -14,6 +14,90 @@ import (
 )
 
 func TestActions(t *testing.T) {
+	t.Run("Creates a new expense", func(t *testing.T) {
+		configFile := "../config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
+		env.cache.Delete("SGD_USD")
+		rawWitResponse := []byte(`{
+			"entities": {
+				"amount": [
+					{ "value": "20 SGD", "confidence": 100.00 }
+				],
+				"datetime": [
+					{ "value": "", "confidence": 100.00 }
+				],
+				"description": [
+					{ "value": "Food", "confidence": 100.00 }
+				]
+			}
+		}`)
+		alphapointResponse := `{
+			"Realtime Currency Exchange Rate": {
+				"5. Exchange Rate": ".7"
+			}
+		}`
+		alphapointServer := mocks.MakeTestServer(alphapointResponse)
+		defer alphapointServer.Close()
+
+		var witResponse wit.WitResponse
+		json.Unmarshal(rawWitResponse, &witResponse)
+
+		alphapoint.BaseUrl = alphapointServer.URL
+
+		a := &Actions{
+			env:         env,
+			witResponse: witResponse,
+			userId:      mocks.TestUserId,
+		}
+
+		isCreated := a.createNewExpense()
+		assert.True(t, isCreated)
+	})
+
+	t.Run("Creates a new expense from cache", func(t *testing.T) {
+		configFile := "../config/config.json"
+		env := LoadEnv(config.LoadConfig(configFile))
+		env.cache.Delete("SGD_USD")
+		rawWitResponse := []byte(`{
+			"entities": {
+				"amount": [
+					{ "value": "20 SGD", "confidence": 100.00 }
+				],
+				"datetime": [
+					{ "value": "", "confidence": 100.00 }
+				],
+				"description": [
+					{ "value": "Food", "confidence": 100.00 }
+				]
+			}
+		}`)
+		alphapointResponse := `{
+			"Realtime Currency Exchange Rate": {
+				"5. Exchange Rate": ".7"
+			}
+		}`
+		alphapointServer := mocks.MakeTestServer(alphapointResponse)
+
+		var witResponse wit.WitResponse
+		json.Unmarshal(rawWitResponse, &witResponse)
+
+		alphapoint.BaseUrl = alphapointServer.URL
+
+		a := &Actions{
+			env:         env,
+			witResponse: witResponse,
+			userId:      mocks.TestUserId,
+		}
+
+		// Initial call without cache
+		a.createNewExpense()
+
+		// Second call should not hit server
+		alphapointServer.Close()
+		isCreated := a.createNewExpense()
+		assert.True(t, isCreated)
+	})
+
 	t.Run("Should handle tracking intent from Wit.ai", func(t *testing.T) {
 		var witResponse wit.WitResponse
 		witResponseRaw := []byte(`{

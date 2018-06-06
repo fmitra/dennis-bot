@@ -35,18 +35,18 @@ func (a *Actions) ProcessIntent() BotResponse {
 }
 
 // Logs a new expense entry for the user
-func (a *Actions) createNewExpense() {
+func (a *Actions) createNewExpense() bool {
 	date := a.witResponse.GetDate()
 	amount, fromCurrency, _ := a.witResponse.GetAmount()
 	targetCurrency := "USD"
 	description, _ := a.witResponse.GetDescription()
 
-	var historicalAmount float64
 	var conversion alphapoint.Conversion
 	var newConversion *alphapoint.Conversion
 	cacheKey := fmt.Sprintf("%s_%s", fromCurrency, targetCurrency)
 	a.env.cache.Get(cacheKey, &conversion)
 
+	historicalAmount := conversion.Rate * amount
 	if conversion.Rate == 0 {
 		ap := alphapoint.NewClient(a.env.config.AlphaPoint.Token)
 		historicalAmount, newConversion = ap.Convert(
@@ -55,8 +55,6 @@ func (a *Actions) createNewExpense() {
 			amount,
 		)
 		a.env.cache.Set(cacheKey, newConversion)
-	} else {
-		historicalAmount = conversion.Rate * amount
 	}
 
 	expense := &expenses.Expense{
@@ -68,7 +66,7 @@ func (a *Actions) createNewExpense() {
 		UserId:      a.userId,
 	}
 	expenseManager := expenses.NewExpenseManager(a.env.db)
-	expenseManager.Save(expense)
+	return expenseManager.Save(expense)
 }
 
 // Starts a goroutine to track an expense and returns an appropriate message
