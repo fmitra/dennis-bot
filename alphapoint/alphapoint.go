@@ -46,7 +46,7 @@ func NewClient(token string) *Client {
 }
 
 // Converts from one currency to another using AlphaPoints' API
-func (c Client) Convert(fromISO string, toISO string, total float64) (float64, *Conversion) {
+func (c *Client) Convert(fromISO string, toISO string, total float64) (float64, *Conversion) {
 	var currencyDetails CurrencyDetails
 
 	currencyBase := fmt.Sprintf(

@@ -39,7 +39,7 @@ func NewClient(token string, domain string) *Client {
 }
 
 // Sets the bot domain webhook with Telegram
-func (c Client) SetWebhook() int {
+func (c *Client) SetWebhook() int {
 	webhook := fmt.Sprintf("%s/%s", c.Domain, c.Token)
 	url := fmt.Sprintf("%s%s/setWebhook?url=%s", c.BaseUrl, c.Token, webhook)
 	resp, httpErr := http.Get(url)
@@ -55,7 +55,7 @@ func (c Client) SetWebhook() int {
 // Sends a message to Telegram. Sending a message
 // requires the ID of a chat log (received from an IncomingMessage)
 // and the text we are sending to the user.
-func (c Client) Send(chatId int, message string) int {
+func (c *Client) Send(chatId int, message string) int {
 	url := fmt.Sprintf("%s%s/sendMessage", c.BaseUrl, c.Token)
 	contentType := "application/json"
 	outMessage := OutgoingMessage{chatId, message}

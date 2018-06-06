@@ -9,13 +9,13 @@ import (
 )
 
 const (
-	TRACKING_SUCCESS = "tracking_success"
+	INTENT_TRACKING_SUCCESS = "tracking_success"
 
-	TRACKING_ERROR = "tracking_error"
+	INTENT_TRACKING_ERROR = "tracking_error"
 
-	PERIOD_TOTAL_SUCCESS = "period_total_success"
+	INTENT_PERIOD_TOTAL_SUCCESS = "period_total_success"
 
-	UNKNOWN_INTENT = "default"
+	INTENT_UNKNOWN = "default"
 )
 
 // Wit.ai Entity
@@ -121,12 +121,12 @@ func (w WitResponse) GetIntent() string {
 	isRequestingTotal, totalErr := w.IsRequestingTotal()
 
 	if isTracking && trackingErr != nil {
-		return TRACKING_ERROR
+		return INTENT_TRACKING_ERROR
 	} else if isTracking && trackingErr == nil {
-		return TRACKING_SUCCESS
+		return INTENT_TRACKING_SUCCESS
 	} else if isRequestingTotal && totalErr == nil {
-		return PERIOD_TOTAL_SUCCESS
+		return INTENT_PERIOD_TOTAL_SUCCESS
 	} else {
-		return UNKNOWN_INTENT
+		return INTENT_UNKNOWN
 	}
 }

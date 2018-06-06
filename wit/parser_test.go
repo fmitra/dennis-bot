@@ -255,7 +255,7 @@ func TestWitParser(t *testing.T) {
 		`))
 
 		intent := witResponse.GetIntent()
-		assert.Equal(t, intent, TRACKING_ERROR)
+		assert.Equal(t, intent, INTENT_TRACKING_ERROR)
 	})
 
 	t.Run("Returns tracking success", func(t *testing.T) {
@@ -276,7 +276,7 @@ func TestWitParser(t *testing.T) {
 		`))
 
 		intent := witResponse.GetIntent()
-		assert.Equal(t, TRACKING_SUCCESS, intent)
+		assert.Equal(t, INTENT_TRACKING_SUCCESS, intent)
 	})
 
 	t.Run("Returns period success", func(t *testing.T) {
@@ -294,7 +294,7 @@ func TestWitParser(t *testing.T) {
 		`))
 
 		intent := witResponse.GetIntent()
-		assert.Equal(t, PERIOD_TOTAL_SUCCESS, intent)
+		assert.Equal(t, INTENT_PERIOD_TOTAL_SUCCESS, intent)
 	})
 
 	t.Run("Returns unknown intent", func(t *testing.T) {
@@ -310,6 +310,6 @@ func TestWitParser(t *testing.T) {
 		`))
 
 		intent := witResponse.GetIntent()
-		assert.Equal(t, UNKNOWN_INTENT, intent)
+		assert.Equal(t, INTENT_UNKNOWN, intent)
 	})
 }

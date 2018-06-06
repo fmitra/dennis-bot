@@ -44,7 +44,7 @@ func NewClient(token string) *Client {
 
 // Sends a message to Wit.Ai for parsing. Wit.Ai helps parse
 // context (ex. What does a user want?) out of a message
-func (c Client) ParseMessage(message string) WitResponse {
+func (c *Client) ParseMessage(message string) WitResponse {
 	var witResponse WitResponse
 
 	witBaseUrl := fmt.Sprintf("%s/message?v=%s", c.BaseUrl, c.ApiVersion)
