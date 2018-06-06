@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"log"
 	"math/rand"
 	"strings"
 )
@@ -64,7 +63,6 @@ var MessageMap = map[string][]string{
 func GetMessage(messageKey string, messageVar string) BotResponse {
 	messages := MessageMap[messageKey]
 	totalMessages := len(messages)
-	log.Printf("%s hmm %s %s", totalMessages, messageKey, messages)
 	random := rand.Intn(totalMessages)
 
 	var parsedMessage string
