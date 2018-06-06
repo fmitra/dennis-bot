@@ -5,8 +5,8 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/fmitra/dennis/telegram"
-	"github.com/fmitra/dennis/wit"
+	"github.com/fmitra/dennis-bot/pkg/telegram"
+	"github.com/fmitra/dennis-bot/pkg/wit"
 )
 
 // Bot is responsible for parsing messages and responding

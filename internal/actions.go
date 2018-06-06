@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/fmitra/dennis/alphapoint"
-	"github.com/fmitra/dennis/expenses"
-	"github.com/fmitra/dennis/wit"
+	"github.com/fmitra/dennis-bot/pkg/alphapoint"
+	"github.com/fmitra/dennis-bot/pkg/expenses"
+	"github.com/fmitra/dennis-bot/pkg/wit"
 )
 
 type Actions struct {

@@ -3,8 +3,9 @@ package alphapoint
 import (
 	"testing"
 
-	"github.com/fmitra/dennis/mocks"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/fmitra/dennis-bot/test"
 )
 
 func TestAlphapoint(t *testing.T) {

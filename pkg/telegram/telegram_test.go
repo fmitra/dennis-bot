@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/fmitra/dennis/mocks"
+	mocks "github.com/fmitra/dennis-bot/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +18,7 @@ func TestTelegram(t *testing.T) {
 	t.Run("Sets webhook", func(t *testing.T) {
 		server := mocks.MakeTestServer("")
 		defer server.Close()
-		telegram := Client{
+		telegram := &Client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
 			BaseUrl: fmt.Sprintf("%s/", server.URL),
@@ -31,7 +31,7 @@ func TestTelegram(t *testing.T) {
 	t.Run("Sends telegram message", func(t *testing.T) {
 		server := mocks.MakeTestServer("")
 		defer server.Close()
-		telegram := Client{
+		telegram := &Client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
 			BaseUrl: fmt.Sprintf("%s/", server.URL),

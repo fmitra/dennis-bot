@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/fmitra/dennis/mocks"
+	mocks "github.com/fmitra/dennis-bot/test"
 )
 
 func TestGeneratesMessage(t *testing.T) {

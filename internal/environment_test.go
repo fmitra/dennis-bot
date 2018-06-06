@@ -10,10 +10,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/fmitra/dennis/config"
-	"github.com/fmitra/dennis/mocks"
-	"github.com/fmitra/dennis/telegram"
-	"github.com/fmitra/dennis/wit"
+	"github.com/fmitra/dennis-bot/config"
+	"github.com/fmitra/dennis-bot/pkg/telegram"
+	"github.com/fmitra/dennis-bot/pkg/wit"
+	mocks "github.com/fmitra/dennis-bot/test"
 )
 
 func TestEnvironment(t *testing.T) {

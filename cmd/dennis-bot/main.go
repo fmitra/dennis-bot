@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/fmitra/dennis/config"
-	"github.com/fmitra/dennis/internal"
+	"github.com/fmitra/dennis-bot/config"
+	"github.com/fmitra/dennis-bot/internal"
 )
 
 func main() {

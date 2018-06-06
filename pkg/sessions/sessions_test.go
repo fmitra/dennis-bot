@@ -19,7 +19,7 @@ type LocalConfig struct {
 
 func GetSession() *Client {
 	var config LocalConfig
-	file := "../config/config.json"
+	file := "../../config/config.json"
 	configFile, err := os.Open(file)
 	defer configFile.Close()
 	if err != nil {

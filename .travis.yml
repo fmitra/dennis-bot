@@ -4,7 +4,7 @@ language: go
 go:
   - "1.9.x"
 
-go_import_path: github.com/fmitra/dennis
+go_import_path: github.com/fmitra/dennis-bot
 
 services:
   - docker

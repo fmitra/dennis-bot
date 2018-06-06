@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/fmitra/dennis/utils"
+	"github.com/fmitra/dennis-bot/pkg/utils"
 )
 
 const (

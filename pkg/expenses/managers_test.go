@@ -9,8 +9,8 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/fmitra/dennis/config"
-	"github.com/fmitra/dennis/mocks"
+	"github.com/fmitra/dennis-bot/config"
+	mocks "github.com/fmitra/dennis-bot/test"
 )
 
 func DeleteTestUserExpenses(db *gorm.DB) {
@@ -18,7 +18,7 @@ func DeleteTestUserExpenses(db *gorm.DB) {
 }
 
 func GetDb() (*gorm.DB, error) {
-	dbConfig := config.LoadConfig("../config/config.json")
+	dbConfig := config.LoadConfig("../../config/config.json")
 	db, err := gorm.Open(
 		"postgres",
 		fmt.Sprintf(

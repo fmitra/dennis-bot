@@ -3,7 +3,7 @@ package wit
 import (
 	"testing"
 
-	"github.com/fmitra/dennis/mocks"
+	mocks "github.com/fmitra/dennis-bot/test"
 	"github.com/stretchr/testify/assert"
 )
 

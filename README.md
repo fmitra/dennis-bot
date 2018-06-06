@@ -6,6 +6,12 @@ A pet project to learn Go, Dennis is Telegram bot to manage expense tracking.
 
 ![dennis](https://www.francismitra.com/static/misc/dennis/convo.jpg)
 
+## Overview
+
+Dennis is fairly niche in that he was written to track intertional expenses. He keeps
+a log of expenses in any currency and returns the total (daily, weekly, or monthly)
+in USD.
+
 ## Developer Dependencies
 
 * [Ngrok](https://ngrok.com/downlaod)

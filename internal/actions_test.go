@@ -6,11 +6,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/fmitra/dennis/alphapoint"
-	"github.com/fmitra/dennis/config"
-	"github.com/fmitra/dennis/expenses"
-	"github.com/fmitra/dennis/mocks"
-	"github.com/fmitra/dennis/wit"
+	"github.com/fmitra/dennis-bot/config"
+	"github.com/fmitra/dennis-bot/pkg/alphapoint"
+	"github.com/fmitra/dennis-bot/pkg/expenses"
+	"github.com/fmitra/dennis-bot/pkg/wit"
+	mocks "github.com/fmitra/dennis-bot/test"
 )
 
 func TestActions(t *testing.T) {

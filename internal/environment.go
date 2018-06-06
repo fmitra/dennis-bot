@@ -9,10 +9,10 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
-	"github.com/fmitra/dennis/config"
-	"github.com/fmitra/dennis/expenses"
-	"github.com/fmitra/dennis/sessions"
-	"github.com/fmitra/dennis/telegram"
+	"github.com/fmitra/dennis-bot/config"
+	"github.com/fmitra/dennis-bot/pkg/expenses"
+	"github.com/fmitra/dennis-bot/pkg/sessions"
+	"github.com/fmitra/dennis-bot/pkg/telegram"
 )
 
 // Working environment for the application
