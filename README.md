@@ -8,9 +8,25 @@ A pet project to learn Go, Dennis is Telegram bot to manage expense tracking.
 
 ## Overview
 
-Dennis is fairly niche in that he was written to track intertional expenses. He keeps
-a log of expenses in any currency and returns the total (daily, weekly, or monthly)
-in USD.
+Dennis was written to track international expenses. He keeps a log of expenses in any
+currency and returns the total (daily, weekly, monthly) in USD. At the moment he
+supports the following commands:
+
+* Track an expense
+
+```
+format: <integer_amount><currency_iso> for <description>
+
+example: 200RUB for Lunch
+```
+
+* Get expense history
+
+```
+format: how much did I spend <time_period> (today, this week, this month)
+
+example: How much did I spend today?
+```
 
 ## Developer Dependencies
 
