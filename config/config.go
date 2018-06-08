@@ -6,7 +6,8 @@ import (
 )
 
 type AppConfig struct {
-	Database struct {
+	SecretKey string `json:"secret_key"`
+	Database  struct {
 		Host     string `json:"host"`
 		Port     int32  `json:"port"`
 		User     string `json:"user"`

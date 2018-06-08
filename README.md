@@ -79,8 +79,8 @@ This step is not necessary if all you want to do is run the test suite.
 #### 5. Run the bot
 
 ```
-go build ./cmd/dennis
-./dennis
+go build ./cmd/dennis-bot
+./dennis-bot
 ```
 
 ## Developer Notes
