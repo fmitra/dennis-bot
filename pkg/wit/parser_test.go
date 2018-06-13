@@ -18,7 +18,7 @@ func getWitResponse(raw []byte) WitResponse {
 func TestWitParser(t *testing.T) {
 	t.Run("Returns unknown intent for empty response", func(t *testing.T) {
 		witResponse := &WitResponse{}
-		assert.Equal(t, "default", witResponse.GetIntent())
+		assert.Equal(t, "unknown_request", witResponse.GetMessageOverview())
 	})
 
 	t.Run("Returns amount", func(t *testing.T) {
@@ -254,8 +254,8 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		intent := witResponse.GetIntent()
-		assert.Equal(t, intent, INTENT_TRACKING_ERROR)
+		overview := witResponse.GetMessageOverview()
+		assert.Equal(t, TRACKING_REQUESTED_ERROR, overview)
 	})
 
 	t.Run("Returns tracking success", func(t *testing.T) {
@@ -275,8 +275,8 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		intent := witResponse.GetIntent()
-		assert.Equal(t, INTENT_TRACKING_SUCCESS, intent)
+		overview := witResponse.GetMessageOverview()
+		assert.Equal(t, TRACKING_REQUESTED_SUCCESS, overview)
 	})
 
 	t.Run("Returns period success", func(t *testing.T) {
@@ -293,8 +293,8 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		intent := witResponse.GetIntent()
-		assert.Equal(t, INTENT_PERIOD_TOTAL_SUCCESS, intent)
+		overview := witResponse.GetMessageOverview()
+		assert.Equal(t, EXPENSE_TOTAL_REQUESTED_SUCCESS, overview)
 	})
 
 	t.Run("Returns unknown intent", func(t *testing.T) {
@@ -309,7 +309,7 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		intent := witResponse.GetIntent()
-		assert.Equal(t, INTENT_UNKNOWN, intent)
+		overview := witResponse.GetMessageOverview()
+		assert.Equal(t, UNKNOWN_REQUEST, overview)
 	})
 }

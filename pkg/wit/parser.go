@@ -9,13 +9,13 @@ import (
 )
 
 const (
-	INTENT_TRACKING_SUCCESS = "tracking_success"
+	TRACKING_REQUESTED_SUCCESS = "tracking_requested_success"
 
-	INTENT_TRACKING_ERROR = "tracking_error"
+	TRACKING_REQUESTED_ERROR = "tracking_requested_error"
 
-	INTENT_PERIOD_TOTAL_SUCCESS = "period_total_success"
+	EXPENSE_TOTAL_REQUESTED_SUCCESS = "expense_total_requested_success"
 
-	INTENT_UNKNOWN = "default"
+	UNKNOWN_REQUEST = "unknown_request"
 )
 
 // Wit.ai Entity
@@ -116,17 +116,20 @@ func (w WitResponse) IsRequestingTotal() (bool, error) {
 	return true, nil
 }
 
-func (w WitResponse) GetIntent() string {
+// Returns an overview of a message based on Wit.ai's parsing
+// We use this to provide context to infer a direction the bot should
+// take when talking to a user
+func (w WitResponse) GetMessageOverview() string {
 	isTracking, trackingErr := w.IsTracking()
 	isRequestingTotal, totalErr := w.IsRequestingTotal()
 
 	if isTracking && trackingErr != nil {
-		return INTENT_TRACKING_ERROR
+		return TRACKING_REQUESTED_ERROR
 	} else if isTracking && trackingErr == nil {
-		return INTENT_TRACKING_SUCCESS
+		return TRACKING_REQUESTED_SUCCESS
 	} else if isRequestingTotal && totalErr == nil {
-		return INTENT_PERIOD_TOTAL_SUCCESS
+		return EXPENSE_TOTAL_REQUESTED_SUCCESS
 	} else {
-		return INTENT_UNKNOWN
+		return UNKNOWN_REQUEST
 	}
 }

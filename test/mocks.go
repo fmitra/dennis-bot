@@ -57,13 +57,18 @@ func MakeTestServer(response string) *httptest.Server {
 	}))
 }
 
-func GetMockMessage() []byte {
-	message := []byte(`{
+func GetMockMessage(userResponse string) []byte {
+	response := "Hello world"
+	if userResponse != "" {
+		response = userResponse
+	}
+
+	messageStr := fmt.Sprintf(`{
 		"update_id": 123,
 		"message": {
 			"message_id": 123,
 			"date": 20180314,
-			"text": "Hello world",
+			"text": "%s",
 			"from": {
 				"id": 12345,
 				"first_name": "Jane",
@@ -77,7 +82,8 @@ func GetMockMessage() []byte {
 				"username": "janedoe"
 			}
 		}
-	}`)
+	}`, response)
+	message := []byte(messageStr)
 	return message
 }
 
@@ -93,13 +99,31 @@ var MessageMapMock = map[string][]string{
 	"default": []string{
 		"This is a default message",
 	},
-	"tracking_success": []string{
-		"Roger that!",
+	"get_expense_total_error": []string{
+		"Whoops!",
 	},
-	"period_total_success": []string{
+	"get_expense_total_success": []string{
 		"You spent {{var}}",
 	},
-	"error": []string{
+	"track_expense_error": []string{
 		"Whoops!",
+	},
+	"track_expense_success": []string{
+		"Roger that!",
+	},
+	"onboard_user_ask_for_password": []string{
+		"What's your password?",
+	},
+	"onboard_user_confirm_password_error": []string{
+		"I didn't understand that",
+	},
+	"onboard_user_reject_password": []string{
+		"Okay try again later",
+	},
+	"onboard_user_confirm_password": []string{
+		"Your password is {{var}}",
+	},
+	"onboard_user_say_outro": []string{
+		"Outro message",
 	},
 }

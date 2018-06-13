@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/fmitra/dennis-bot/config"
+	convo "github.com/fmitra/dennis-bot/internal/conversation"
 	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/expenses"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
@@ -18,9 +19,9 @@ import (
 func TestBot(t *testing.T) {
 	t.Run("Should handle tracking intent from Wit.ai", func(t *testing.T) {
 		var incMessage telegram.IncomingMessage
-		message := mocks.GetMockMessage()
+		message := mocks.GetMockMessage("")
 		json.Unmarshal(message, &incMessage)
-		MessageMap = mocks.MessageMapMock
+		convo.MessageMap = mocks.MessageMapMock
 
 		witResponse := `{
 			"entities": {
@@ -52,12 +53,12 @@ func TestBot(t *testing.T) {
 		bot := &Bot{env}
 
 		response := bot.BuildResponse(incMessage)
-		assert.Equal(t, BotResponse("Roger that!"), response)
+		assert.Equal(t, convo.BotResponse("Roger that!"), response)
 	})
 
 	t.Run("Should handle period query intent from Wit.ai", func(t *testing.T) {
 		var incMessage telegram.IncomingMessage
-		message := mocks.GetMockMessage()
+		message := mocks.GetMockMessage("")
 		json.Unmarshal(message, &incMessage)
 
 		witResponse := `{
@@ -82,14 +83,14 @@ func TestBot(t *testing.T) {
 			Delete(expenses.Expense{})
 
 		response := bot.BuildResponse(incMessage)
-		assert.Equal(t, BotResponse("You spent 0.00"), response)
+		assert.Equal(t, convo.BotResponse("You spent 0.00"), response)
 	})
 
 	t.Run("Should return a default message", func(t *testing.T) {
 		var incMessage telegram.IncomingMessage
-		message := mocks.GetMockMessage()
+		message := mocks.GetMockMessage("")
 		json.Unmarshal(message, &incMessage)
-		MessageMap = mocks.MessageMapMock
+		convo.MessageMap = mocks.MessageMapMock
 
 		witResponse := `{
 			"entities": {
@@ -108,14 +109,14 @@ func TestBot(t *testing.T) {
 		bot := &Bot{env}
 
 		response := bot.BuildResponse(incMessage)
-		assert.Equal(t, BotResponse("This is a default message"), response)
+		assert.Equal(t, convo.BotResponse("This is a default message"), response)
 	})
 
 	t.Run("Should return a error message", func(t *testing.T) {
 		var incMessage telegram.IncomingMessage
-		message := mocks.GetMockMessage()
+		message := mocks.GetMockMessage("")
 		json.Unmarshal(message, &incMessage)
-		MessageMap = mocks.MessageMapMock
+		convo.MessageMap = mocks.MessageMapMock
 
 		witResponse := `{
 			"entities": {
@@ -136,7 +137,7 @@ func TestBot(t *testing.T) {
 		bot := &Bot{env}
 
 		response := bot.BuildResponse(incMessage)
-		assert.Equal(t, BotResponse("Whoops!"), response)
+		assert.Equal(t, convo.BotResponse("Whoops!"), response)
 	})
 
 	t.Run("Receives and responds through telegram", func(t *testing.T) {
@@ -150,7 +151,7 @@ func TestBot(t *testing.T) {
 		}
 
 		bot := &Bot{env}
-		message := mocks.GetMockMessage()
+		message := mocks.GetMockMessage("")
 		witResponse := `{
 			"entities": {
 				"amount": [],
@@ -174,7 +175,7 @@ func TestBot(t *testing.T) {
 		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
-		message := mocks.GetMockMessage()
+		message := mocks.GetMockMessage("")
 
 		var incMessage telegram.IncomingMessage
 		json.Unmarshal(message, &incMessage)
@@ -192,8 +193,8 @@ func TestBot(t *testing.T) {
 		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
-		message := mocks.GetMockMessage()
-		response := BotResponse("Hello world")
+		message := mocks.GetMockMessage("")
+		response := convo.BotResponse("Hello world")
 
 		var incMessage telegram.IncomingMessage
 		json.Unmarshal(message, &incMessage)
@@ -201,5 +202,4 @@ func TestBot(t *testing.T) {
 		statusCode := bot.SendMessage(response, incMessage)
 		assert.Equal(t, 200, statusCode)
 	})
-
 }

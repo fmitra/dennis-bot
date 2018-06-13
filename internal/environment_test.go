@@ -35,7 +35,7 @@ func TestEnvironment(t *testing.T) {
 	t.Run("Should respond to webhook", func(t *testing.T) {
 		configFile := "../config/config.json"
 		config := config.LoadConfig(configFile)
-		message := mocks.GetMockMessage()
+		message := mocks.GetMockMessage("")
 
 		witResponse := `{
 			"entities": {

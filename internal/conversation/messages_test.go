@@ -1,4 +1,4 @@
-package internal
+package conversation
 
 import (
 	"testing"
@@ -12,9 +12,9 @@ func TestGeneratesMessage(t *testing.T) {
 	var message BotResponse
 	MessageMap = mocks.MessageMapMock
 
-	message = GetMessage("tracking_success", "")
+	message = GetMessage("track_expense_success", "")
 	assert.Equal(t, BotResponse("Roger that!"), message)
 
-	message = GetMessage("period_total_success", "20")
+	message = GetMessage("get_expense_total_success", "20")
 	assert.Equal(t, BotResponse("You spent 20"), message)
 }

@@ -5,6 +5,7 @@ import (
 	"log"
 	"strconv"
 
+	convo "github.com/fmitra/dennis-bot/internal/conversation"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 )
@@ -42,27 +43,21 @@ func (bot *Bot) ReceiveMessage(payload []byte) (telegram.IncomingMessage, error)
 }
 
 // Sends a message back through telegram
-func (bot *Bot) SendMessage(response BotResponse, incMessage telegram.IncomingMessage) int {
+func (bot *Bot) SendMessage(r convo.BotResponse, incMessage telegram.IncomingMessage) int {
 	chatId := incMessage.GetChatId()
 
-	return bot.env.telegram.Send(chatId, string(response))
+	return bot.env.telegram.Send(chatId, string(r))
 }
 
 // Processes an incoming message and retrieves the appropriate response
-func (bot *Bot) BuildResponse(incMessage telegram.IncomingMessage) BotResponse {
+func (bot *Bot) BuildResponse(incMessage telegram.IncomingMessage) convo.BotResponse {
 	w := wit.NewClient(bot.env.config.Wit.Token)
 	witResponse := w.ParseMessage(incMessage.GetMessage())
-	userId := incMessage.GetUser().Id
-
-	actions := &Actions{
-		env:         bot.env,
-		witResponse: witResponse,
-		userId:      userId,
+	actions := &convo.Actions{
+		bot.env.db,
+		bot.env.cache,
+		bot.env.config,
 	}
-
-	// Incoming messages are associated with user intent. Here we
-	// we process the user's request and retrieve a response
-	botResponse := actions.ProcessIntent()
-
+	botResponse := convo.GetResponse(witResponse, incMessage, actions)
 	return botResponse
 }
