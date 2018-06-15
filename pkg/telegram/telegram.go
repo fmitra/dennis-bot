@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -84,9 +83,6 @@ func (c *Client) Send(chatId int, message string) int {
 		log.Panicf("telegram: failed to send message")
 	}
 
-	body, _ := ioutil.ReadAll(respBody)
 	respBody.Close()
-	log.Printf("telegram: outgoing message - %s - %s", payload, body)
-
 	return statusCode
 }

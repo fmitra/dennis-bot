@@ -13,6 +13,7 @@ import (
 	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/expenses"
 	"github.com/fmitra/dennis-bot/pkg/sessions"
+	"github.com/fmitra/dennis-bot/pkg/users"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
@@ -39,7 +40,7 @@ func GetDb(config config.AppConfig) (*gorm.DB, error) {
 			config.Database.SSLMode,
 		),
 	)
-	db.AutoMigrate(&expenses.Expense{})
+	db.AutoMigrate(&users.User{}, &expenses.Expense{})
 
 	return db, err
 }
@@ -197,5 +198,26 @@ func TestExpenseTotal(t *testing.T) {
 		json.Unmarshal(rawWitResponse, &witResponse)
 		_, err := action.GetExpenseTotal(witResponse, mocks.TestUserId)
 		assert.EqualError(t, err, "foo is an invalid period")
+	})
+}
+
+func TestCreateUser(t *testing.T) {
+	t.Run("It should create a new user", func(t *testing.T) {
+		configFile := "../../config/config.json"
+		appConfig := config.LoadConfig(configFile)
+		db, _ := GetDb(appConfig)
+		cache := GetSession(appConfig)
+
+		action := &Actions{
+			db,
+			cache,
+			appConfig,
+		}
+
+		userId := uint(123)
+		password := "my-password"
+
+		isCreated := action.CreateNewUser(userId, password)
+		assert.True(t, isCreated)
 	})
 }

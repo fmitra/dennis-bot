@@ -42,20 +42,20 @@ func NewExpenseManager(db *gorm.DB) *ExpenseManager {
 	}
 }
 
-func (e *ExpenseManager) Save(expense *Expense) bool {
-	if e.db.NewRecord(expense) {
-		e.db.Create(expense)
+func (m *ExpenseManager) Save(expense *Expense) bool {
+	if m.db.NewRecord(expense) {
+		m.db.Create(expense)
 		return true
 	}
 
-	log.Printf("models: attempting insert record with existing pk - %s", e)
+	log.Printf("models: attempting insert record with existing pk - %s", expense)
 	return false
 }
 
 // Parses a descriptive time period (month, week) into a time.Time object
 // time.Time object
-func (e *ExpenseManager) ParseTimePeriod(period string) (time.Time, error) {
-	today := e.clock.Now()
+func (m *ExpenseManager) ParseTimePeriod(period string) (time.Time, error) {
+	today := m.clock.Now()
 	weekday := int(today.Weekday())
 	year, month, day := today.Date()
 
@@ -73,22 +73,20 @@ func (e *ExpenseManager) ParseTimePeriod(period string) (time.Time, error) {
 	}
 }
 
-func (e *ExpenseManager) QueryByPeriod(period string, userId int) ([]Expense, error) {
+func (m *ExpenseManager) QueryByPeriod(period string, userId uint) ([]Expense, error) {
 	var expenses []Expense
-	var query string
 
-	timePeriod, err := e.ParseTimePeriod(period)
+	timePeriod, err := m.ParseTimePeriod(period)
 	if err != nil {
 		return expenses, err
 	}
 
+	query := "user_id = ? AND date >= ?"
 	if period == TODAY {
 		query = "user_id = ? AND date = ?"
-	} else {
-		query = "user_id = ? AND date >= ?"
 	}
 
-	result := e.db.Where(query, userId, timePeriod).Find(&expenses)
+	result := m.db.Where(query, userId, timePeriod).Find(&expenses)
 	if result.Error != nil {
 		return expenses, result.Error
 	}
@@ -96,22 +94,20 @@ func (e *ExpenseManager) QueryByPeriod(period string, userId int) ([]Expense, er
 	return expenses, nil
 }
 
-func (e *ExpenseManager) TotalByPeriod(period string, userId int) (float64, error) {
-	var query string
+func (m *ExpenseManager) TotalByPeriod(period string, userId uint) (float64, error) {
 	var expenseTotal ExpenseTotal
 
-	timePeriod, err := e.ParseTimePeriod(period)
+	timePeriod, err := m.ParseTimePeriod(period)
 	if err != nil {
 		return expenseTotal.Total, err
 	}
 
+	query := "user_id = ? AND date >= ?"
 	if period == TODAY {
 		query = "user_id = ? AND date = ?"
-	} else {
-		query = "user_id = ? AND date >= ?"
 	}
 
-	result := e.db.Table("expenses").
+	result := m.db.Table("expenses").
 		Select("sum(historical) as total").
 		Where(query, userId, timePeriod).
 		Scan(&expenseTotal)

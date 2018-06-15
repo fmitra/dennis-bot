@@ -10,11 +10,19 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/fmitra/dennis-bot/config"
+	"github.com/fmitra/dennis-bot/pkg/users"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
 
 func DeleteTestUserExpenses(db *gorm.DB) {
-	db.Where("user_id = ?", mocks.TestUserId).Unscoped().Delete(Expense{})
+	user := GetTestUser(db)
+	db.Where("user_id = ?", user.ID).Unscoped().Delete(Expense{})
+}
+
+func GetTestUser(db *gorm.DB) users.User {
+	var user users.User
+	db.Where("telegram_id = ?", mocks.TestUserId).First(&user)
+	return user
 }
 
 func GetDb() (*gorm.DB, error) {
@@ -32,12 +40,22 @@ func GetDb() (*gorm.DB, error) {
 		),
 	)
 	// TODO Set up proper teardown/setup handling for DB related tests
-	db.AutoMigrate(&Expense{})
+	db.AutoMigrate(&users.User{}, &Expense{})
+
+	password := "my-password"
+	user := &users.User{
+		TelegramID: mocks.TestUserId,
+		Password: password,
+	}
+	db.Create(user)
 
 	return db, err
 }
 
 func BatchCreateExpenses(db *gorm.DB, firstEntryDate time.Time, totalEntries int) {
+	var user users.User
+	db.Where("telegram_id = ?", mocks.TestUserId).First(&user)
+
 	for days := 1; days <= 10; days++ {
 		createdAt := firstEntryDate.AddDate(0, 0, days)
 		expense := &Expense{
@@ -47,7 +65,7 @@ func BatchCreateExpenses(db *gorm.DB, firstEntryDate time.Time, totalEntries int
 			Historical:  20.25,
 			Currency:    "SGD",
 			Category:    "",
-			UserId:      mocks.TestUserId,
+			User:        user,
 		}
 		db.Create(expense)
 
@@ -58,7 +76,7 @@ func BatchCreateExpenses(db *gorm.DB, firstEntryDate time.Time, totalEntries int
 	}
 }
 
-func TestModels(t *testing.T) {
+func TestManager(t *testing.T) {
 	t.Run("It should return an ExpenseManager", func(t *testing.T) {
 		db, err := GetDb()
 		defer db.Close()
@@ -73,6 +91,7 @@ func TestModels(t *testing.T) {
 		defer db.Close()
 		assert.NoError(t, err)
 
+		user := GetTestUser(db)
 		expense := &Expense{
 			Date:        time.Now(),
 			Description: "Food",
@@ -80,7 +99,7 @@ func TestModels(t *testing.T) {
 			Historical:  20.25,
 			Currency:    "SGD",
 			Category:    "",
-			UserId:      mocks.TestUserId,
+			User:        user,
 		}
 		assert.True(t, db.NewRecord(expense))
 
@@ -118,8 +137,9 @@ func TestModels(t *testing.T) {
 			{"today", 1},
 		}
 
+		user := GetTestUser(db)
 		for _, test := range testCases {
-			expenses, err := expenseManager.QueryByPeriod(test.input, mocks.TestUserId)
+			expenses, err := expenseManager.QueryByPeriod(test.input, user.ID)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, len(expenses))
 		}
@@ -142,7 +162,9 @@ func TestModels(t *testing.T) {
 
 		firstEntryDate := time.Date(2018, 3, 8, 0, 0, 0, 0, time.UTC)
 		BatchCreateExpenses(db, firstEntryDate, 5)
-		_, errorMessage := expenseManager.QueryByPeriod("some-date", mocks.TestUserId)
+
+		user := GetTestUser(db)
+		_, errorMessage := expenseManager.QueryByPeriod("some-date", user.ID)
 		assert.EqualError(t, errorMessage, "some-date is an invalid period")
 	})
 
@@ -204,8 +226,9 @@ func TestModels(t *testing.T) {
 			{"today", 20.25},
 		}
 
+		user := GetTestUser(db)
 		for _, test := range testCases {
-			total, err := expenseManager.TotalByPeriod(test.input, mocks.TestUserId)
+			total, err := expenseManager.TotalByPeriod(test.input, user.ID)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, total)
 		}

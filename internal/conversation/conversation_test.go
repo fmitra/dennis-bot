@@ -9,6 +9,7 @@ import (
 	"github.com/fmitra/dennis-bot/config"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
+	"github.com/fmitra/dennis-bot/pkg/users"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
 
@@ -42,7 +43,14 @@ func TestConversation(t *testing.T) {
 		var witResponse wit.WitResponse
 		json.Unmarshal(rawWitResponse, &witResponse)
 
-		conversation := NewConversation(mocks.TestUserId, witResponse)
+		configFile := "../../config/config.json"
+		appConfig := config.LoadConfig(configFile)
+		db, _ := GetDb(appConfig)
+		action := &Actions{
+			Db: db,
+		}
+
+		conversation := NewConversation(mocks.TestUserId, witResponse, action)
 		assert.Equal(t, mocks.TestUserId, conversation.UserId)
 		assert.Equal(t, TRACK_EXPENSE_INTENT, conversation.Intent)
 	})
@@ -65,7 +73,23 @@ func TestConversation(t *testing.T) {
 			}
 		}`)
 		json.Unmarshal(rawWitResponse, &witResponse)
-		assert.Equal(t, TRACK_EXPENSE_INTENT, InferIntent(witResponse))
+		assert.Equal(t, ONBOARD_USER_INTENT, InferIntent(witResponse, uint(0)))
+
+		rawWitResponse = []byte(`{
+			"entities": {
+				"amount": [
+					{ "value": "20 SGD", "confidence": 100.00 }
+				],
+				"datetime": [
+					{ "value": "", "confidence": 100.00 }
+				],
+				"description": [
+					{ "value": "Food", "confidence": 100.00 }
+				]
+			}
+		}`)
+		json.Unmarshal(rawWitResponse, &witResponse)
+		assert.Equal(t, TRACK_EXPENSE_INTENT, InferIntent(witResponse, uint(123)))
 
 		rawWitResponse = []byte(`{
 			"entities": {
@@ -79,7 +103,7 @@ func TestConversation(t *testing.T) {
 			}
 		}`)
 		json.Unmarshal(rawWitResponse, &witResponse)
-		assert.Equal(t, TRACK_EXPENSE_INTENT, InferIntent(witResponse))
+		assert.Equal(t, TRACK_EXPENSE_INTENT, InferIntent(witResponse, uint(123)))
 
 		rawWitResponse = []byte(`{
 			"entities": {
@@ -92,7 +116,7 @@ func TestConversation(t *testing.T) {
 			}
 		}`)
 		json.Unmarshal(rawWitResponse, &witResponse)
-		assert.Equal(t, GET_EXPENSE_TOTAL_INTENT, InferIntent(witResponse))
+		assert.Equal(t, GET_EXPENSE_TOTAL_INTENT, InferIntent(witResponse, uint(123)))
 
 		rawWitResponse = []byte(`{
 			"entities": {
@@ -103,14 +127,14 @@ func TestConversation(t *testing.T) {
 			}
 		}`)
 		json.Unmarshal(rawWitResponse, &witResponse)
-		assert.Equal(t, "", InferIntent(witResponse))
+		assert.Equal(t, "", InferIntent(witResponse, uint(123)))
 	})
 
 	t.Run("Should get conversation from cache", func(t *testing.T) {
 		configFile := "../../config/config.json"
 		appConfig := config.LoadConfig(configFile)
 		cache := GetSession(appConfig)
-		userId := 124
+		userId := uint(124)
 		conversation := Conversation{
 			Intent: ONBOARD_USER_INTENT,
 			UserId: userId,
@@ -128,11 +152,22 @@ func TestConversation(t *testing.T) {
 		configFile := "../../config/config.json"
 		appConfig := config.LoadConfig(configFile)
 		cache := GetSession(appConfig)
-		userId := 125
+		cacheKey := "125_conversation"
+		userId := uint(125)
+		cache.Delete(cacheKey)
 
 		cachedConversation, err := GetConversation(userId, cache)
 		assert.EqualError(t, err, "No conversation found")
 		assert.Equal(t, cachedConversation, Conversation{})
+
+		conversation := Conversation{
+			Intent: ONBOARD_USER_INTENT,
+			UserId: userId,
+			Step:   -1,
+		}
+		cache.Set(cacheKey, conversation)
+		_, err = GetConversation(userId, cache)
+		assert.EqualError(t, err, "No responses available")
 	})
 
 	t.Run("Should retrieve an Intent", func(t *testing.T) {
@@ -142,7 +177,8 @@ func TestConversation(t *testing.T) {
 		witResponse := wit.WitResponse{}
 		incMessage := telegram.IncomingMessage{}
 		actions := &Actions{}
-		intent := conversation.GetIntent(witResponse, incMessage, actions)
+		botUserId := uint(0)
+		intent := conversation.GetIntent(witResponse, incMessage, actions, botUserId)
 		assert.IsType(t, &OnboardUser{}, intent)
 	})
 
@@ -203,5 +239,34 @@ func TestConversation(t *testing.T) {
 		response = conversation.Respond(witResponse, incMessage, actions)
 		assert.Equal(t, BotResponse("Outro message"), response)
 		assert.Equal(t, -1, conversation.Step)
+	})
+
+	t.Run("Should cache conversations with remaining responses", func(t *testing.T) {
+		configFile := "../../config/config.json"
+		appConfig := config.LoadConfig(configFile)
+		db, _ := GetDb(appConfig)
+		cache := GetSession(appConfig)
+		cacheKey := "12345_conversation"
+
+		// Clean DB and cache for test
+		cache.Delete(cacheKey)
+		db.Unscoped().Delete(users.User{}, "telegram_id = ?", mocks.TestUserId)
+
+		MessageMap = mocks.MessageMapMock
+		actions := &Actions{
+			Cache: cache,
+			Db: db,
+		}
+		witResponse := wit.WitResponse{}
+		incMessage := telegram.IncomingMessage{}
+		message := mocks.GetMockMessage("")
+		json.Unmarshal(message, &incMessage)
+
+		GetResponse(witResponse, incMessage, actions)
+
+		// Should set cache
+		var cachedConvo Conversation
+		cache.Get(cacheKey, &cachedConvo)
+		assert.Equal(t, ONBOARD_USER_INTENT, cachedConvo.Intent)
 	})
 }

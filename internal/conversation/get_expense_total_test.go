@@ -4,14 +4,27 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/fmitra/dennis-bot/config"
 	"github.com/fmitra/dennis-bot/pkg/expenses"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
+	"github.com/fmitra/dennis-bot/pkg/users"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
+
+func GetTestUser(db *gorm.DB) users.User {
+	var user users.User
+	db.Where("telegram_id = ?", mocks.TestUserId).First(&user)
+	return user
+}
+
+func DeleteTestUserExpenses(db *gorm.DB) {
+	user := GetTestUser(db)
+	db.Where("user_id = ?", user.ID).Unscoped().Delete(expenses.Expense{})
+}
 
 func TestGetExpenseTotal(t *testing.T) {
 	t.Run("Should return a list of possible responses", func(t *testing.T) {
@@ -48,10 +61,7 @@ func TestGetExpenseTotal(t *testing.T) {
 		message := mocks.GetMockMessage("")
 		json.Unmarshal(message, &incMessage)
 
-		db.Where("user_id = ?", mocks.TestUserId).
-			Unscoped().
-			Delete(expenses.Expense{})
-
+		DeleteTestUserExpenses(db)
 		expenseTotal := &GetExpenseTotal{
 			Context{
 				Step:        0,
@@ -94,10 +104,7 @@ func TestGetExpenseTotal(t *testing.T) {
 		message := mocks.GetMockMessage("")
 		json.Unmarshal(message, &incMessage)
 
-		db.Where("user_id = ?", mocks.TestUserId).
-			Unscoped().
-			Delete(expenses.Expense{})
-
+		DeleteTestUserExpenses(db)
 		expenseTotal := &GetExpenseTotal{
 			Context{
 				Step:        0,

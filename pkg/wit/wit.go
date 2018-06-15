@@ -61,9 +61,8 @@ func (c *Client) ParseMessage(message string) WitResponse {
 		}
 
 		body, _ := ioutil.ReadAll(resp.Body)
-		log.Printf("witai: response - %s", body)
-		jsonErr := json.Unmarshal(body, &witResponse)
-		if jsonErr != nil {
+		err = json.Unmarshal(body, &witResponse)
+		if err != nil {
 			return err
 		}
 		return nil

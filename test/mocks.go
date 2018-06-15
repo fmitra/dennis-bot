@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const TestUserId = 12345
+const TestUserId = uint(12345)
 
 type TelegramMock struct {
 	Calls struct {

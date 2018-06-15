@@ -41,19 +41,27 @@ func (i *OnboardUser) ValidatePassword() (BotResponse, error) {
 	var response BotResponse
 	var err error
 
-	if userInput == "no" {
+	isPasswordConfirmed := userInput == "yes"
+	isPasswordRejected := userInput == "no"
+
+	if isPasswordConfirmed {
+		return response, nil
+	}
+
+	if isPasswordRejected {
 		response = GetMessage(ONBOARD_USER_REJECT_PASSWORD, messageVar)
 		err = errors.New("Password rejected")
 		i.EndConversation()
-	} else if userInput != "yes" {
-		response = GetMessage(ONBOARD_USER_CONFIRM_PASSWORD_ERROR, messageVar)
-		err = errors.New("Response invalid")
+		return response, err
 	}
 
+	response = GetMessage(ONBOARD_USER_CONFIRM_PASSWORD_ERROR, messageVar)
+	err = errors.New("Response invalid")
 	return response, err
 }
 
-func (c *OnboardUser) SayOutro() (BotResponse, error) {
+func (i *OnboardUser) SayOutro() (BotResponse, error) {
+	i.EndConversation()
 	messageVar := ""
 	return GetMessage(ONBOARD_USER_SAY_OUTRO, messageVar), nil
 }

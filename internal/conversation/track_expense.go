@@ -26,12 +26,11 @@ func (i *TrackExpense) Respond() (BotResponse, int) {
 func (i *TrackExpense) ConfirmExpense() (BotResponse, error) {
 	messageVar := ""
 	overview := i.WitResponse.GetMessageOverview()
-	userId := i.IncMessage.GetUser().Id
 	var response BotResponse
 
 	response = GetMessage(TRACK_EXPENSE_ERROR, messageVar)
 	if overview == wit.TRACKING_REQUESTED_SUCCESS {
-		go i.actions.CreateNewExpense(i.WitResponse, userId)
+		go i.actions.CreateNewExpense(i.WitResponse, i.BotUserId)
 		response = GetMessage(TRACK_EXPENSE_SUCCESS, messageVar)
 	}
 

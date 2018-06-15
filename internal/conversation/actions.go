@@ -12,6 +12,7 @@ import (
 	"github.com/fmitra/dennis-bot/pkg/expenses"
 	"github.com/fmitra/dennis-bot/pkg/sessions"
 	"github.com/fmitra/dennis-bot/pkg/wit"
+	"github.com/fmitra/dennis-bot/pkg/users"
 )
 
 // Actions are taken by the bot in response to a user request during
@@ -23,7 +24,7 @@ type Actions struct {
 	Config config.AppConfig
 }
 
-func (a *Actions) CreateNewExpense(witResponse wit.WitResponse, userId int) bool {
+func (a *Actions) CreateNewExpense(witResponse wit.WitResponse, userId uint) bool {
 	date := witResponse.GetDate()
 	amount, fromCurrency, _ := witResponse.GetAmount()
 	targetCurrency := "USD"
@@ -51,17 +52,26 @@ func (a *Actions) CreateNewExpense(witResponse wit.WitResponse, userId int) bool
 		Total:       amount,
 		Historical:  historicalAmount,
 		Currency:    fromCurrency,
-		UserId:      userId,
+		UserID:      userId,
 	}
-	expenseManager := expenses.NewExpenseManager(a.Db)
-	return expenseManager.Save(expense)
+	manager := expenses.NewExpenseManager(a.Db)
+	return manager.Save(expense)
 }
 
-func (a *Actions) GetExpenseTotal(witResponse wit.WitResponse, userId int) (string, error) {
-	expenseManager := expenses.NewExpenseManager(a.Db)
+func (a *Actions) GetExpenseTotal(witResponse wit.WitResponse, userId uint) (string, error) {
+	manager := expenses.NewExpenseManager(a.Db)
 	period, err := witResponse.GetSpendPeriod()
-	total, err := expenseManager.TotalByPeriod(period, userId)
+	total, err := manager.TotalByPeriod(period, userId)
 	messageVar := strconv.FormatFloat(total, 'f', 2, 64)
 
 	return messageVar, err
+}
+
+func (a *Actions) CreateNewUser(userId uint, password string) bool {
+	user := &users.User{
+		TelegramID: userId,
+		Password: password,
+	}
+	manager := users.NewUserManager(a.Db)
+	return manager.Save(user)
 }

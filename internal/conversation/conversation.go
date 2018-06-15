@@ -7,12 +7,18 @@ import (
 
 	"github.com/fmitra/dennis-bot/pkg/sessions"
 	t "github.com/fmitra/dennis-bot/pkg/telegram"
+	"github.com/fmitra/dennis-bot/pkg/users"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 )
 
 const (
-	ONBOARD_USER_INTENT      = "onboard_user_intent"
-	TRACK_EXPENSE_INTENT     = "track_expense_intent"
+	// Onboards a user into the bot by creating a user account
+	ONBOARD_USER_INTENT = "onboard_user_intent"
+
+	// Tracks a user's expense
+	TRACK_EXPENSE_INTENT = "track_expense_intent"
+
+	// Returns total expense history for the user
 	GET_EXPENSE_TOTAL_INTENT = "get_expense_total_intent"
 )
 
@@ -34,14 +40,16 @@ type Context struct {
 	Step        int
 	WitResponse wit.WitResponse
 	IncMessage  t.IncomingMessage
+	BotUserId   uint
 }
 
 // Represents a user's place in a conversation, for example a conversation
 // may have just recently been initialized or may be ongoing.
 type Conversation struct {
-	Intent string
-	UserId int
-	Step   int
+	Intent    string // The objective the of the user. Conversations are based around intents
+	UserId    uint   // The user ID from the incoming chat service (ex. Telegram User ID)
+	BotUserId uint   // The ID of the user account (if it exists) in our system
+	Step      int    // A user's place in a conversation
 }
 
 // Helper method to ensure all Intents embeding context has access to the same
@@ -70,20 +78,23 @@ func (cx *Context) Process(responses []func() (BotResponse, error)) (BotResponse
 
 // Ends a conversation
 func (cx *Context) EndConversation() {
-	cx.Step = -1
+	finalStep := -1
+	cx.Step = finalStep
 }
 
 func (c *Conversation) HasResponse() bool {
-	return c.Step > -1
+	finalStep := -1
+	return c.Step > finalStep
 }
 
 // Creates a new intent with additional context fields in order to
 // determine a response
-func (c *Conversation) GetIntent(w wit.WitResponse, inc t.IncomingMessage, a *Actions) Intent {
+func (c *Conversation) GetIntent(w wit.WitResponse, inc t.IncomingMessage, a *Actions, uid uint) Intent {
 	context := Context{
 		WitResponse: w,
 		IncMessage:  inc,
 		Step:        c.Step,
+		BotUserId:   uid,
 	}
 	switch c.Intent {
 	case ONBOARD_USER_INTENT:
@@ -104,14 +115,21 @@ func (c *Conversation) Respond(w wit.WitResponse, inc t.IncomingMessage, a *Acti
 		return BotResponse("")
 	}
 
-	intent := c.GetIntent(w, inc, a)
+	intent := c.GetIntent(w, inc, a, c.BotUserId)
 	response, nextStep := intent.Respond()
 	c.Step = nextStep
 
 	return response
 }
 
-func InferIntent(w wit.WitResponse) string {
+func InferIntent(w wit.WitResponse, botUserId uint) string {
+	noId := 0
+	// We can only process a user's request if they have an account
+	// in our system, otherwise we force them into an onboarding flow.
+	if int(botUserId) == noId {
+		return ONBOARD_USER_INTENT
+	}
+
 	overview := w.GetMessageOverview()
 	switch overview {
 	case wit.TRACKING_REQUESTED_SUCCESS:
@@ -125,22 +143,33 @@ func InferIntent(w wit.WitResponse) string {
 	}
 }
 
-func NewConversation(userId int, w wit.WitResponse) Conversation {
-	intent := InferIntent(w)
+// Creates a new conversation between the bot and the user. If the user
+// has an existing account, we associate their account ID with the user
+// ID of their chat service.
+func NewConversation(userId uint, w wit.WitResponse, a *Actions) Conversation {
+	var botUser users.User
+	a.Db.Where("telegram_id = ?", userId).First(&botUser)
+
+	intent := InferIntent(w, botUser.ID)
 	conversation := Conversation{
-		Intent: intent,
-		UserId: userId,
+		Intent:    intent,
+		UserId:    userId,
+		BotUserId: botUser.ID,
 	}
 
 	return conversation
 }
 
-func GetConversation(userId int, cache sessions.Session) (Conversation, error) {
+func GetConversation(userId uint, cache sessions.Session) (Conversation, error) {
 	var conversation Conversation
-	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(userId))
+	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(userId)))
 	cache.Get(cacheKey, &conversation)
-	if conversation.UserId == 0 {
+	noUser := 0
+	if int(conversation.UserId) == noUser {
 		return conversation, errors.New("No conversation found")
+	}
+	if !conversation.HasResponse() {
+		return conversation, errors.New("No responses available")
 	}
 	return conversation, nil
 }
@@ -150,14 +179,18 @@ func GetResponse(w wit.WitResponse, inc t.IncomingMessage, a *Actions) BotRespon
 
 	conversation, err := GetConversation(userId, a.Cache)
 	if err != nil {
-		conversation = NewConversation(userId, w)
+		conversation = NewConversation(userId, w, a)
 	}
 
 	response := conversation.Respond(w, inc, a)
 
+	// Check if there are additional responses available. If responses are found,
+	// we cache the conversation so the user can pick up where they left off
+	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(userId)))
 	if conversation.HasResponse() {
-		cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(userId))
 		a.Cache.Set(cacheKey, conversation)
+	} else {
+		a.Cache.Delete(cacheKey)
 	}
 
 	return response

@@ -21,10 +21,12 @@ type Bot struct {
 func (bot *Bot) Converse(payload []byte) int {
 	incMessage, err := bot.ReceiveMessage(payload)
 	if err != nil {
-		log.Panicf("bot: cannot respond to unsupported payload - %s", err)
+		log.Printf("bot: cannot respond to unsupported payload - %s", err)
+		errorCode := 400
+		return errorCode
 	}
 	user := incMessage.GetUser()
-	bot.env.cache.Set(strconv.Itoa(user.Id), user)
+	bot.env.cache.Set(strconv.Itoa(int(user.Id)), user)
 	response := bot.BuildResponse(incMessage)
 
 	return bot.SendMessage(response, incMessage)
@@ -35,7 +37,6 @@ func (bot *Bot) ReceiveMessage(payload []byte) (telegram.IncomingMessage, error)
 	var incMessage telegram.IncomingMessage
 	err := json.Unmarshal(payload, &incMessage)
 	if err != nil {
-		log.Printf("bot: invalid payload - %s", err)
 		return telegram.IncomingMessage{}, err
 	}
 

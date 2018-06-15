@@ -13,6 +13,7 @@ import (
 	"github.com/fmitra/dennis-bot/pkg/expenses"
 	"github.com/fmitra/dennis-bot/pkg/sessions"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
+	"github.com/fmitra/dennis-bot/pkg/users"
 )
 
 // Working environment for the application
@@ -33,7 +34,6 @@ func (env *Env) Webhook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, _ := ioutil.ReadAll(r.Body)
 		defer r.Body.Close()
-		log.Printf("main: incoming message - %s", body)
 
 		bot := &Bot{env}
 		go bot.Converse(body)
@@ -82,7 +82,7 @@ func LoadEnv(config config.AppConfig) *Env {
 		config.Redis.Db,
 	})
 
-	db.AutoMigrate(&expenses.Expense{})
+	db.AutoMigrate(&users.User{}, &expenses.Expense{})
 
 	telegram := telegram.NewClient(
 		config.Telegram.Token,

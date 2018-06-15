@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/fmitra/dennis-bot/config"
@@ -12,9 +13,21 @@ import (
 	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/expenses"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
+	"github.com/fmitra/dennis-bot/pkg/users"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
+
+func GetTestUser(db *gorm.DB) users.User {
+	var user users.User
+	db.Where("telegram_id = ?", mocks.TestUserId).First(&user)
+	return user
+}
+
+func DeleteTestUserExpenses(db *gorm.DB) {
+	user := GetTestUser(db)
+	db.Where("user_id = ?", user.ID).Unscoped().Delete(expenses.Expense{})
+}
 
 func TestBot(t *testing.T) {
 	t.Run("Should handle tracking intent from Wit.ai", func(t *testing.T) {
@@ -78,9 +91,7 @@ func TestBot(t *testing.T) {
 		configFile := "../config/config.json"
 		env := LoadEnv(config.LoadConfig(configFile))
 		bot := &Bot{env}
-		bot.env.db.Where("user_id = ?", mocks.TestUserId).
-			Unscoped().
-			Delete(expenses.Expense{})
+		DeleteTestUserExpenses(bot.env.db)
 
 		response := bot.BuildResponse(incMessage)
 		assert.Equal(t, convo.BotResponse("You spent 0.00"), response)
@@ -144,11 +155,9 @@ func TestBot(t *testing.T) {
 		configFile := "../config/config.json"
 		telegramMock := &mocks.TelegramMock{}
 		sessionMock := &mocks.SessionMock{}
-		env := &Env{
-			cache:    sessionMock,
-			config:   config.LoadConfig(configFile),
-			telegram: telegramMock,
-		}
+		env := LoadEnv(config.LoadConfig(configFile))
+		env.cache = sessionMock
+		env.telegram = telegramMock
 
 		bot := &Bot{env}
 		message := mocks.GetMockMessage("")

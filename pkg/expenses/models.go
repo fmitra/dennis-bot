@@ -1,18 +1,22 @@
 package expenses
 
-import "time"
+import (
+	"time"
+
+	"github.com/jinzhu/gorm"
+
+	"github.com/fmitra/dennis-bot/pkg/users"
+)
 
 // Describes a tracked expense
 type Expense struct {
-	ID          int        `gorm:"primary_key"` // Auto assigned ID
-	CreatedAt   time.Time  // Timestamp of DB entry
-	UpdatedAt   time.Time  // Timestamp of last save date
-	DeletedAt   *time.Time // Timestamp for soft deletion
-	Date        time.Time  // Date the expense was made (time is zeroed out)
-	Description string     // Description of the expense
-	Total       float64    // Total amount paid for the expense
-	Historical  float64    // Historical USD value of the total
-	Currency    string     // Currency denomination of the total
-	Category    string     // Category of the expense
-	UserId      int        // Telegram UserId of the expense owner
+	gorm.Model
+	Date        time.Time `gorm:"index;not null"` // Date the expense was made
+	Description string    `gorm:"not null"`       // Description of the expense
+	Total       float64   `gorm:"not null"`       // Total amount paid for the expense
+	Historical  float64   // Historical USD value of the total
+	Currency    string    `gorm:"type:varchar(5);not null"` // Currency ISO of the total
+	Category    string    `gorm:"type:varchar(30)"`         // Category of the expense
+	User        users.User
+	UserID      uint
 }

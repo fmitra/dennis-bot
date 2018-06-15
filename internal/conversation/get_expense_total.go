@@ -18,8 +18,7 @@ func (i *GetExpenseTotal) Respond() (BotResponse, int) {
 }
 
 func (i *GetExpenseTotal) CalculateTotal() (BotResponse, error) {
-	userId := i.IncMessage.GetUser().Id
-	messageVar, err := i.actions.GetExpenseTotal(i.WitResponse, userId)
+	messageVar, err := i.actions.GetExpenseTotal(i.WitResponse, i.BotUserId)
 	var response BotResponse
 
 	response = GetMessage(GET_EXPENSE_TOTAL_SUCCESS, messageVar)
