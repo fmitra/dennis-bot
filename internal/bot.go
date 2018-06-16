@@ -3,7 +3,6 @@ package internal
 import (
 	"encoding/json"
 	"log"
-	"strconv"
 
 	convo "github.com/fmitra/dennis-bot/internal/conversation"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
@@ -25,8 +24,6 @@ func (bot *Bot) Converse(payload []byte) int {
 		errorCode := 400
 		return errorCode
 	}
-	user := incMessage.GetUser()
-	bot.env.cache.Set(strconv.Itoa(int(user.Id)), user)
 	response := bot.BuildResponse(incMessage)
 
 	return bot.SendMessage(response, incMessage)

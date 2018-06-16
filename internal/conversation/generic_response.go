@@ -13,7 +13,7 @@ func (i *GenericResponse) GetResponses() []func() (BotResponse, error) {
 	}
 }
 
-func (i *GenericResponse) Respond() (BotResponse, int) {
+func (i *GenericResponse) Respond() (BotResponse, *Context) {
 	responses := i.GetResponses()
 	return i.Process(responses)
 }

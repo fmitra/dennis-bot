@@ -19,7 +19,7 @@ type Config struct {
 }
 
 type Session interface {
-	Set(cacheKey string, v interface{})
+	Set(cacheKey string, v interface{}, timeInSeconds int)
 	Get(cacheKey string, v interface{}) error
 	Delete(cacheKey string) error
 }
@@ -57,9 +57,13 @@ func (c *Client) Delete(cacheKey string) error {
 	return nil
 }
 
-func (c *Client) Set(cacheKey string, v interface{}) {
-	oneWeek := 25200 * time.Millisecond
-	expireIn := time.Duration(oneWeek)
+func (c *Client) Set(cacheKey string, v interface{}, timeInSeconds int) {
+	// One hour default duration
+	duration := time.Duration(3600) * time.Second
+	if timeInSeconds != 0 {
+		duration = time.Duration(timeInSeconds) * time.Second
+	}
+	expireIn := duration
 	c.codec.Set(&cache.Item{
 		Key:        cacheKey,
 		Object:     v,

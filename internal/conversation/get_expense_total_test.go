@@ -75,9 +75,9 @@ func (suite *ExpenseTotalSuite) TestGetExpenseTotalMessage() {
 		},
 		suite.Action,
 	}
-	response, step := expenseTotal.Respond()
+	response, cx := expenseTotal.Respond()
 	assert.Equal(suite.T(), BotResponse("You spent 0.00"), response)
-	assert.Equal(suite.T(), -1, step)
+	assert.Equal(suite.T(), -1, cx.Step)
 }
 
 func (suite *ExpenseTotalSuite) TestGetExpenseTotalError() {
@@ -106,9 +106,9 @@ func (suite *ExpenseTotalSuite) TestGetExpenseTotalError() {
 		},
 		suite.Action,
 	}
-	response, step := expenseTotal.Respond()
+	response, cx := expenseTotal.Respond()
 	assert.Equal(suite.T(), BotResponse("Whoops!"), response)
-	assert.Equal(suite.T(), -1, step)
+	assert.Equal(suite.T(), -1, cx.Step)
 }
 
 func TestExpenseTotalSuite(t *testing.T) {

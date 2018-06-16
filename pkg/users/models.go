@@ -1,10 +1,9 @@
 package users
 
 import (
-	"log"
-
 	"github.com/jinzhu/gorm"
-	"golang.org/x/crypto/bcrypt"
+
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 )
 
 // Represents a User account associated with the bot.
@@ -17,15 +16,6 @@ type User struct {
 	TelegramID uint   `gorm:"unique_index"`
 }
 
-func (u *User) BeforeCreate() error {
-	p := []byte(u.Password)
-	cost := 10
-	hash, err := bcrypt.GenerateFromPassword(p, cost)
-	if err != nil {
-		log.Printf("users: failed to hash password")
-		return err
-	}
-
-	u.Password = string(hash)
-	return nil
+func (u *User) IsPasswordValid(password string) bool {
+	return crypto.ValidateHash(u.Password, password)
 }

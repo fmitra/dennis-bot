@@ -24,7 +24,7 @@ type SessionMock struct {
 	}
 }
 
-func (s *SessionMock) Set(cacheKey string, v interface{}) {
+func (s *SessionMock) Set(cacheKey string, v interface{}, timeInSeconds int) {
 	s.Calls.Set++
 }
 
@@ -125,5 +125,11 @@ var MessageMapMock = map[string][]string{
 	},
 	"onboard_user_say_outro": []string{
 		"Outro message",
+	},
+	"onboard_user_account_creation_failed": []string{
+		"Couldn't create account",
+	},
+	"onboard_user_password_hash_failed": []string{
+		"Couldn't hash password",
 	},
 }

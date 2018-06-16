@@ -16,7 +16,7 @@ func (i *TrackExpense) GetResponses() []func() (BotResponse, error) {
 	}
 }
 
-func (i *TrackExpense) Respond() (BotResponse, int) {
+func (i *TrackExpense) Respond() (BotResponse, *Context) {
 	responses := i.GetResponses()
 	return i.Process(responses)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
 
@@ -45,16 +46,15 @@ func (suite *Suite) TestCreatesNewUser() {
 	assert.True(suite.T(), isCreated)
 }
 
-func (suite *Suite) TestHashesUserPasswordOnSave() {
-	password := "my-password"
-	manager := NewUserManager(suite.Env.Db)
+func (suite *Suite) ValidatesUserPassword() {
+	hashedPassword, _ := crypto.HashText("my-password")
 	user := &User{
+		Password:   hashedPassword,
 		TelegramID: mocks.TestUserId,
-		Password:   password,
 	}
-	manager.Save(user)
-	assert.NotEqual(suite.T(), password, user.Password)
-	assert.NotEqual(suite.T(), "", user.Password)
+
+	assert.True(suite.T(), user.IsPasswordValid("my-password"))
+	assert.False(suite.T(), user.IsPasswordValid("not-my-password"))
 }
 
 func TestSuite(t *testing.T) {

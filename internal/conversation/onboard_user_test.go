@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/fmitra/dennis-bot/pkg/telegram"
+	"github.com/fmitra/dennis-bot/pkg/users"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
 
@@ -115,6 +116,49 @@ func (suite *OnboardUserSuite) TestValidatesPassword() {
 	response, err = onboardUser.ValidatePassword()
 	assert.Equal(suite.T(), BotResponse("I didn't understand that"), response)
 	assert.EqualError(suite.T(), err, "Response invalid")
+}
+
+func (suite *OnboardUserSuite) TestCreatesUser() {
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("Yes")
+	json.Unmarshal(message, &incMessage)
+
+	onboardUser := &OnboardUser{
+		Context{
+			Step:       2,
+			IncMessage: incMessage,
+		},
+		suite.Action,
+	}
+
+	response, err := onboardUser.ValidatePassword()
+
+	var user users.User
+	suite.Env.Db.Where("telegram_id = ?", mocks.TestUserId).First(&user)
+
+	assert.Equal(suite.T(), user.TelegramID, mocks.TestUserId)
+	assert.Equal(suite.T(), BotResponse(""), response)
+	assert.NoError(suite.T(), err)
+}
+
+func (suite *OnboardUserSuite) TestReturnsErrorForFailedAccountCreation() {
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("Yes")
+	json.Unmarshal(message, &incMessage)
+	mocks.CreateTestUser(suite.Env.Db)
+
+	onboardUser := &OnboardUser{
+		Context{
+			Step:       2,
+			IncMessage: incMessage,
+		},
+		suite.Action,
+	}
+
+	response, err := onboardUser.ValidatePassword()
+
+	assert.EqualError(suite.T(), err, "Account creation failed")
+	assert.Equal(suite.T(), BotResponse("Couldn't create account"), response)
 }
 
 func (suite *OnboardUserSuite) TestSaysOutro() {

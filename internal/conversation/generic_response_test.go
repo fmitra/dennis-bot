@@ -56,8 +56,8 @@ func (suite *GenericResponseSuite) TestReturnResponse() {
 		&Actions{},
 	}
 
-	response, step := genericResponse.Respond()
-	assert.Equal(suite.T(), -1, step)
+	response, cx := genericResponse.Respond()
+	assert.Equal(suite.T(), -1, cx.Step)
 	assert.Equal(suite.T(), BotResponse("This is a default message"), response)
 }
 

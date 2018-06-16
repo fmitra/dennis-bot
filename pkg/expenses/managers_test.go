@@ -37,8 +37,7 @@ func GetTestUser(db *gorm.DB) users.User {
 }
 
 func BatchCreateExpenses(db *gorm.DB, firstEntryDate time.Time, totalEntries int) {
-	var user users.User
-	db.Where("telegram_id = ?", mocks.TestUserId).First(&user)
+	user := GetTestUser(db)
 
 	for days := 1; days <= 10; days++ {
 		createdAt := firstEntryDate.AddDate(0, 0, days)

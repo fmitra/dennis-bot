@@ -18,12 +18,19 @@ func NewUserManager(db *gorm.DB) *UserManager {
 }
 
 func (m *UserManager) Save(user *User) bool {
+	var existingUser User
+	m.db.Where("telegram_id = ?", user.TelegramID).First(&existingUser)
+	noId := int(0)
+	if int(existingUser.ID) != noId {
+		log.Printf("models: attempting insert record with existing pk - %s", user)
+		return false
+	}
+
 	if m.db.NewRecord(user) {
 		m.db.Create(user)
 		return true
 	}
 
-	log.Printf("models: attempting insert record with existing pk - %s", user)
 	return false
 }
 

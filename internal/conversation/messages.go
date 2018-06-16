@@ -24,6 +24,13 @@ const (
 	// invalid text
 	ONBOARD_USER_CONFIRM_PASSWORD_ERROR = "onboard_user_confirm_password_error"
 
+	// Response when we are unable to create an account during the onboarding
+	// flow
+	ONBOARD_USER_ACCOUNT_CREATION_FAILED = "onboard_user_account_creation_failed"
+
+	// Response when we fail to hash a user's password prior to storage
+	ONBOARD_USER_PASSWORD_HASH_FAILED = "onboard_user_password_hash_failed"
+
 	// Response when a user successfully sets a password
 	ONBOARD_USER_SAY_OUTRO = "onboard_user_say_outro"
 
@@ -97,6 +104,13 @@ var MessageMap = map[string][]string{
 	},
 	ONBOARD_USER_REJECT_PASSWORD: []string{
 		"Okay will if you think of password later just let me know.",
+	},
+	ONBOARD_USER_ACCOUNT_CREATION_FAILED: []string{
+		"Looks like you already created account. Why don't you try tracking an expense.",
+	},
+	ONBOARD_USER_PASSWORD_HASH_FAILED: []string{
+		"Whoops something went wrong. Let's try again. What do you want your " +
+			"password to be?",
 	},
 }
 

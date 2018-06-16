@@ -193,7 +193,6 @@ func (suite *BotSuite) TestReceivesRespondsWithTelegram() {
 
 	bot.Converse(message)
 	assert.Equal(suite.T(), 1, telegramMock.Calls.Send)
-	assert.Equal(suite.T(), 1, sessionMock.Calls.Set)
 }
 
 func (suite *BotSuite) TestReceivesIncomingMessage() {

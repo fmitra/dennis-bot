@@ -43,7 +43,8 @@ func (a *Actions) CreateNewExpense(witResponse wit.WitResponse, userId uint) boo
 			"USD",
 			amount,
 		)
-		a.Cache.Set(cacheKey, newConversion)
+		oneWeek := 604800
+		a.Cache.Set(cacheKey, newConversion, oneWeek)
 	}
 
 	expense := &expenses.Expense{

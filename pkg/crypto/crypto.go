@@ -12,6 +12,8 @@ import (
 	"errors"
 	"io"
 	"log"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func InitializeGob() {
@@ -159,6 +161,28 @@ func Decrypt(text string, password string) (string, error) {
 	stream.XORKeyStream(decodedText, decodedText)
 
 	return string(decodedText), nil
+}
+
+func HashText(text string) (string, error) {
+	t := []byte(text)
+	cost := 10
+	hash, err := bcrypt.GenerateFromPassword(t, cost)
+	if err != nil {
+		log.Printf("users: failed to hash password")
+		return "", err
+	}
+
+	return string(hash), nil
+}
+
+func ValidateHash(hash, text string) bool {
+	bHash := []byte(hash)
+	bText := []byte(text)
+	err := bcrypt.CompareHashAndPassword(bHash, bText)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // Encodes a key type to a base64 encoded string for storage

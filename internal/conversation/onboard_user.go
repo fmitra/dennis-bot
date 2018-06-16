@@ -3,6 +3,8 @@ package conversation
 import (
 	"errors"
 	"strings"
+
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 )
 
 // An Intent designed to onboard a new user into the bot platform
@@ -20,7 +22,7 @@ func (i *OnboardUser) GetResponses() []func() (BotResponse, error) {
 	}
 }
 
-func (i *OnboardUser) Respond() (BotResponse, int) {
+func (i *OnboardUser) Respond() (BotResponse, *Context) {
 	responses := i.GetResponses()
 	return i.Process(responses)
 }
@@ -31,27 +33,47 @@ func (i *OnboardUser) AskForPassword() (BotResponse, error) {
 }
 
 func (i *OnboardUser) ConfirmPassword() (BotResponse, error) {
-	messageVar := i.IncMessage.GetMessage()
-	return GetMessage(ONBOARD_USER_CONFIRM_PASSWORD, messageVar), nil
+	password := i.IncMessage.GetMessage()
+	hashedPassword, err := crypto.HashText(password)
+	if err != nil {
+		return GetMessage(ONBOARD_USER_PASSWORD_HASH_FAILED, ""), err
+	}
+
+	i.AuxData = hashedPassword
+	return GetMessage(ONBOARD_USER_CONFIRM_PASSWORD, password), nil
 }
 
 func (i *OnboardUser) ValidatePassword() (BotResponse, error) {
 	messageVar := ""
 	userInput := strings.ToLower(i.IncMessage.GetMessage())
+	var isUserCreated bool
 	var response BotResponse
 	var err error
 
 	isPasswordConfirmed := userInput == "yes"
 	isPasswordRejected := userInput == "no"
 
-	if isPasswordConfirmed {
-		return response, nil
-	}
-
 	if isPasswordRejected {
 		response = GetMessage(ONBOARD_USER_REJECT_PASSWORD, messageVar)
 		err = errors.New("Password rejected")
 		i.EndConversation()
+		return response, err
+	}
+
+	if isPasswordConfirmed {
+		// Password should have been set to auxiliary data in the previous step
+		password := i.AuxData
+		userId := i.IncMessage.GetUser().Id
+		isUserCreated = i.actions.CreateNewUser(userId, password)
+	}
+
+	if isPasswordConfirmed && isUserCreated {
+		return BotResponse(""), nil
+	}
+
+	if isPasswordConfirmed && !isUserCreated {
+		response = GetMessage(ONBOARD_USER_ACCOUNT_CREATION_FAILED, messageVar)
+		err = errors.New("Account creation failed")
 		return response, err
 	}
 

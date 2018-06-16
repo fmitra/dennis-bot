@@ -95,4 +95,13 @@ func TestKeys(t *testing.T) {
 		assert.IsType(t, rsa.PublicKey{}, publicKey)
 		assert.NotNil(t, publicKey.N)
 	})
+
+	t.Run("Should hash a string", func(t *testing.T) {
+		password := "my-password"
+		hashedPassword, _ := HashText(password)
+		assert.NotEqual(t, password, hashedPassword)
+
+		isValid := ValidateHash(hashedPassword, password)
+		assert.True(t, isValid)
+	})
 }

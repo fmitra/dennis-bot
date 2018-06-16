@@ -70,9 +70,9 @@ func (suite *TrackExpenseSuite) TestReturnsSuccessMessage() {
 		},
 		suite.Action,
 	}
-	response, step := trackExpense.Respond()
+	response, cx := trackExpense.Respond()
 	assert.Equal(suite.T(), BotResponse("Roger that!"), response)
-	assert.Equal(suite.T(), -1, step)
+	assert.Equal(suite.T(), -1, cx.Step)
 }
 
 func (suite *TrackExpenseSuite) TestReturnsErrorMessage() {
@@ -100,9 +100,9 @@ func (suite *TrackExpenseSuite) TestReturnsErrorMessage() {
 		},
 		suite.Action,
 	}
-	response, step := trackExpense.Respond()
+	response, cx := trackExpense.Respond()
 	assert.Equal(suite.T(), BotResponse("Whoops!"), response)
-	assert.Equal(suite.T(), -1, step)
+	assert.Equal(suite.T(), -1, cx.Step)
 }
 
 func TestTrackExpenseSuite(t *testing.T) {

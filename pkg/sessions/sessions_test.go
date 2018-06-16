@@ -49,8 +49,9 @@ func TestSessions(t *testing.T) {
 			"userEmail",
 		}
 
+		expiresIn := 60
 		var cachedUser UserMock
-		session.Set("userId", userMock)
+		session.Set("userId", userMock, expiresIn)
 		session.Get("userId", &cachedUser)
 
 		assert.Equal(t, userMock, cachedUser)
@@ -72,8 +73,9 @@ func TestSessions(t *testing.T) {
 			"userEmail",
 		}
 
+		expiresIn := 60
 		var wanted UserMock
-		session.Set("userId", userMock)
+		session.Set("userId", userMock, expiresIn)
 		err := session.Get("nonExistentUser", &wanted)
 
 		assert.EqualError(t, err, "No session found")

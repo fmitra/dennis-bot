@@ -154,7 +154,8 @@ func (suite *ConvoSuite) TestGetsConversationFromCache() {
 	}
 	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserId)))
 
-	cache.Set(cacheKey, conversation)
+	oneMinute := 60
+	cache.Set(cacheKey, conversation, oneMinute)
 	cachedConversation, err := GetConversation(mocks.TestUserId, cache)
 
 	assert.NoError(suite.T(), err)
@@ -173,7 +174,8 @@ func (suite *ConvoSuite) TestReturnsErrorFetchingFromCache() {
 		Step:   -1,
 	}
 	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserId)))
-	cache.Set(cacheKey, conversation)
+	oneMinute := 60
+	cache.Set(cacheKey, conversation, oneMinute)
 	_, err = GetConversation(mocks.TestUserId, cache)
 	assert.EqualError(suite.T(), err, "No responses available")
 }
@@ -194,7 +196,11 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	conversation := &Conversation{
 		Intent: ONBOARD_USER_INTENT,
 	}
-	actions := &Actions{}
+	actions := &Actions{
+		suite.Env.Db,
+		suite.Env.Cache,
+		suite.Env.Config,
+	}
 	witResponse := wit.WitResponse{}
 	incMessage := telegram.IncomingMessage{}
 	message := mocks.GetMockMessage("")

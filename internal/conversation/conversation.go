@@ -28,19 +28,21 @@ const (
 // for that action.
 type Intent interface {
 	// Determine's a user's intent behind an incoming message
-	Respond() (BotResponse, int)
+	Respond() (BotResponse, *Context)
 
 	// Returns a list of functions to deliver responses to a user.
 	// Functions are listed in order of delivery from top to bottom.
 	GetResponses() []func() (BotResponse, error)
 }
 
-// Context provides necessary info and methods for an Intent to process a response
+// Context is embeded into all Intents to provides necessary info and
+// methods to process a response
 type Context struct {
 	Step        int
 	WitResponse wit.WitResponse
 	IncMessage  t.IncomingMessage
 	BotUserId   uint
+	AuxData     string
 }
 
 // Represents a user's place in a conversation, for example a conversation
@@ -50,6 +52,7 @@ type Conversation struct {
 	UserId    uint   // The user ID from the incoming chat service (ex. Telegram User ID)
 	BotUserId uint   // The ID of the user account (if it exists) in our system
 	Step      int    // A user's place in a conversation
+	AuxData   string // Optional auxiliary info that we can set while processing a response
 }
 
 // Helper method to ensure all Intents embeding context has access to the same
@@ -57,7 +60,7 @@ type Conversation struct {
 // Nil errors and empty responses are typically performed in validation steps (ex.
 // ask a question and check for an answer). Valid responses increment a step,
 // allowing a user to receive the next response in defined in the `GetResponses` array
-func (cx *Context) Process(responses []func() (BotResponse, error)) (BotResponse, int) {
+func (cx *Context) Process(responses []func() (BotResponse, error)) (BotResponse, *Context) {
 	response, err := responses[cx.Step]()
 
 	for response == BotResponse("") && err == nil {
@@ -73,7 +76,7 @@ func (cx *Context) Process(responses []func() (BotResponse, error)) (BotResponse
 		cx.EndConversation()
 	}
 
-	return response, cx.Step
+	return response, cx
 }
 
 // Ends a conversation
@@ -95,6 +98,7 @@ func (c *Conversation) GetIntent(w wit.WitResponse, inc t.IncomingMessage, a *Ac
 		IncMessage:  inc,
 		Step:        c.Step,
 		BotUserId:   uid,
+		AuxData:     c.AuxData,
 	}
 	switch c.Intent {
 	case ONBOARD_USER_INTENT:
@@ -116,8 +120,9 @@ func (c *Conversation) Respond(w wit.WitResponse, inc t.IncomingMessage, a *Acti
 	}
 
 	intent := c.GetIntent(w, inc, a, c.BotUserId)
-	response, nextStep := intent.Respond()
-	c.Step = nextStep
+	response, context := intent.Respond()
+	c.Step = context.Step
+	c.AuxData = context.AuxData
 
 	return response
 }
@@ -188,7 +193,8 @@ func GetResponse(w wit.WitResponse, inc t.IncomingMessage, a *Actions) BotRespon
 	// we cache the conversation so the user can pick up where they left off
 	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(userId)))
 	if conversation.HasResponse() {
-		a.Cache.Set(cacheKey, conversation)
+		threeMinutes := 120
+		a.Cache.Set(cacheKey, conversation, threeMinutes)
 	} else {
 		a.Cache.Delete(cacheKey)
 	}
