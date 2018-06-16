@@ -10,6 +10,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"github.com/fmitra/dennis-bot/config"
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/expenses"
 	"github.com/fmitra/dennis-bot/pkg/sessions"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
@@ -75,6 +76,8 @@ func LoadEnv(config config.AppConfig) *Env {
 		log.Panicf("environment: database connection failed - %s", err)
 	}
 
+	db.AutoMigrate(&users.User{}, &expenses.Expense{})
+
 	cache := sessions.NewClient(sessions.Config{
 		config.Redis.Host,
 		config.Redis.Port,
@@ -82,12 +85,12 @@ func LoadEnv(config config.AppConfig) *Env {
 		config.Redis.Db,
 	})
 
-	db.AutoMigrate(&users.User{}, &expenses.Expense{})
-
 	telegram := telegram.NewClient(
 		config.Telegram.Token,
 		config.BotDomain,
 	)
+
+	crypto.InitializeGob()
 
 	return &Env{
 		db:       db,

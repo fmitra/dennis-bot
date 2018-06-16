@@ -5,107 +5,130 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
 
-func TestOnboardUser(t *testing.T) {
-	t.Run("Should return a list of possible responses", func(t *testing.T) {
-		onboardUser := &OnboardUser{}
-		assert.Equal(t, 4, len(onboardUser.GetResponses()))
-	})
+type OnboardUserSuite struct {
+	suite.Suite
+	Env    *mocks.TestEnv
+	Action *Actions
+}
 
-	t.Run("Should ask for password", func(t *testing.T) {
-		onboardUser := &OnboardUser{
-			Context{
-				Step: 0,
-			},
-			&Actions{},
-		}
-		MessageMap = mocks.MessageMapMock
+func (suite *OnboardUserSuite) SetupSuite() {
+	configFile := "../../config/config.json"
+	suite.Env = mocks.GetTestEnv(configFile)
+	suite.Action = &Actions{
+		suite.Env.Db,
+		suite.Env.Cache,
+		suite.Env.Config,
+	}
+}
 
-		response, _ := onboardUser.AskForPassword()
-		assert.Equal(t, BotResponse("What's your password?"), response)
-	})
+func (suite *OnboardUserSuite) BeforeTest(suiteName, testName string) {
+	MessageMap = mocks.MessageMapMock
+}
 
-	t.Run("Should ask to confirm password", func(t *testing.T) {
-		var incMessage telegram.IncomingMessage
-		message := mocks.GetMockMessage("")
-		json.Unmarshal(message, &incMessage)
+func (suite *OnboardUserSuite) AfterTest(suiteName, testName string) {
+	mocks.CleanUpEnv(suite.Env)
+}
 
-		onboardUser := &OnboardUser{
-			Context{
-				Step:       1,
-				IncMessage: incMessage,
-			},
-			&Actions{},
-		}
-		MessageMap = mocks.MessageMapMock
+func (suite *OnboardUserSuite) TestGetResponseList() {
+	onboardUser := &OnboardUser{}
+	assert.Equal(suite.T(), 4, len(onboardUser.GetResponses()))
+}
 
-		response, _ := onboardUser.ConfirmPassword()
-		assert.Equal(t, BotResponse("Your password is Hello world"), response)
-	})
+func (suite *OnboardUserSuite) TestAsksForPassword() {
+	onboardUser := &OnboardUser{
+		Context{
+			Step: 0,
+		},
+		suite.Action,
+	}
 
-	t.Run("Should validate password", func(t *testing.T) {
-		MessageMap = mocks.MessageMapMock
-		var incMessage telegram.IncomingMessage
-		message := mocks.GetMockMessage("No")
-		json.Unmarshal(message, &incMessage)
+	response, _ := onboardUser.AskForPassword()
+	assert.Equal(suite.T(), BotResponse("What's your password?"), response)
+}
 
-		onboardUser := &OnboardUser{
-			Context{
-				Step:       2,
-				IncMessage: incMessage,
-			},
-			&Actions{},
-		}
+func (suite *OnboardUserSuite) TestConfirmsPassword() {
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("")
+	json.Unmarshal(message, &incMessage)
 
-		response, err := onboardUser.ValidatePassword()
-		assert.Equal(t, BotResponse("Okay try again later"), response)
-		assert.EqualError(t, err, "Password rejected")
+	onboardUser := &OnboardUser{
+		Context{
+			Step:       1,
+			IncMessage: incMessage,
+		},
+		suite.Action,
+	}
 
-		message = mocks.GetMockMessage("YES")
-		json.Unmarshal(message, &incMessage)
+	response, _ := onboardUser.ConfirmPassword()
+	assert.Equal(suite.T(), BotResponse("Your password is Hello world"), response)
+}
 
-		onboardUser = &OnboardUser{
-			Context{
-				Step:       2,
-				IncMessage: incMessage,
-			},
-			&Actions{},
-		}
+func (suite *OnboardUserSuite) TestValidatesPassword() {
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("No")
+	json.Unmarshal(message, &incMessage)
 
-		response, err = onboardUser.ValidatePassword()
-		assert.Equal(t, BotResponse(""), response)
-		assert.NoError(t, err)
+	onboardUser := &OnboardUser{
+		Context{
+			Step:       2,
+			IncMessage: incMessage,
+		},
+		suite.Action,
+	}
 
-		message = mocks.GetMockMessage("Invalid")
-		json.Unmarshal(message, &incMessage)
+	response, err := onboardUser.ValidatePassword()
+	assert.Equal(suite.T(), BotResponse("Okay try again later"), response)
+	assert.EqualError(suite.T(), err, "Password rejected")
 
-		onboardUser = &OnboardUser{
-			Context{
-				Step:       2,
-				IncMessage: incMessage,
-			},
-			&Actions{},
-		}
+	message = mocks.GetMockMessage("YES")
+	json.Unmarshal(message, &incMessage)
 
-		response, err = onboardUser.ValidatePassword()
-		assert.Equal(t, BotResponse("I didn't understand that"), response)
-		assert.EqualError(t, err, "Response invalid")
-	})
+	onboardUser = &OnboardUser{
+		Context{
+			Step:       2,
+			IncMessage: incMessage,
+		},
+		suite.Action,
+	}
 
-	t.Run("Should say outro", func(t *testing.T) {
-		onboardUser := &OnboardUser{
-			Context{
-				Step: 3,
-			},
-			&Actions{},
-		}
-		MessageMap = mocks.MessageMapMock
+	response, err = onboardUser.ValidatePassword()
+	assert.Equal(suite.T(), BotResponse(""), response)
+	assert.NoError(suite.T(), err)
 
-		response, _ := onboardUser.SayOutro()
-		assert.Equal(t, BotResponse("Outro message"), response)
-	})
+	message = mocks.GetMockMessage("Invalid")
+	json.Unmarshal(message, &incMessage)
+
+	onboardUser = &OnboardUser{
+		Context{
+			Step:       2,
+			IncMessage: incMessage,
+		},
+		suite.Action,
+	}
+
+	response, err = onboardUser.ValidatePassword()
+	assert.Equal(suite.T(), BotResponse("I didn't understand that"), response)
+	assert.EqualError(suite.T(), err, "Response invalid")
+}
+
+func (suite *OnboardUserSuite) TestSaysOutro() {
+	onboardUser := &OnboardUser{
+		Context{
+			Step: 3,
+		},
+		suite.Action,
+	}
+
+	response, _ := onboardUser.SayOutro()
+	assert.Equal(suite.T(), BotResponse("Outro message"), response)
+}
+
+func TestOnboardUserSuite(t *testing.T) {
+	suite.Run(t, new(OnboardUserSuite))
 }

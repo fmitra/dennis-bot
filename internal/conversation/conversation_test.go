@@ -2,271 +2,270 @@ package conversation
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
-	"github.com/fmitra/dennis-bot/config"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
-	"github.com/fmitra/dennis-bot/pkg/users"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
 
-func TestConversation(t *testing.T) {
-	t.Run("Should return boolean for response check", func(t *testing.T) {
-		conversation := &Conversation{}
-		hasResponse := conversation.HasResponse()
-		assert.True(t, hasResponse)
+type ConvoSuite struct {
+	suite.Suite
+	Env *mocks.TestEnv
+}
 
-		conversation = &Conversation{
-			Step: -1,
+func (suite *ConvoSuite) SetupSuite() {
+	configFile := "../../config/config.json"
+	suite.Env = mocks.GetTestEnv(configFile)
+}
+
+func (suite *ConvoSuite) BeforeTest(suiteName, testName string) {
+	// Responses may be randomized from a list of options.
+	// We need to ensure the returned response is predictable
+	MessageMap = mocks.MessageMapMock
+}
+
+func (suite *ConvoSuite) AfterTest(suiteName, testName string) {
+	mocks.CleanUpEnv(suite.Env)
+}
+
+func (suite *ConvoSuite) TestReturnsBooleanForResponseCheck() {
+	conversation := &Conversation{}
+	hasResponse := conversation.HasResponse()
+	assert.True(suite.T(), hasResponse)
+
+	conversation = &Conversation{
+		Step: -1,
+	}
+	hasResponse = conversation.HasResponse()
+	assert.False(suite.T(), hasResponse)
+}
+
+func (suite *ConvoSuite) TestCreatesNewConversation() {
+	rawWitResponse := []byte(`{
+		"entities": {
+			"amount": [
+				{ "value": "20 SGD", "confidence": 100.00 }
+			],
+			"datetime": [
+				{ "value": "", "confidence": 100.00 }
+			],
+			"description": [
+				{ "value": "Food", "confidence": 100.00 }
+			]
 		}
-		hasResponse = conversation.HasResponse()
-		assert.False(t, hasResponse)
-	})
+	}`)
+	var witResponse wit.WitResponse
+	json.Unmarshal(rawWitResponse, &witResponse)
+	action := &Actions{
+		Db: suite.Env.Db,
+	}
 
-	t.Run("Should create a new conversation", func(t *testing.T) {
-		rawWitResponse := []byte(`{
-			"entities": {
-				"amount": [
-					{ "value": "20 SGD", "confidence": 100.00 }
-				],
-				"datetime": [
-					{ "value": "", "confidence": 100.00 }
-				],
-				"description": [
-					{ "value": "Food", "confidence": 100.00 }
-				]
-			}
-		}`)
-		var witResponse wit.WitResponse
-		json.Unmarshal(rawWitResponse, &witResponse)
+	conversation := NewConversation(mocks.TestUserId, witResponse, action)
+	assert.Equal(suite.T(), mocks.TestUserId, conversation.UserId)
+	assert.Equal(suite.T(), ONBOARD_USER_INTENT, conversation.Intent)
+}
 
-		configFile := "../../config/config.json"
-		appConfig := config.LoadConfig(configFile)
-		db, _ := GetDb(appConfig)
-		action := &Actions{
-			Db: db,
+func (suite *ConvoSuite) TestInfersUserIntentFromWitResponse() {
+	var rawWitResponse []byte
+	var witResponse wit.WitResponse
+
+	rawWitResponse = []byte(`{
+		"entities": {
+			"amount": [
+				{ "value": "20 SGD", "confidence": 100.00 }
+			],
+			"datetime": [
+				{ "value": "", "confidence": 100.00 }
+			],
+			"description": [
+				{ "value": "Food", "confidence": 100.00 }
+			]
 		}
+	}`)
+	json.Unmarshal(rawWitResponse, &witResponse)
+	assert.Equal(suite.T(), ONBOARD_USER_INTENT, InferIntent(witResponse, uint(0)))
 
-		conversation := NewConversation(mocks.TestUserId, witResponse, action)
-		assert.Equal(t, mocks.TestUserId, conversation.UserId)
-		assert.Equal(t, TRACK_EXPENSE_INTENT, conversation.Intent)
-	})
-
-	t.Run("Should infer user intent from WitResponse", func(t *testing.T) {
-		var rawWitResponse []byte
-		var witResponse wit.WitResponse
-
-		rawWitResponse = []byte(`{
-			"entities": {
-				"amount": [
-					{ "value": "20 SGD", "confidence": 100.00 }
-				],
-				"datetime": [
-					{ "value": "", "confidence": 100.00 }
-				],
-				"description": [
-					{ "value": "Food", "confidence": 100.00 }
-				]
-			}
-		}`)
-		json.Unmarshal(rawWitResponse, &witResponse)
-		assert.Equal(t, ONBOARD_USER_INTENT, InferIntent(witResponse, uint(0)))
-
-		rawWitResponse = []byte(`{
-			"entities": {
-				"amount": [
-					{ "value": "20 SGD", "confidence": 100.00 }
-				],
-				"datetime": [
-					{ "value": "", "confidence": 100.00 }
-				],
-				"description": [
-					{ "value": "Food", "confidence": 100.00 }
-				]
-			}
-		}`)
-		json.Unmarshal(rawWitResponse, &witResponse)
-		assert.Equal(t, TRACK_EXPENSE_INTENT, InferIntent(witResponse, uint(123)))
-
-		rawWitResponse = []byte(`{
-			"entities": {
-				"amount": [
-					{ "value": "20 SGD", "confidence": 100.00 }
-				],
-				"datetime": [
-					{ "value": "", "confidence": 100.00 }
-				],
-				"description": []
-			}
-		}`)
-		json.Unmarshal(rawWitResponse, &witResponse)
-		assert.Equal(t, TRACK_EXPENSE_INTENT, InferIntent(witResponse, uint(123)))
-
-		rawWitResponse = []byte(`{
-			"entities": {
-				"amount": [],
-				"datetime": [],
-				"description": [],
-				"total_spent": [
-					{ "value": "month", "confidence": 100.00 }
-				]
-			}
-		}`)
-		json.Unmarshal(rawWitResponse, &witResponse)
-		assert.Equal(t, GET_EXPENSE_TOTAL_INTENT, InferIntent(witResponse, uint(123)))
-
-		rawWitResponse = []byte(`{
-			"entities": {
-				"amount": [],
-				"datetime": [],
-				"description": [],
-				"total_spent": []
-			}
-		}`)
-		json.Unmarshal(rawWitResponse, &witResponse)
-		assert.Equal(t, "", InferIntent(witResponse, uint(123)))
-	})
-
-	t.Run("Should get conversation from cache", func(t *testing.T) {
-		configFile := "../../config/config.json"
-		appConfig := config.LoadConfig(configFile)
-		cache := GetSession(appConfig)
-		userId := uint(124)
-		conversation := Conversation{
-			Intent: ONBOARD_USER_INTENT,
-			UserId: userId,
+	rawWitResponse = []byte(`{
+		"entities": {
+			"amount": [
+				{ "value": "20 SGD", "confidence": 100.00 }
+			],
+			"datetime": [
+				{ "value": "", "confidence": 100.00 }
+			],
+			"description": [
+				{ "value": "Food", "confidence": 100.00 }
+			]
 		}
-		cacheKey := "124_conversation"
+	}`)
+	json.Unmarshal(rawWitResponse, &witResponse)
+	assert.Equal(suite.T(), TRACK_EXPENSE_INTENT, InferIntent(witResponse, uint(123)))
 
-		cache.Set(cacheKey, conversation)
-		cachedConversation, err := GetConversation(userId, cache)
-
-		assert.NoError(t, err)
-		assert.Equal(t, cachedConversation, conversation)
-	})
-
-	t.Run("Should return error when fetching conversation from cache", func(t *testing.T) {
-		configFile := "../../config/config.json"
-		appConfig := config.LoadConfig(configFile)
-		cache := GetSession(appConfig)
-		cacheKey := "125_conversation"
-		userId := uint(125)
-		cache.Delete(cacheKey)
-
-		cachedConversation, err := GetConversation(userId, cache)
-		assert.EqualError(t, err, "No conversation found")
-		assert.Equal(t, cachedConversation, Conversation{})
-
-		conversation := Conversation{
-			Intent: ONBOARD_USER_INTENT,
-			UserId: userId,
-			Step:   -1,
+	rawWitResponse = []byte(`{
+		"entities": {
+			"amount": [
+				{ "value": "20 SGD", "confidence": 100.00 }
+			],
+			"datetime": [
+				{ "value": "", "confidence": 100.00 }
+			],
+			"description": []
 		}
-		cache.Set(cacheKey, conversation)
-		_, err = GetConversation(userId, cache)
-		assert.EqualError(t, err, "No responses available")
-	})
+	}`)
+	json.Unmarshal(rawWitResponse, &witResponse)
+	assert.Equal(suite.T(), TRACK_EXPENSE_INTENT, InferIntent(witResponse, uint(123)))
 
-	t.Run("Should retrieve an Intent", func(t *testing.T) {
-		conversation := &Conversation{
-			Intent: ONBOARD_USER_INTENT,
+	rawWitResponse = []byte(`{
+		"entities": {
+			"amount": [],
+			"datetime": [],
+			"description": [],
+			"total_spent": [
+				{ "value": "month", "confidence": 100.00 }
+			]
 		}
-		witResponse := wit.WitResponse{}
-		incMessage := telegram.IncomingMessage{}
-		actions := &Actions{}
-		botUserId := uint(0)
-		intent := conversation.GetIntent(witResponse, incMessage, actions, botUserId)
-		assert.IsType(t, &OnboardUser{}, intent)
-	})
+	}`)
+	json.Unmarshal(rawWitResponse, &witResponse)
+	assert.Equal(suite.T(), GET_EXPENSE_TOTAL_INTENT, InferIntent(witResponse, uint(123)))
 
-	t.Run("Should get response from Intent in correct order", func(t *testing.T) {
-		MessageMap = mocks.MessageMapMock
-		conversation := &Conversation{
-			Intent: ONBOARD_USER_INTENT,
+	rawWitResponse = []byte(`{
+		"entities": {
+			"amount": [],
+			"datetime": [],
+			"description": [],
+			"total_spent": []
 		}
-		actions := &Actions{}
-		witResponse := wit.WitResponse{}
-		incMessage := telegram.IncomingMessage{}
-		message := mocks.GetMockMessage("")
-		json.Unmarshal(message, &incMessage)
+	}`)
+	json.Unmarshal(rawWitResponse, &witResponse)
+	assert.Equal(suite.T(), "", InferIntent(witResponse, uint(123)))
+}
 
-		// Starts at step 0
-		assert.Equal(t, 0, conversation.Step)
+func (suite *ConvoSuite) TestGetsConversationFromCache() {
+	cache := suite.Env.Cache
+	conversation := Conversation{
+		Intent: ONBOARD_USER_INTENT,
+		UserId: mocks.TestUserId,
+	}
+	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserId)))
 
-		// First response requests password
-		response := conversation.Respond(witResponse, incMessage, actions)
-		assert.Equal(t, BotResponse("What's your password?"), response)
-		assert.Equal(t, 1, conversation.Step)
+	cache.Set(cacheKey, conversation)
+	cachedConversation, err := GetConversation(mocks.TestUserId, cache)
 
-		// Second response requests confirmation
-		message = mocks.GetMockMessage("foo")
-		json.Unmarshal(message, &incMessage)
-		response = conversation.Respond(witResponse, incMessage, actions)
-		assert.Equal(t, BotResponse("Your password is foo"), response)
-		assert.Equal(t, 2, conversation.Step)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), conversation, cachedConversation)
+}
 
-		// Invalid response prevents user from reaching step 3
-		message = mocks.GetMockMessage("invalid answer")
-		json.Unmarshal(message, &incMessage)
-		response = conversation.Respond(witResponse, incMessage, actions)
-		assert.Equal(t, BotResponse("I didn't understand that"), response)
-		assert.Equal(t, 2, conversation.Step)
+func (suite *ConvoSuite) TestReturnsErrorFetchingFromCache() {
+	cache := suite.Env.Cache
+	cachedConversation, err := GetConversation(mocks.TestUserId, cache)
+	assert.EqualError(suite.T(), err, "No conversation found")
+	assert.Equal(suite.T(), cachedConversation, Conversation{})
 
-		// Answering no to password confirmation ends the conversation
-		message = mocks.GetMockMessage("No")
-		json.Unmarshal(message, &incMessage)
-		response = conversation.Respond(witResponse, incMessage, actions)
-		assert.Equal(t, BotResponse("Okay try again later"), response)
-		assert.Equal(t, -1, conversation.Step)
+	conversation := Conversation{
+		Intent: ONBOARD_USER_INTENT,
+		UserId: mocks.TestUserId,
+		Step:   -1,
+	}
+	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserId)))
+	cache.Set(cacheKey, conversation)
+	_, err = GetConversation(mocks.TestUserId, cache)
+	assert.EqualError(suite.T(), err, "No responses available")
+}
 
-		// After receiving a negative step, all future respones are empty
-		message = mocks.GetMockMessage("Hello?")
-		json.Unmarshal(message, &incMessage)
-		response = conversation.Respond(witResponse, incMessage, actions)
-		assert.Equal(t, BotResponse(""), response)
-		assert.Equal(t, -1, conversation.Step)
+func (suite *ConvoSuite) TestRetrievesIntent() {
+	conversation := &Conversation{
+		Intent: ONBOARD_USER_INTENT,
+	}
+	witResponse := wit.WitResponse{}
+	incMessage := telegram.IncomingMessage{}
+	actions := &Actions{}
+	botUserId := uint(0)
+	intent := conversation.GetIntent(witResponse, incMessage, actions, botUserId)
+	assert.IsType(suite.T(), &OnboardUser{}, intent)
+}
 
-		// Manually edit the step so we can continue the final tests
-		conversation.Step = 2
+func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
+	conversation := &Conversation{
+		Intent: ONBOARD_USER_INTENT,
+	}
+	actions := &Actions{}
+	witResponse := wit.WitResponse{}
+	incMessage := telegram.IncomingMessage{}
+	message := mocks.GetMockMessage("")
+	json.Unmarshal(message, &incMessage)
 
-		// When steps are iterated past the number of responses, we should
-		// reset the step to -1 to end the conversation
-		message = mocks.GetMockMessage("Yes")
-		json.Unmarshal(message, &incMessage)
-		response = conversation.Respond(witResponse, incMessage, actions)
-		assert.Equal(t, BotResponse("Outro message"), response)
-		assert.Equal(t, -1, conversation.Step)
-	})
+	// Starts at step 0
+	assert.Equal(suite.T(), 0, conversation.Step)
 
-	t.Run("Should cache conversations with remaining responses", func(t *testing.T) {
-		configFile := "../../config/config.json"
-		appConfig := config.LoadConfig(configFile)
-		db, _ := GetDb(appConfig)
-		cache := GetSession(appConfig)
-		cacheKey := "12345_conversation"
+	// First response requests password
+	response := conversation.Respond(witResponse, incMessage, actions)
+	assert.Equal(suite.T(), BotResponse("What's your password?"), response)
+	assert.Equal(suite.T(), 1, conversation.Step)
 
-		// Clean DB and cache for test
-		cache.Delete(cacheKey)
-		db.Unscoped().Delete(users.User{}, "telegram_id = ?", mocks.TestUserId)
+	// Second response requests confirmation
+	message = mocks.GetMockMessage("foo")
+	json.Unmarshal(message, &incMessage)
+	response = conversation.Respond(witResponse, incMessage, actions)
+	assert.Equal(suite.T(), BotResponse("Your password is foo"), response)
+	assert.Equal(suite.T(), 2, conversation.Step)
 
-		MessageMap = mocks.MessageMapMock
-		actions := &Actions{
-			Cache: cache,
-			Db: db,
-		}
-		witResponse := wit.WitResponse{}
-		incMessage := telegram.IncomingMessage{}
-		message := mocks.GetMockMessage("")
-		json.Unmarshal(message, &incMessage)
+	// Invalid response prevents user from reaching step 3
+	message = mocks.GetMockMessage("invalid answer")
+	json.Unmarshal(message, &incMessage)
+	response = conversation.Respond(witResponse, incMessage, actions)
+	assert.Equal(suite.T(), BotResponse("I didn't understand that"), response)
+	assert.Equal(suite.T(), 2, conversation.Step)
 
-		GetResponse(witResponse, incMessage, actions)
+	// Answering no to password confirmation ends the conversation
+	message = mocks.GetMockMessage("No")
+	json.Unmarshal(message, &incMessage)
+	response = conversation.Respond(witResponse, incMessage, actions)
+	assert.Equal(suite.T(), BotResponse("Okay try again later"), response)
+	assert.Equal(suite.T(), -1, conversation.Step)
 
-		// Should set cache
-		var cachedConvo Conversation
-		cache.Get(cacheKey, &cachedConvo)
-		assert.Equal(t, ONBOARD_USER_INTENT, cachedConvo.Intent)
-	})
+	// After receiving a negative step, all future respones are empty
+	message = mocks.GetMockMessage("Hello?")
+	json.Unmarshal(message, &incMessage)
+	response = conversation.Respond(witResponse, incMessage, actions)
+	assert.Equal(suite.T(), BotResponse(""), response)
+	assert.Equal(suite.T(), -1, conversation.Step)
+
+	// Manually edit the step so we can continue the final tests
+	conversation.Step = 2
+
+	// When steps are iterated past the number of responses, we should
+	// reset the step to -1 to end the conversation
+	message = mocks.GetMockMessage("Yes")
+	json.Unmarshal(message, &incMessage)
+	response = conversation.Respond(witResponse, incMessage, actions)
+	assert.Equal(suite.T(), BotResponse("Outro message"), response)
+	assert.Equal(suite.T(), -1, conversation.Step)
+}
+
+func (suite *ConvoSuite) TestCachesConversationsWithRemainingResponses() {
+	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserId)))
+	actions := &Actions{
+		Cache: suite.Env.Cache,
+		Db:    suite.Env.Db,
+	}
+	witResponse := wit.WitResponse{}
+	incMessage := telegram.IncomingMessage{}
+	message := mocks.GetMockMessage("")
+	json.Unmarshal(message, &incMessage)
+
+	GetResponse(witResponse, incMessage, actions)
+
+	var cachedConvo Conversation
+	suite.Env.Cache.Get(cacheKey, &cachedConvo)
+	assert.Equal(suite.T(), ONBOARD_USER_INTENT, cachedConvo.Intent)
+}
+
+func TestConvoSuite(t *testing.T) {
+	suite.Run(t, new(ConvoSuite))
 }

@@ -1,82 +1,62 @@
 package users
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
-	"github.com/fmitra/dennis-bot/config"
+	mocks "github.com/fmitra/dennis-bot/test"
 )
 
-func GetDb() (*gorm.DB, error) {
-	dbConfig := config.LoadConfig("../../config/config.json")
-	db, err := gorm.Open(
-		"postgres",
-		fmt.Sprintf(
-			"host=%s port=%d user=%s dbname=%s password=%s sslmode=%s",
-			dbConfig.Database.Host,
-			dbConfig.Database.Port,
-			dbConfig.Database.User,
-			dbConfig.Database.Name,
-			dbConfig.Database.Password,
-			dbConfig.Database.SSLMode,
-		),
-	)
-	// TODO Set up proper teardown/setup handling for DB related tests
-	db.AutoMigrate(User{})
-
-	return db, err
+type Suite struct {
+	suite.Suite
+	Env *mocks.TestEnv
 }
 
-func DeleteTestUser(db *gorm.DB, testUserId uint) {
-	db.Unscoped().Delete(User{}, "telegram_id = ?", testUserId)
+func (suite *Suite) SetupSuite() {
+	configFile := "../../config/config.json"
+	suite.Env = mocks.GetTestEnv(configFile)
 }
 
-func TestManagers(t *testing.T) {
-	t.Run("It should return a user by their telegram ID", func(t *testing.T) {
-		db, _ := GetDb()
-		manager := NewUserManager(db)
-		testUserId := uint(4567)
-		DeleteTestUser(db, testUserId)
-		password := "my-password"
-		user := &User{
-			TelegramID: testUserId,
-			Password: password,
-		}
-		db.Create(user)
+func (suite *Suite) AfterTest(suiteName, testName string) {
+	mocks.CleanUpEnv(suite.Env)
+}
 
-		queriedUser := manager.GetByTelegramId(testUserId)
-		assert.Equal(t, testUserId, queriedUser.TelegramID)
-	})
+func (suite *Suite) TestReturnsUserByTelegramID() {
+	manager := NewUserManager(suite.Env.Db)
+	password := "my-password"
+	user := &User{
+		TelegramID: mocks.TestUserId,
+		Password:   password,
+	}
+	suite.Env.Db.Create(user)
 
-	t.Run("It should create a new user", func(t *testing.T) {
-		db, _ := GetDb()
-		testUserId := uint(4567)
-		DeleteTestUser(db, testUserId)
-		manager := NewUserManager(db)
-		user := &User{
-			TelegramID: testUserId,
-		}
-		isCreated := manager.Save(user)
-		DeleteTestUser(db, testUserId)
-		assert.True(t, isCreated)
-	})
+	queriedUser := manager.GetByTelegramId(mocks.TestUserId)
+	assert.Equal(suite.T(), mocks.TestUserId, queriedUser.TelegramID)
+}
 
-	t.Run("It should store a hash of the user password on save", func(t *testing.T) {
-		db, _ := GetDb()
-		testUserId := uint(4567)
-		DeleteTestUser(db, testUserId)
-		password := "my-password"
-		manager := NewUserManager(db)
-		user := &User{
-			TelegramID: testUserId,
-			Password: password,
-		}
-		manager.Save(user)
-		assert.NotEqual(t, password, user.Password)
-		assert.NotEqual(t, "", user.Password)
-	})
+func (suite *Suite) TestCreatesNewUser() {
+	manager := NewUserManager(suite.Env.Db)
+	user := &User{
+		TelegramID: mocks.TestUserId,
+	}
+	isCreated := manager.Save(user)
+	assert.True(suite.T(), isCreated)
+}
+
+func (suite *Suite) TestHashesUserPasswordOnSave() {
+	password := "my-password"
+	manager := NewUserManager(suite.Env.Db)
+	user := &User{
+		TelegramID: mocks.TestUserId,
+		Password:   password,
+	}
+	manager.Save(user)
+	assert.NotEqual(suite.T(), password, user.Password)
+	assert.NotEqual(suite.T(), "", user.Password)
+}
+
+func TestSuite(t *testing.T) {
+	suite.Run(t, new(Suite))
 }

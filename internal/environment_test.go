@@ -9,73 +9,89 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
-	"github.com/fmitra/dennis-bot/config"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
 
-func TestEnvironment(t *testing.T) {
-	t.Run("Should respond to healthcheck", func(t *testing.T) {
-		configFile := "../config/config.json"
-		config := config.LoadConfig(configFile)
-		env := LoadEnv(config)
+type EnvSuite struct {
+	suite.Suite
+	Env *mocks.TestEnv
+}
 
-		req, err := http.NewRequest("GET", "/healthcheck", nil)
-		assert.NoError(t, err)
+func (suite *EnvSuite) SetupSuite() {
+	configFile := "../config/config.json"
+	suite.Env = mocks.GetTestEnv(configFile)
+}
 
-		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(env.HealthCheck())
+func (suite *EnvSuite) TestRespondsToHealthCheck() {
+	env := &Env{
+		suite.Env.Db,
+		suite.Env.Cache,
+		suite.Env.Config,
+		&telegram.Client{},
+	}
 
-		handler.ServeHTTP(rr, req)
-		assert.Equal(t, "ok", rr.Body.String())
-	})
+	req, err := http.NewRequest("GET", "/healthcheck", nil)
+	assert.NoError(suite.T(), err)
 
-	t.Run("Should respond to webhook", func(t *testing.T) {
-		configFile := "../config/config.json"
-		config := config.LoadConfig(configFile)
-		message := mocks.GetMockMessage("")
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(env.HealthCheck())
 
-		witResponse := `{
-			"entities": {
-				"amount": [],
-				"datetime": [],
-				"description": []
-			}
-		}`
-		telegramServer := mocks.MakeTestServer("")
-		witServer := mocks.MakeTestServer(witResponse)
+	handler.ServeHTTP(rr, req)
+	assert.Equal(suite.T(), "ok", rr.Body.String())
+}
 
-		telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
-		wit.BaseUrl = witServer.URL
+func (suite *EnvSuite) TestRespondsToWebhook() {
+	message := mocks.GetMockMessage("")
+	witResponse := `{
+		"entities": {
+			"amount": [],
+			"datetime": [],
+			"description": []
+		}
+	}`
+	telegramServer := mocks.MakeTestServer("")
+	witServer := mocks.MakeTestServer(witResponse)
 
-		env := LoadEnv(config)
+	telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
+	wit.BaseUrl = witServer.URL
+	telegramClient := telegram.NewClient("", "")
 
-		req, err := http.NewRequest("POST", "/webook", bytes.NewBuffer(message))
-		assert.NoError(t, err)
+	env := &Env{
+		suite.Env.Db,
+		suite.Env.Cache,
+		suite.Env.Config,
+		telegramClient,
+	}
 
-		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(env.Webhook())
+	req, err := http.NewRequest("POST", "/webook", bytes.NewBuffer(message))
+	assert.NoError(suite.T(), err)
 
-		handler.ServeHTTP(rr, req)
-		assert.Equal(t, "received", rr.Body.String())
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(env.Webhook())
 
-		// Business logic is handled in a go routine, so we need
-		// to add a delay to close the test server
-		time.Sleep(time.Second * 1)
-		telegramServer.Close()
-		witServer.Close()
-	})
+	handler.ServeHTTP(rr, req)
+	assert.Equal(suite.T(), "received", rr.Body.String())
 
-	t.Run("Should load environment from config", func(t *testing.T) {
-		configFile := "../config/config.json"
-		config := config.LoadConfig(configFile)
-		env := LoadEnv(config)
+	// Business logic is handled in a go routine, so we need
+	// to add a delay to close the test server
+	time.Sleep(time.Second * 1)
+	telegramServer.Close()
+	witServer.Close()
+}
 
-		assert.NotNil(t, env.db)
-		assert.NotNil(t, env.cache)
-		assert.NotNil(t, env.config)
-		assert.NotNil(t, env.telegram)
-	})
+func (suite *EnvSuite) TestShouldLoadFromConfig() {
+	env := LoadEnv(suite.Env.Config)
+
+	assert.NotNil(suite.T(), env.db)
+	assert.NotNil(suite.T(), env.cache)
+	assert.NotNil(suite.T(), env.config)
+	assert.NotNil(suite.T(), env.telegram)
+}
+
+func TestEnvSuite(t *testing.T) {
+	suite.Run(t, new(EnvSuite))
 }

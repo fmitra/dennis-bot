@@ -61,9 +61,12 @@ func (c *Client) ParseMessage(message string) WitResponse {
 		}
 
 		body, _ := ioutil.ReadAll(resp.Body)
-		err = json.Unmarshal(body, &witResponse)
-		if err != nil {
-			return err
+		jsonErr := json.Unmarshal(body, &witResponse)
+
+		// There is no need to retry if we receive a successful request containing
+		// invalid data. We simply treat it as a empty response and carry on.
+		if jsonErr != nil {
+			log.Printf("%s", jsonErr)
 		}
 		return nil
 	}

@@ -5,50 +5,62 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
 
-func TestGenericResponse(t *testing.T) {
-	t.Run("Should return a list of possible responses", func(t *testing.T) {
-		genericResponse := &GenericResponse{}
-		assert.Equal(t, 1, len(genericResponse.GetResponses()))
-	})
+type GenericResponseSuite struct {
+	suite.Suite
+	Env *mocks.TestEnv
+}
 
-	t.Run("Should return a generic response", func(t *testing.T) {
-		rawWitResponse := []byte(`{
-			"entities": {
-				"amount": [
-					{ "value": "20 SGD", "confidence": 100.00 }
-				],
-				"datetime": [
-					{ "value": "", "confidence": 100.00 }
-				],
-				"description": [
-					{ "value": "Food", "confidence": 100.00 }
-				]
-			}
-		}`)
-		var witResponse wit.WitResponse
-		json.Unmarshal(rawWitResponse, &witResponse)
+func (suite *GenericResponseSuite) BeforeTest(suiteName, testName string) {
+	MessageMap = mocks.MessageMapMock
+}
 
-		var incMessage telegram.IncomingMessage
-		message := mocks.GetMockMessage("")
-		json.Unmarshal(message, &incMessage)
+func (suite *GenericResponseSuite) TestGetResponseList() {
+	genericResponse := &GenericResponse{}
+	assert.Equal(suite.T(), 1, len(genericResponse.GetResponses()))
+}
 
-		genericResponse := &GenericResponse{
-			Context{
-				Step:        0,
-				WitResponse: witResponse,
-				IncMessage:  incMessage,
-			},
-			&Actions{},
+func (suite *GenericResponseSuite) TestReturnResponse() {
+	rawWitResponse := []byte(`{
+		"entities": {
+			"amount": [
+				{ "value": "20 SGD", "confidence": 100.00 }
+			],
+			"datetime": [
+				{ "value": "", "confidence": 100.00 }
+			],
+			"description": [
+				{ "value": "Food", "confidence": 100.00 }
+			]
 		}
+	}`)
+	var witResponse wit.WitResponse
+	json.Unmarshal(rawWitResponse, &witResponse)
 
-		response, step := genericResponse.Respond()
-		assert.Equal(t, -1, step)
-		assert.Equal(t, BotResponse("This is a default message"), response)
-	})
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("")
+	json.Unmarshal(message, &incMessage)
+
+	genericResponse := &GenericResponse{
+		Context{
+			Step:        0,
+			WitResponse: witResponse,
+			IncMessage:  incMessage,
+		},
+		&Actions{},
+	}
+
+	response, step := genericResponse.Respond()
+	assert.Equal(suite.T(), -1, step)
+	assert.Equal(suite.T(), BotResponse("This is a default message"), response)
+}
+
+func TestGenericResponseSuite(t *testing.T) {
+	suite.Run(t, new(GenericResponseSuite))
 }

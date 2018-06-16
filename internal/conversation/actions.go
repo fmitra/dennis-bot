@@ -11,8 +11,8 @@ import (
 	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/expenses"
 	"github.com/fmitra/dennis-bot/pkg/sessions"
-	"github.com/fmitra/dennis-bot/pkg/wit"
 	"github.com/fmitra/dennis-bot/pkg/users"
+	"github.com/fmitra/dennis-bot/pkg/wit"
 )
 
 // Actions are taken by the bot in response to a user request during
@@ -70,7 +70,7 @@ func (a *Actions) GetExpenseTotal(witResponse wit.WitResponse, userId uint) (str
 func (a *Actions) CreateNewUser(userId uint, password string) bool {
 	user := &users.User{
 		TelegramID: userId,
-		Password: password,
+		Password:   password,
 	}
 	manager := users.NewUserManager(a.Db)
 	return manager.Save(user)
