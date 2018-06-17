@@ -3,6 +3,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/jinzhu/gorm"
@@ -112,7 +113,7 @@ func (suite *BotSuite) TestHandlesExpenseTotalIntent() {
 	bot := &Bot{suite.BotEnv}
 
 	response := bot.BuildResponse(incMessage)
-	assert.Equal(suite.T(), convo.BotResponse("You spent 0.00"), response)
+	assert.Equal(suite.T(), convo.BotResponse("I need your password"), response)
 }
 
 func (suite *BotSuite) TestReturnsDefaultMessage() {
@@ -158,6 +159,9 @@ func (suite *BotSuite) TestReturnsErrorMessage() {
 	defer witServer.Close()
 
 	bot := &Bot{suite.BotEnv}
+
+	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(mocks.TestUserId)))
+	suite.Env.Cache.Set(cacheKey, "my-password", 180)
 
 	response := bot.BuildResponse(incMessage)
 	assert.Equal(suite.T(), convo.BotResponse("Whoops!"), response)

@@ -3,8 +3,6 @@ package conversation
 import (
 	"errors"
 	"strings"
-
-	"github.com/fmitra/dennis-bot/pkg/crypto"
 )
 
 // An Intent designed to onboard a new user into the bot platform
@@ -34,12 +32,7 @@ func (i *OnboardUser) AskForPassword() (BotResponse, error) {
 
 func (i *OnboardUser) ConfirmPassword() (BotResponse, error) {
 	password := i.IncMessage.GetMessage()
-	hashedPassword, err := crypto.HashText(password)
-	if err != nil {
-		return GetMessage(ONBOARD_USER_PASSWORD_HASH_FAILED, ""), err
-	}
-
-	i.AuxData = hashedPassword
+	i.AuxData = password
 	return GetMessage(ONBOARD_USER_CONFIRM_PASSWORD, password), nil
 }
 
@@ -68,7 +61,7 @@ func (i *OnboardUser) ValidatePassword() (BotResponse, error) {
 	}
 
 	if isPasswordConfirmed && isUserCreated {
-		return BotResponse(""), nil
+		return i.SkipResponse()
 	}
 
 	if isPasswordConfirmed && !isUserCreated {

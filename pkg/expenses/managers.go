@@ -1,9 +1,11 @@
 package expenses
 
 import (
+	"crypto/rsa"
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -94,27 +96,24 @@ func (m *ExpenseManager) QueryByPeriod(period string, userId uint) ([]Expense, e
 	return expenses, nil
 }
 
-func (m *ExpenseManager) TotalByPeriod(period string, userId uint) (float64, error) {
-	var expenseTotal ExpenseTotal
-
-	timePeriod, err := m.ParseTimePeriod(period)
+func (m *ExpenseManager) TotalByPeriod(period string, userId uint, privateKey rsa.PrivateKey) (float64, error) {
+	expenseTotal := 0.0
+	expenses, err := m.QueryByPeriod(period, userId)
 	if err != nil {
-		return expenseTotal.Total, err
+		return expenseTotal, err
 	}
 
-	query := "user_id = ? AND date >= ?"
-	if period == TODAY {
-		query = "user_id = ? AND date = ?"
+	// We cannot sum the DB column because expense history is stored
+	// as an encrypted string in the DB, so we must first query for the relevant
+	// records, decrypt, and sum it ourselves
+	for _, expense := range expenses {
+		expense.Decrypt(privateKey)
+		amount, err := strconv.ParseFloat(expense.Historical, 64)
+		if err != nil {
+			return 0.0, err
+		}
+
+		expenseTotal += amount
 	}
-
-	result := m.db.Table("expenses").
-		Select("sum(historical) as total").
-		Where(query, userId, timePeriod).
-		Scan(&expenseTotal)
-
-	if result.Error != nil {
-		return expenseTotal.Total, err
-	}
-
-	return expenseTotal.Total, nil
+	return expenseTotal, nil
 }

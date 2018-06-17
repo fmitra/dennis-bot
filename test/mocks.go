@@ -99,11 +99,20 @@ var MessageMapMock = map[string][]string{
 	"default": []string{
 		"This is a default message",
 	},
+	"get_expense_total_invalid_period": []string{
+		"Whoops!",
+	},
 	"get_expense_total_error": []string{
 		"Whoops!",
 	},
 	"get_expense_total_success": []string{
 		"You spent {{var}}",
+	},
+	"get_expense_total_password_invalid": []string{
+		"This password is invalid",
+	},
+	"get_expense_total_ask_for_password": []string{
+		"I need your password",
 	},
 	"track_expense_error": []string{
 		"Whoops!",
@@ -128,8 +137,5 @@ var MessageMapMock = map[string][]string{
 	},
 	"onboard_user_account_creation_failed": []string{
 		"Couldn't create account",
-	},
-	"onboard_user_password_hash_failed": []string{
-		"Couldn't hash password",
 	},
 }

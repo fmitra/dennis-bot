@@ -2,15 +2,15 @@
 
 # Dennis
 
-A pet project to learn Go, Dennis is Telegram bot to manage expense tracking.
+A pet project to learn Go, Dennis is a privacy friendly Telegram bot to manage expense tracking.
 
 ![dennis](https://www.francismitra.com/static/misc/dennis/convo.jpg)
 
 ## Overview
 
-Dennis was written to track international expenses. He keeps a log of expenses in any
-currency and returns the total (daily, weekly, monthly) in USD. At the moment he
-supports the following commands:
+Dennis was written as a way to track international expenses in USD. He keeps an encrypted log of
+expenses in any currency and returns the total (daily, weekly, monthly) converted to USD. At the
+moment he supports the following commands:
 
 * Track an expense
 
@@ -28,6 +28,31 @@ format: how much did I spend <time_period> (today, this week, this month)
 example: How much did I spend today?
 ```
 
+### Privacy Friendly But Not Foolproof
+
+While Dennis respects your privacy, **he's not intented to store confidential data**. His primary
+use case is to offer a **convenient** way to follow up on your day to day spending. In short,
+he protects you from himself - the bot owner cannot access your detailed expenditures, or
+use your information for advertising. Anyone with access to your device however, can
+easily see your password in plaintext and request the info.
+
+#### Data protection
+
+Dennis creates a private/public key pair for all users and additionally sets a user password
+to protect the user's private key in storage. These keys are used to encrypt expense totals
+and descriptions (timestamps are unencrypted) to ensure anyone running the bot has zero
+access to a user's detailed expenditures. Dennis can only return your expense history
+after you provide him with your password.
+
+While this protect's user data from the bot owner, keep in mind passwords are visible in
+plaintext right inside of the Telegram application. Anyone who has access to your chats for
+instance, can grab hold of your expense history.
+
+#### Logging
+
+With the exception of error logging, there are no logs set up to identify incoming or outgoing
+chat history between the user and Dennis.
+
 ## Developer Dependencies
 
 * [Ngrok](https://ngrok.com/downlaod)
@@ -43,7 +68,7 @@ You will need API key's for the following services to get started.
 
 #### 1. Set up development environment
 
-The test suite will expect Postgres and Redis to be set up as well as a valid
+The test suite requires Postgres and Redis to be set up as well as a valid
 configuraiton file. The `config.example.json` file is already prepared to use the
 default settings in the sample `docker-compose.example.yml`.
 
@@ -89,19 +114,3 @@ go build ./cmd/dennis-bot
 
 Telegram does not send any authentication headers in their requests, and instead recommends
 you instead use the token as the path of your webhook.
-
-#### Docker
-
-There is a Dockerfile to build the bot for deploy. If you'd like to include it in with the
-other dependencies in `docker-compose.yml` you can add the following to your file's services:
-
-```
-bot:
-  build: .
-  ports:
-    - 8080:8080
-  restart: unless-stopped
-  depends_on:
-    - postgres
-    - redis
-```

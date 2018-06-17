@@ -2,6 +2,8 @@ package conversation
 
 import (
 	"github.com/fmitra/dennis-bot/pkg/wit"
+
+	"github.com/fmitra/dennis-bot/pkg/users"
 )
 
 // An Intent designed to track a user's expenses
@@ -28,9 +30,14 @@ func (i *TrackExpense) ConfirmExpense() (BotResponse, error) {
 	overview := i.WitResponse.GetMessageOverview()
 	var response BotResponse
 
+	telegramUserId := i.IncMessage.GetUser().Id
+	manager := users.NewUserManager(i.actions.Db)
+	user := manager.GetByTelegramId(telegramUserId)
+	publicKey, _ := user.GetPublicKey()
+
 	response = GetMessage(TRACK_EXPENSE_ERROR, messageVar)
 	if overview == wit.TRACKING_REQUESTED_SUCCESS {
-		go i.actions.CreateNewExpense(i.WitResponse, i.BotUserId)
+		go i.actions.CreateNewExpense(i.WitResponse, i.BotUserId, publicKey)
 		response = GetMessage(TRACK_EXPENSE_SUCCESS, messageVar)
 	}
 

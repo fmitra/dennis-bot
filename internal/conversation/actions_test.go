@@ -1,6 +1,7 @@
 package conversation
 
 import (
+	"crypto/rsa"
 	"encoding/json"
 	"testing"
 
@@ -60,7 +61,8 @@ func (suite *ActionSuite) TestCreatesNewExpense() {
 	alphapoint.BaseUrl = alphapointServer.URL
 
 	action := suite.Action
-	isCreated := action.CreateNewExpense(witResponse, mocks.TestUserId)
+	publicKey := rsa.PublicKey{}
+	isCreated := action.CreateNewExpense(witResponse, mocks.TestUserId, publicKey)
 	assert.True(suite.T(), isCreated)
 }
 
@@ -90,32 +92,23 @@ func (suite *ActionSuite) TestCreatesNewExpenseFromCache() {
 
 	alphapoint.BaseUrl = alphapointServer.URL
 
+	publicKey := rsa.PublicKey{}
+
 	action := suite.Action
 	// Initial call without cache
-	action.CreateNewExpense(witResponse, mocks.TestUserId)
+	action.CreateNewExpense(witResponse, mocks.TestUserId, publicKey)
 
 	// Second call should not hit server
 	alphapointServer.Close()
-	isCreated := action.CreateNewExpense(witResponse, mocks.TestUserId)
+	isCreated := action.CreateNewExpense(witResponse, mocks.TestUserId, publicKey)
 	assert.True(suite.T(), isCreated)
 }
 
 func (suite *ActionSuite) TestGetsExpenseTotal() {
 	action := suite.Action
-	rawWitResponse := []byte(`{
-		"entities": {
-			"amount": [],
-			"datetime": [],
-			"description": [],
-			"total_spent": [
-				{ "value": "month", "confidence": 100.00 }
-			]
-		}
-	}`)
-	var witResponse wit.WitResponse
-	json.Unmarshal(rawWitResponse, &witResponse)
-
-	total, err := action.GetExpenseTotal(witResponse, mocks.TestUserId)
+	privateKey := rsa.PrivateKey{}
+	period := "month"
+	total, err := action.GetExpenseTotal(period, mocks.TestUserId, privateKey)
 	assert.Equal(suite.T(), "0.00", total)
 	assert.NoError(suite.T(), err)
 }
@@ -127,19 +120,9 @@ func (suite *ActionSuite) TestReturnsErrorForInvalidPeriod() {
 		suite.Env.Config,
 	}
 
-	rawWitResponse := []byte(`{
-		"entities": {
-			"amount": [],
-			"datetime": [],
-			"description": [],
-			"total_spent": [
-				{ "value": "foo", "confidence": 100.00 }
-			]
-		}
-	}`)
-	var witResponse wit.WitResponse
-	json.Unmarshal(rawWitResponse, &witResponse)
-	_, err := action.GetExpenseTotal(witResponse, mocks.TestUserId)
+	privateKey := rsa.PrivateKey{}
+	period := "foo"
+	_, err := action.GetExpenseTotal(period, mocks.TestUserId, privateKey)
 	assert.EqualError(suite.T(), err, "foo is an invalid period")
 }
 

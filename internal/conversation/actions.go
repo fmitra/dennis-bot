@@ -1,7 +1,9 @@
 package conversation
 
 import (
+	"crypto/rsa"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/jinzhu/gorm"
@@ -24,7 +26,7 @@ type Actions struct {
 	Config config.AppConfig
 }
 
-func (a *Actions) CreateNewExpense(witResponse wit.WitResponse, userId uint) bool {
+func (a *Actions) CreateNewExpense(witResponse wit.WitResponse, userId uint, publicKey rsa.PublicKey) bool {
 	date := witResponse.GetDate()
 	amount, fromCurrency, _ := witResponse.GetAmount()
 	targetCurrency := "USD"
@@ -50,20 +52,23 @@ func (a *Actions) CreateNewExpense(witResponse wit.WitResponse, userId uint) boo
 	expense := &expenses.Expense{
 		Date:        date,
 		Description: description,
-		Total:       amount,
-		Historical:  historicalAmount,
+		Total:       strconv.FormatFloat(amount, 'f', -1, 64),
+		Historical:  strconv.FormatFloat(historicalAmount, 'f', -1, 64),
 		Currency:    fromCurrency,
 		UserID:      userId,
 	}
+	expense.Encrypt(publicKey)
 	manager := expenses.NewExpenseManager(a.Db)
 	return manager.Save(expense)
 }
 
-func (a *Actions) GetExpenseTotal(witResponse wit.WitResponse, userId uint) (string, error) {
+func (a *Actions) GetExpenseTotal(expensePeriod string, userId uint, privateKey rsa.PrivateKey) (string, error) {
 	manager := expenses.NewExpenseManager(a.Db)
-	period, err := witResponse.GetSpendPeriod()
-	total, err := manager.TotalByPeriod(period, userId)
+	total, err := manager.TotalByPeriod(expensePeriod, userId, privateKey)
 	messageVar := strconv.FormatFloat(total, 'f', 2, 64)
+	if err != nil {
+		log.Printf("actions: failed to query expenses %s", err)
+	}
 
 	return messageVar, err
 }

@@ -28,9 +28,6 @@ const (
 	// flow
 	ONBOARD_USER_ACCOUNT_CREATION_FAILED = "onboard_user_account_creation_failed"
 
-	// Response when we fail to hash a user's password prior to storage
-	ONBOARD_USER_PASSWORD_HASH_FAILED = "onboard_user_password_hash_failed"
-
 	// Response when a user successfully sets a password
 	ONBOARD_USER_SAY_OUTRO = "onboard_user_say_outro"
 
@@ -45,6 +42,15 @@ const (
 
 	// Response when an expense total query failed
 	GET_EXPENSE_TOTAL_ERROR = "get_expense_total_error"
+
+	// Response when a user first requests expense totals
+	GET_EXPENSE_TOTAL_ASK_FOR_PASSWORD = "get_expense_total_ask_for_password"
+
+	// Response when a user provides an invalid password
+	GET_EXPENSE_TOTAL_PASSWORD_INVALID = "get_expense_total_password_invalid"
+
+	// Response when an invalid time range is requested by the user
+	GET_EXPENSE_TOTAL_INVALID_PERIOD = "get_expense_total_invalid_period"
 )
 
 type BotResponse string
@@ -67,11 +73,20 @@ var MessageMap = map[string][]string{
 		"How much did you spend? You can say something like 20USD for Dinner",
 	},
 	GET_EXPENSE_TOTAL_ERROR: []string{
-		"I didn't understand that. You can say something like " +
-			"'how much did I spend today?'",
+		"Whoops something went wrong. Why don't you try again later.",
 	},
 	GET_EXPENSE_TOTAL_SUCCESS: []string{
 		"You spent {{var}}",
+	},
+	GET_EXPENSE_TOTAL_INVALID_PERIOD: []string{
+		"I didn't understand that. You can say something like " +
+			"'how much did I spend today?'",
+	},
+	GET_EXPENSE_TOTAL_ASK_FOR_PASSWORD: []string{
+		"Hold up! What's your password?",
+	},
+	GET_EXPENSE_TOTAL_PASSWORD_INVALID: []string{
+		"This password isn't right. Try again, or say 'stop' to cancel",
 	},
 	TRACK_EXPENSE_SUCCESS: []string{
 		"Ok got it!",
@@ -107,10 +122,6 @@ var MessageMap = map[string][]string{
 	},
 	ONBOARD_USER_ACCOUNT_CREATION_FAILED: []string{
 		"Looks like you already created account. Why don't you try tracking an expense.",
-	},
-	ONBOARD_USER_PASSWORD_HASH_FAILED: []string{
-		"Whoops something went wrong. Let's try again. What do you want your " +
-			"password to be?",
 	},
 }
 

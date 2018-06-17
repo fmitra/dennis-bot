@@ -2,14 +2,14 @@ package conversation
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 	"testing"
 
-	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/fmitra/dennis-bot/pkg/telegram"
-	"github.com/fmitra/dennis-bot/pkg/users"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
@@ -38,15 +38,9 @@ func (suite *ExpenseTotalSuite) AfterTest(suiteName, testName string) {
 	mocks.CleanUpEnv(suite.Env)
 }
 
-func GetTestUser(db *gorm.DB) users.User {
-	var user users.User
-	db.Where("telegram_id = ?", mocks.TestUserId).First(&user)
-	return user
-}
-
 func (suite *ExpenseTotalSuite) TestGetResponseList() {
 	expenseTotal := &GetExpenseTotal{}
-	assert.Equal(suite.T(), 1, len(expenseTotal.GetResponses()))
+	assert.Equal(suite.T(), 3, len(expenseTotal.GetResponses()))
 }
 
 func (suite *ExpenseTotalSuite) TestGetExpenseTotalMessage() {
@@ -69,9 +63,10 @@ func (suite *ExpenseTotalSuite) TestGetExpenseTotalMessage() {
 
 	expenseTotal := &GetExpenseTotal{
 		Context{
-			Step:        0,
+			Step:        2,
 			WitResponse: witResponse,
 			IncMessage:  incMessage,
+			AuxData:     "month",
 		},
 		suite.Action,
 	}
@@ -100,7 +95,7 @@ func (suite *ExpenseTotalSuite) TestGetExpenseTotalError() {
 
 	expenseTotal := &GetExpenseTotal{
 		Context{
-			Step:        0,
+			Step:        2,
 			WitResponse: witResponse,
 			IncMessage:  incMessage,
 		},
@@ -109,6 +104,146 @@ func (suite *ExpenseTotalSuite) TestGetExpenseTotalError() {
 	response, cx := expenseTotal.Respond()
 	assert.Equal(suite.T(), BotResponse("Whoops!"), response)
 	assert.Equal(suite.T(), -1, cx.Step)
+}
+
+func (suite *ExpenseTotalSuite) TestAskForPassword() {
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("")
+	json.Unmarshal(message, &incMessage)
+
+	rawWitResponse := []byte(`{
+		"entities": {
+			"amount": [],
+			"datetime": [],
+			"description": [],
+			"total_spent": [
+				{ "value": "month", "confidence": 100.00 }
+			]
+		}
+	}`)
+	var witResponse wit.WitResponse
+	json.Unmarshal(rawWitResponse, &witResponse)
+
+	expenseTotal := &GetExpenseTotal{
+		Context{
+			Step:        0,
+			IncMessage:  incMessage,
+			WitResponse: witResponse,
+		},
+		suite.Action,
+	}
+
+	response, err := expenseTotal.AskForPassword()
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), BotResponse("I need your password"), response)
+}
+
+func (suite *ExpenseTotalSuite) TestSkipsPasswordRequest() {
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("")
+	json.Unmarshal(message, &incMessage)
+
+	rawWitResponse := []byte(`{
+		"entities": {
+			"amount": [],
+			"datetime": [],
+			"description": [],
+			"total_spent": [
+				{ "value": "month", "confidence": 100.00 }
+			]
+		}
+	}`)
+	var witResponse wit.WitResponse
+	json.Unmarshal(rawWitResponse, &witResponse)
+
+	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(incMessage.GetUser().Id)))
+	suite.Action.Cache.Set(cacheKey, "my-password", 180)
+
+	expenseTotal := &GetExpenseTotal{
+		Context{
+			Step:        0,
+			IncMessage:  incMessage,
+			WitResponse: witResponse,
+		},
+		suite.Action,
+	}
+
+	response, err := expenseTotal.AskForPassword()
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), BotResponse(""), response)
+}
+
+func (suite *ExpenseTotalSuite) TestValidatesPassword() {
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("my-password")
+	json.Unmarshal(message, &incMessage)
+
+	rawWitResponse := []byte(`{
+		"entities": {
+			"amount": [],
+			"datetime": [],
+			"description": [],
+			"total_spent": [
+				{ "value": "month", "confidence": 100.00 }
+			]
+		}
+	}`)
+	var witResponse wit.WitResponse
+	json.Unmarshal(rawWitResponse, &witResponse)
+
+	mocks.CreateTestUser(suite.Env.Db)
+	expenseTotal := &GetExpenseTotal{
+		Context{
+			Step:        0,
+			IncMessage:  incMessage,
+			WitResponse: witResponse,
+		},
+		suite.Action,
+	}
+
+	response, err := expenseTotal.ValidatePassword()
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), BotResponse(""), response)
+}
+
+func (suite *ExpenseTotalSuite) TestSkipsPasswordValidation() {
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("")
+	json.Unmarshal(message, &incMessage)
+
+	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(incMessage.GetUser().Id)))
+	suite.Action.Cache.Set(cacheKey, "my-password", 180)
+
+	expenseTotal := &GetExpenseTotal{
+		Context{
+			Step:       0,
+			IncMessage: incMessage,
+		},
+		suite.Action,
+	}
+
+	response, err := expenseTotal.ValidatePassword()
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), BotResponse(""), response)
+}
+
+func (suite *ExpenseTotalSuite) TestFailsPasswordValidation() {
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("Invalid password")
+	json.Unmarshal(message, &incMessage)
+
+	mocks.CreateTestUser(suite.Env.Db)
+	expenseTotal := &GetExpenseTotal{
+		Context{
+			Step:       0,
+			IncMessage: incMessage,
+		},
+		suite.Action,
+	}
+
+	response, err := expenseTotal.ValidatePassword()
+	assert.EqualError(suite.T(), err, "Password invalid")
+	assert.Equal(suite.T(), BotResponse("This password is invalid"), response)
 }
 
 func TestExpenseTotalSuite(t *testing.T) {

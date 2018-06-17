@@ -79,6 +79,11 @@ func (cx *Context) Process(responses []func() (BotResponse, error)) (BotResponse
 	return response, cx
 }
 
+// Skips over to the next response in line
+func (cx *Context) SkipResponse() (BotResponse, error) {
+	return BotResponse(""), nil
+}
+
 // Ends a conversation
 func (cx *Context) EndConversation() {
 	finalStep := -1
@@ -193,7 +198,7 @@ func GetResponse(w wit.WitResponse, inc t.IncomingMessage, a *Actions) BotRespon
 	// we cache the conversation so the user can pick up where they left off
 	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(userId)))
 	if conversation.HasResponse() {
-		threeMinutes := 120
+		threeMinutes := 180
 		a.Cache.Set(cacheKey, conversation, threeMinutes)
 	} else {
 		a.Cache.Delete(cacheKey)

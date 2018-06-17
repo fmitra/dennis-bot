@@ -8,48 +8,48 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/users"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
 
-type Suite struct {
+type ExpenseManagerSuite struct {
 	suite.Suite
 	Env *mocks.TestEnv
 }
 
-func (suite *Suite) SetupSuite() {
+func (suite *ExpenseManagerSuite) SetupSuite() {
 	configFile := "../../config/config.json"
 	suite.Env = mocks.GetTestEnv(configFile)
 }
 
-func (suite *Suite) BeforeTest(suiteName, testName string) {
-	mocks.CreateTestUser(suite.Env.Db)
-}
-
-func (suite *Suite) AfterTest(suiteName, testName string) {
+func (suite *ExpenseManagerSuite) AfterTest(suiteName, testName string) {
 	mocks.CleanUpEnv(suite.Env)
 }
 
 func GetTestUser(db *gorm.DB) users.User {
-	var user users.User
-	db.Where("telegram_id = ?", mocks.TestUserId).First(&user)
-	return user
+	user := &users.User{
+		TelegramID: uint(100),
+		Password:   "password",
+	}
+	db.Create(user)
+	return *user
 }
 
-func BatchCreateExpenses(db *gorm.DB, firstEntryDate time.Time, totalEntries int) {
-	user := GetTestUser(db)
-
+func BatchCreateExpenses(db *gorm.DB, u users.User, firstEntryDate time.Time, totalEntries int) {
 	for days := 1; days <= 10; days++ {
 		createdAt := firstEntryDate.AddDate(0, 0, days)
 		expense := &Expense{
 			Date:        createdAt,
 			Description: "Food",
-			Total:       26.31,
-			Historical:  20.25,
+			Total:       "26.31",
+			Historical:  "20.25",
 			Currency:    "SGD",
 			Category:    "",
-			User:        user,
+			User:        u,
 		}
+		publicKey, _ := crypto.ParsePublicKey(u.PublicKey)
+		expense.Encrypt(publicKey)
 		db.Create(expense)
 
 		// We cannot define the creation date on the initial
@@ -59,18 +59,18 @@ func BatchCreateExpenses(db *gorm.DB, firstEntryDate time.Time, totalEntries int
 	}
 }
 
-func (suite *Suite) TestReturnsExpenseManager() {
+func (suite *ExpenseManagerSuite) TestReturnsExpenseManager() {
 	expenseManager := NewExpenseManager(suite.Env.Db)
 	assert.IsType(suite.T(), &ExpenseManager{}, expenseManager)
 }
 
-func (suite *Suite) TestCreateExpense() {
+func (suite *ExpenseManagerSuite) TestCreateExpense() {
 	user := GetTestUser(suite.Env.Db)
 	expense := &Expense{
 		Date:        time.Now(),
 		Description: "Food",
-		Total:       26.30,
-		Historical:  20.25,
+		Total:       "26.30",
+		Historical:  "20.25",
 		Currency:    "SGD",
 		Category:    "",
 		User:        user,
@@ -84,7 +84,7 @@ func (suite *Suite) TestCreateExpense() {
 	assert.False(suite.T(), suite.Env.Db.NewRecord(expense))
 }
 
-func (suite *Suite) TestQueryExpensesByPeriod() {
+func (suite *ExpenseManagerSuite) TestQueryExpensesByPeriod() {
 	currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
 	mockTime := &mocks.MockTime{currentTime}
 	expenseManager := &ExpenseManager{
@@ -93,7 +93,8 @@ func (suite *Suite) TestQueryExpensesByPeriod() {
 	}
 
 	firstEntryDate := time.Date(2018, 3, 8, 0, 0, 0, 0, time.UTC)
-	BatchCreateExpenses(suite.Env.Db, firstEntryDate, 10)
+	user := GetTestUser(suite.Env.Db)
+	BatchCreateExpenses(suite.Env.Db, user, firstEntryDate, 10)
 
 	var testCases = []struct {
 		input    string
@@ -104,7 +105,6 @@ func (suite *Suite) TestQueryExpensesByPeriod() {
 		{"today", 1},
 	}
 
-	user := GetTestUser(suite.Env.Db)
 	for _, test := range testCases {
 		expenses, err := expenseManager.QueryByPeriod(test.input, user.ID)
 		assert.NoError(suite.T(), err)
@@ -112,7 +112,7 @@ func (suite *Suite) TestQueryExpensesByPeriod() {
 	}
 }
 
-func (suite *Suite) TestQueryInvalidPeriodWillError() {
+func (suite *ExpenseManagerSuite) TestQueryInvalidPeriodWillError() {
 	currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
 	mockTime := &mocks.MockTime{currentTime}
 	expenseManager := &ExpenseManager{
@@ -121,15 +121,15 @@ func (suite *Suite) TestQueryInvalidPeriodWillError() {
 	}
 
 	firstEntryDate := time.Date(2018, 3, 8, 0, 0, 0, 0, time.UTC)
-	BatchCreateExpenses(suite.Env.Db, firstEntryDate, 5)
-
 	user := GetTestUser(suite.Env.Db)
+	BatchCreateExpenses(suite.Env.Db, user, firstEntryDate, 5)
+
 	_, errorMessage := expenseManager.QueryByPeriod("some-date", user.ID)
 	assert.EqualError(suite.T(), errorMessage, "some-date is an invalid period")
 
 }
 
-func (suite *Suite) TestParseStringOptionToTime() {
+func (suite *ExpenseManagerSuite) TestParseStringOptionToTime() {
 	currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
 	mockTime := &mocks.MockTime{currentTime}
 	expenseManager := &ExpenseManager{
@@ -153,7 +153,7 @@ func (suite *Suite) TestParseStringOptionToTime() {
 	}
 }
 
-func (suite *Suite) TestSumsHistoricalTotalsByPeriod() {
+func (suite *ExpenseManagerSuite) TestSumsHistoricalTotalsByPeriod() {
 	currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
 	mockTime := &mocks.MockTime{currentTime}
 	expenseManager := &ExpenseManager{
@@ -162,7 +162,8 @@ func (suite *Suite) TestSumsHistoricalTotalsByPeriod() {
 	}
 
 	firstEntryDate := time.Date(2018, 3, 8, 0, 0, 0, 0, time.UTC)
-	BatchCreateExpenses(suite.Env.Db, firstEntryDate, 10)
+	user := GetTestUser(suite.Env.Db)
+	BatchCreateExpenses(suite.Env.Db, user, firstEntryDate, 10)
 
 	var testCases = []struct {
 		input    string
@@ -173,14 +174,14 @@ func (suite *Suite) TestSumsHistoricalTotalsByPeriod() {
 		{"today", 20.25},
 	}
 
-	user := GetTestUser(suite.Env.Db)
+	privateKey, _ := crypto.ParsePrivateKey(user.PrivateKey, "password")
 	for _, test := range testCases {
-		total, err := expenseManager.TotalByPeriod(test.input, user.ID)
+		total, err := expenseManager.TotalByPeriod(test.input, user.ID, privateKey)
 		assert.NoError(suite.T(), err)
 		assert.Equal(suite.T(), test.expected, total)
 	}
 }
 
-func TestSuite(t *testing.T) {
-	suite.Run(t, new(Suite))
+func TestExpenseManagerSuite(t *testing.T) {
+	suite.Run(t, new(ExpenseManagerSuite))
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/fmitra/dennis-bot/config"
 	"github.com/fmitra/dennis-bot/pkg/sessions"
@@ -45,23 +46,28 @@ func GetTestEnv(configFile string) *TestEnv {
 
 // Creates default test user with telegram user ID specified in mocks
 func CreateTestUser(db *gorm.DB) {
-	password := "my-password"
+	password, _ := bcrypt.GenerateFromPassword([]byte("my-password"), 10)
 	user := &user{
 		TelegramID: TestUserId,
-		Password:   password,
+		Password:   string(password),
 	}
 	db.Create(user)
 }
 
 // Clears common DB and cached objects after every test
 func CleanUpEnv(testEnv *TestEnv) {
+	var m sync.Mutex
+	m.Lock()
 	testEnv.Db.Exec("DELETE FROM expenses;")
 	testEnv.Db.Exec("DELETE FROM users;")
 
 	defaultUserCache := fmt.Sprintf("%s_conversation", strconv.Itoa(int(TestUserId)))
+	defaultPassCache := fmt.Sprintf("%s_password", strconv.Itoa(int(TestUserId)))
 	defaultCurrencyCache := "SGD_USD"
 	testEnv.Cache.Delete(defaultUserCache)
+	testEnv.Cache.Delete(defaultPassCache)
 	testEnv.Cache.Delete(defaultCurrencyCache)
+	m.Unlock()
 }
 
 // Duplicate of the users pkg model. We define this here to prevent circular
@@ -70,6 +76,8 @@ type user struct {
 	gorm.Model
 	Password   string `gorm:"type:varchar(2000);not null"`
 	TelegramID uint   `gorm:"unique_index"`
+	PublicKey  string `gorm:"type:varchar(2500);not null"`
+	PrivateKey string `gorm:"type:varchar(2500);not null"`
 }
 
 // Duplicate of the expense pkg model. We define this here to prevent circular
@@ -78,10 +86,10 @@ type expense struct {
 	gorm.Model
 	Date        time.Time `gorm:"index;not null"` // Date the expense was made
 	Description string    `gorm:"not null"`       // Description of the expense
-	Total       float64   `gorm:"not null"`       // Total amount paid for the expense
-	Historical  float64   // Historical USD value of the total
-	Currency    string    `gorm:"type:varchar(5);not null"` // Currency ISO of the total
-	Category    string    `gorm:"type:varchar(30)"`         // Category of the expense
+	Total       string    `gorm:"not null"`       // Total amount paid for the expense
+	Historical  string    // Historical USD value of the total
+	Currency    string    `gorm:"not null"`         // Currency ISO of the total
+	Category    string    `gorm:"type:varchar(30)"` // Category of the expense
 	User        user
 	UserID      uint
 }
