@@ -2,7 +2,7 @@
 
 # Dennis
 
-A pet project to learn Go, Dennis is a privacy friendly Telegram bot to manage expense tracking.
+A pet project to learn Go, Dennis is a privacy friendly Telegram bot to manage expense tracking. Talk to him [here](https://t.me/AssistantDennisBot)
 
 ![dennis](https://www.francismitra.com/static/misc/dennis/convo.jpg)
 
@@ -28,21 +28,19 @@ format: how much did I spend <time_period> (today, this week, this month)
 example: How much did I spend today?
 ```
 
-### Privacy Friendly But Not Foolproof
+### Privacy Friendly But Be Warned
 
 While Dennis respects your privacy, **he's not intented to store confidential data**. His primary
 use case is to offer a **convenient** way to follow up on your day to day spending. In short,
 he protects you from himself - the bot owner cannot access your detailed expenditures, or
-use your information for advertising. Anyone with access to your device however, can
-easily see your password in plaintext and request the info.
+use your information for advertising. Anyone with access to your device however can **easily**
+access or request this info.
 
 #### Data protection
 
-Dennis creates a private/public key pair for all users and additionally sets a user password
-to protect the user's private key in storage. These keys are used to encrypt expense totals
-and descriptions (timestamps are unencrypted) to ensure anyone running the bot has zero
-access to a user's detailed expenditures. Dennis can only return your expense history
-after you provide him with your password.
+Dennis creates a private/public key pair for all users to encrypt most details of their expenses
+(note: timestamps are unencrypted). Your private key is protected with a password of your choice.
+This ensures the admin running the bot has no zero access to your expenditures.
 
 While this protect's user data from the bot owner, keep in mind passwords are visible in
 plaintext right inside of the Telegram application. Anyone who has access to your chats for
@@ -94,11 +92,11 @@ This step is not necessary if all you want to do is run the test suite.
 
 #### 4. Set up your local `config.json`
 
-* Postgres & Redis settings if you are not using the default test config
-* Telegram API token to respond to messages
-* Wit.ai auth token to parse user messages
-* Alphapoint API key to convert currency
-* Domain the bot will be receiving webhooks from. In development, this will be the Ngrok URL
+* `database` and `reddis` - Postgres & Redis settings if you are not using the default test config
+* `telegram` - Telegram API token to respond to messages
+* `wit` - Wit.ai auth token to parse user messages
+* `alphapoint` - Alphapoint API key to convert currency
+* `bot_domain` - Domain the bot will be receiving webhooks from. In development, this will be the Ngrok URL
 
 
 #### 5. Run the bot
@@ -109,6 +107,11 @@ go build ./cmd/dennis-bot
 ```
 
 ## Developer Notes
+
+#### Test Environment
+
+There is a race condition pending to be resolved in DB clean up tasks. It's visible when
+the entire test suite is run with `go test ./...`. Isolated they run fine.
 
 #### Telegram Authentication
 

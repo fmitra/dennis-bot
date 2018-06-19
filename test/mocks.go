@@ -13,6 +13,7 @@ type TelegramMock struct {
 	Calls struct {
 		SetWebhook int
 		Send       int
+		SendAction int
 	}
 }
 
@@ -46,6 +47,12 @@ func (t *TelegramMock) SetWebhook() int {
 
 func (t *TelegramMock) Send(chatId int, message string) int {
 	t.Calls.Send++
+	statusCode := 200
+	return statusCode
+}
+
+func (t *TelegramMock) SendAction(chatId int, action string) int {
+	t.Calls.SendAction++
 	statusCode := 200
 	return statusCode
 }

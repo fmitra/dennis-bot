@@ -31,6 +31,12 @@ type OutgoingMessage struct {
 	Text   string `json:"text"`
 }
 
+// Represents a Telegram Chat Action (ex. Bot is typing indicator)
+type ChatAction struct {
+	ChatId int `json:"chat_id"`
+	Action string `json:"action"`
+}
+
 func (i IncomingMessage) GetChatId() (chatId int) {
 	return i.Message.Chat.Id
 }

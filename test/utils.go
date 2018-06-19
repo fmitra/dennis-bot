@@ -54,11 +54,14 @@ func CreateTestUser(db *gorm.DB) {
 	db.Create(user)
 }
 
-// Clears common DB and cached objects after every test
+// Clears common DB and cached objects. Intended to be run after any test
+// suite with a DB dependency
 func CleanUpEnv(testEnv *TestEnv) {
-	var m sync.Mutex
-	m.Lock()
-	testEnv.Db.Exec("DELETE FROM expenses;")
+	// TODO There is a race condition that needs to be investigated where test tear down
+	// methods do not finish clearing out the DB before the next suite starts. Setting
+	// a lock does not seem to resolve it. For now, we will miitigate the issue with
+	// with custom SQL and a sleeper until we find a more elegant solution.
+	testEnv.Db.Exec("DELETE FROM expenses e USING users u WHERE e.user_id = u.id and u.telegram_id != 100;")
 	testEnv.Db.Exec("DELETE FROM users;")
 
 	defaultUserCache := fmt.Sprintf("%s_conversation", strconv.Itoa(int(TestUserId)))
@@ -67,7 +70,9 @@ func CleanUpEnv(testEnv *TestEnv) {
 	testEnv.Cache.Delete(defaultUserCache)
 	testEnv.Cache.Delete(defaultPassCache)
 	testEnv.Cache.Delete(defaultCurrencyCache)
-	m.Unlock()
+
+	// TODO Clean this up later
+	time.Sleep(500 * time.Millisecond)
 }
 
 // Duplicate of the users pkg model. We define this here to prevent circular

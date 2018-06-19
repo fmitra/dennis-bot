@@ -18,10 +18,6 @@ const (
 	TODAY = "today"
 )
 
-type ExpenseTotal struct {
-	Total float64
-}
-
 type Clock interface {
 	Now() time.Time
 }

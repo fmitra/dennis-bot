@@ -235,6 +235,28 @@ func (suite *BotSuite) TestSendsOutgoingMessage() {
 	assert.Equal(suite.T(), 200, statusCode)
 }
 
+func (suite *BotSuite) TestSendsTypingIndicator() {
+	telegramServer := mocks.MakeTestServer("")
+	telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
+	telegramMock := telegram.NewClient("", "")
+	defer telegramServer.Close()
+
+	bot := &Bot{
+		&Env{
+			suite.Env.Db,
+			suite.Env.Cache,
+			suite.Env.Config,
+			telegramMock,
+		},
+	}
+	message := mocks.GetMockMessage("")
+	var incMessage telegram.IncomingMessage
+	json.Unmarshal(message, &incMessage)
+
+	statusCode := bot.SendTypingIndicator(incMessage)
+	assert.Equal(suite.T(), 200, statusCode)
+}
+
 func TestBotSuite(t *testing.T) {
 	suite.Run(t, new(BotSuite))
 }

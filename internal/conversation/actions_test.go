@@ -108,7 +108,7 @@ func (suite *ActionSuite) TestGetsExpenseTotal() {
 	action := suite.Action
 	privateKey := rsa.PrivateKey{}
 	period := "month"
-	total, err := action.GetExpenseTotal(period, mocks.TestUserId, privateKey)
+	total, err := action.GetExpenseTotal(period, uint(200), privateKey)
 	assert.Equal(suite.T(), "0.00", total)
 	assert.NoError(suite.T(), err)
 }

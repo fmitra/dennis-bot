@@ -19,6 +19,7 @@ var BaseUrl = "https://api.telegram.org/bot"
 type Telegram interface {
 	SetWebhook() int
 	Send(chatId int, message string) int
+	SendAction(chatId int, action string) int
 }
 
 type Client struct {
@@ -80,9 +81,30 @@ func (c *Client) Send(chatId int, message string) int {
 		strategy.Backoff(backoff.Exponential(time.Second, 2)),
 	)
 	if err != nil {
-		log.Panicf("telegram: failed to send message")
+		log.Printf("telegram: failed to send message")
 	}
 
 	respBody.Close()
+	return statusCode
+}
+
+// Sends a processing notice to the user. Used to alert the user
+// that the bot has received their message and will respond soon.
+// Most common usage is a typing indicator.
+func (c *Client) SendAction(chatId int, action string) int {
+	url := fmt.Sprintf("%s%s/sendChatAction", c.BaseUrl, c.Token)
+	contentType := "application/json"
+	chatAction := ChatAction{chatId, action}
+	payload, _ := json.Marshal(chatAction)
+
+	var statusCode int
+	resp, err := http.Post(url, contentType, bytes.NewReader(payload))
+	if err != nil {
+		log.Printf("telegram: failed to send action")
+		statusCode = 400
+	}
+
+	statusCode = resp.StatusCode
+	resp.Body.Close()
 	return statusCode
 }

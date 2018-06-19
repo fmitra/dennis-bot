@@ -24,6 +24,8 @@ func (bot *Bot) Converse(payload []byte) int {
 		errorCode := 400
 		return errorCode
 	}
+
+	bot.SendTypingIndicator(incMessage)
 	response := bot.BuildResponse(incMessage)
 
 	return bot.SendMessage(response, incMessage)
@@ -45,6 +47,12 @@ func (bot *Bot) SendMessage(r convo.BotResponse, incMessage telegram.IncomingMes
 	chatId := incMessage.GetChatId()
 
 	return bot.env.telegram.Send(chatId, string(r))
+}
+
+func (bot *Bot) SendTypingIndicator(incMessage telegram.IncomingMessage) int {
+	chatId := incMessage.GetChatId()
+	action := "typing"
+	return bot.env.telegram.SendAction(chatId, action)
 }
 
 // Processes an incoming message and retrieves the appropriate response

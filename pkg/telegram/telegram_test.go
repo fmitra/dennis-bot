@@ -42,4 +42,19 @@ func TestTelegram(t *testing.T) {
 		statusCode := telegram.Send(chatId, message)
 		assert.Equal(t, 200, statusCode)
 	})
+
+	t.Run("Sends a telegram chat action", func(t *testing.T) {
+		server := mocks.MakeTestServer("")
+		defer server.Close()
+		telegram := &Client{
+			Token:   "telegramToken",
+			Domain:  "https://localhost",
+			BaseUrl: fmt.Sprintf("%s/", server.URL),
+		}
+
+		chatId := 5
+		action := "typing"
+		statusCode := telegram.SendAction(chatId, action)
+		assert.Equal(t, 200, statusCode)
+	})
 }

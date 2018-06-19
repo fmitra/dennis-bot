@@ -24,6 +24,7 @@ func (suite *ExpenseManagerSuite) SetupSuite() {
 }
 
 func (suite *ExpenseManagerSuite) AfterTest(suiteName, testName string) {
+	suite.Env.Db.Exec("DELETE FROM expenses;")
 	mocks.CleanUpEnv(suite.Env)
 }
 
@@ -37,7 +38,7 @@ func GetTestUser(db *gorm.DB) users.User {
 }
 
 func BatchCreateExpenses(db *gorm.DB, u users.User, firstEntryDate time.Time, totalEntries int) {
-	for days := 1; days <= 10; days++ {
+	for days := 1; days <= totalEntries; days++ {
 		createdAt := firstEntryDate.AddDate(0, 0, days)
 		expense := &Expense{
 			Date:        createdAt,

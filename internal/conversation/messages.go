@@ -57,71 +57,87 @@ type BotResponse string
 
 var MessageMap = map[string][]string{
 	DEFAULT: []string{
-		"Hi! Tell Dennis what you want to do!",
+		"alright, alright you want my attention? You have it",
 
-		"What are you tracking? You can say something like " +
-			"2000JPY for cornerstore sushi. Not in Japan? No problemmm " +
-			"you can use any currency!",
+		"I just got back from accounting school. Tell me to track something. " +
+			"You can say '2000JPY for sushi'",
 
-		"Let's get started! You can say something like " +
-			"4USD for coffee yesterday",
+		"hmm... ehhhh.... idk",
 
-		"Dennis Dennis Dennis Dennis",
+		"H-h-hi I'm dennis",
 
-		"Hiiiiiiiii I'm Dennis!",
-
-		"How much did you spend? You can say something like 20USD for Dinner",
+		"What you want!? I'm trying to take a vacation",
 	},
 	GET_EXPENSE_TOTAL_ERROR: []string{
-		"Whoops something went wrong. Why don't you try again later.",
+		"ehhh oh no... Idk what happened. Try again later.",
 	},
 	GET_EXPENSE_TOTAL_SUCCESS: []string{
-		"You spent {{var}}",
+		"You spent {{var}} USD",
+
+		"lets see now... looks like {{var}} USD",
+
+		"hmmm.... {{var}} USD",
 	},
 	GET_EXPENSE_TOTAL_INVALID_PERIOD: []string{
-		"I didn't understand that. You can say something like " +
-			"'how much did I spend today?'",
+		"I'm not that smart. Ask me something like 'how much did I spend today'",
+
+		"ask me something later. Dennis is on vacation",
 	},
 	GET_EXPENSE_TOTAL_ASK_FOR_PASSWORD: []string{
-		"Hold up! What's your password?",
+		"wait wait! What's your password",
+
+		"I can't tell you without a password",
+
+		"ok, but first you gotta tell me your password",
 	},
 	GET_EXPENSE_TOTAL_PASSWORD_INVALID: []string{
-		"This password isn't right. Try again, or say 'stop' to cancel",
+		"wat! that password's not rigiht. Try again or say 'cancel'",
+
+		"hold up! that's not the password. Try again or say 'cancel'",
 	},
 	TRACK_EXPENSE_SUCCESS: []string{
-		"Ok got it!",
+		"ok writing it down...",
 
-		"Roger that!",
+		"you spend so much. When you gon take me out? today is dennis day!",
+
+		"okay one min. Let me get my calculator",
+
+		"writing.... and... done!",
 	},
 	TRACK_EXPENSE_ERROR: []string{
-		"I didn't understand that. You need to tell me exactly what " +
-			"what your expense is. For example '0.00012BTC for Rent'",
+		"I didn't get that. Try saying something like '1000RUB for lunch'",
 
-		"I didn't get that. Try saying 'How much did I spend this week?'",
+		"hmm this is embarassing. I have no idea what I'm doing. Try asking me to track " +
+		"12USD for food",
 	},
 	ONBOARD_USER_ASK_FOR_PASSWORD: []string{
-		"You seem around here! My name is Dennis and I can track your expenses " +
-			"but first, you need to create a password to protect your data. What " +
-			"do you want your password to be?",
+		"I dont know you. I'm Dennis though, and I can track your finances. But first, " +
+		"you gotta make a password. What do you want your password to be?",
 
-		"You need to create a password before I can track your expenses. What " +
-			"do you want your password to be?",
+		"Hiiiii I'm Dennis. I track your expenses. What do you want your password to be?",
+
+		"h-h-hi I'm dennis. I can track your finances, but first, we got to make a " +
+		"password. What do you want your password to be?",
 	},
 	ONBOARD_USER_CONFIRM_PASSWORD: []string{
-		"Ok your password is {{var}}. Is that right? Just say yes or no.",
+		"alright got it, your password is '{{var}}'. Is that right? Just say yes or no.",
+
+		"ok '{{var}}' right? Just say yes or no",
 	},
 	ONBOARD_USER_SAY_OUTRO: []string{
-		"Alright you're all set! When you're ready to start, you can say something " +
-			"like 450RUB for Lunch",
+		"got it! you're all set! Next time you buy something, just to tell me something " +
+		"like 450SGD for tickets",
 	},
 	ONBOARD_USER_CONFIRM_PASSWORD_ERROR: []string{
-		"I didn't understand that. You can say yes or no",
+		"I don't get it. I told you just say yes or no!",
+
+		"You're confusing me. Just say 'yes' or 'no'",
 	},
 	ONBOARD_USER_REJECT_PASSWORD: []string{
-		"Okay will if you think of password later just let me know.",
+		"alright well just come back later if you think of a password",
 	},
 	ONBOARD_USER_ACCOUNT_CREATION_FAILED: []string{
-		"Looks like you already created account. Why don't you try tracking an expense.",
+		"Hey! I think you already have an account. Why don't you try tracking something",
 	},
 }
 
