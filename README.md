@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/fmitra/dennis-bot.svg?branch=master)](https://travis-ci.org/fmitra/dennis-bot)
+[![Build Status](https://travis-ci.org/fmitra/dennis-bot.svg?branch=master)](https://travis-ci.org/fmitra/dennis-bot) [![Report Card](https://goreportcard.com/badge/github.com/fmitra/dennis-bot)](https://goreportcard.com/badge/github.com/fmitra/dennis-bot)
 
 # Dennis
 
