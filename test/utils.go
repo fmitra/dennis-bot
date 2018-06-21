@@ -18,7 +18,7 @@ import (
 )
 
 // We use global variables here to implement testEnv as a singleton
-// accross the different test suites.
+// across the different test suites.
 var (
 	testEnv *TestEnv
 	once    sync.Once
@@ -34,7 +34,7 @@ type TestEnv struct {
 // GetTestEnv returns TestEnv as a singleton.
 func GetTestEnv(configFile string) *TestEnv {
 	// We only need a single Postgres/Redis connection
-	// to share accross tests
+	// to share across tests
 	once.Do(func() {
 		crypto.InitializeGob()
 
@@ -83,7 +83,7 @@ func CleanUpEnv(testEnv *TestEnv) {
 }
 
 // Duplicate of the users pkg model. We define this here to prevent circular
-// imports when creating the test enviroment.
+// imports when creating the test environment.
 type user struct {
 	gorm.Model
 	Password   string `gorm:"type:varchar(2000);not null"`

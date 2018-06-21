@@ -113,7 +113,7 @@ var MessageMap = map[string][]string{
 	TrackExpenseError: []string{
 		"I didn't get that. Try saying something like '1000RUB for lunch'",
 
-		"hmm this is embarassing. I have no idea what I'm doing. Try asking me to track " +
+		"hmm this is embarrassing. I have no idea what I'm doing. Try asking me to track " +
 			"12USD for food",
 	},
 	OnboardUserAskForPassword: []string{

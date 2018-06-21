@@ -88,7 +88,7 @@ func (c *Client) ParseMessage(message string) Response {
 	)
 
 	if err != nil {
-		log.Printf("witai: Failed to retreive wit response")
+		log.Printf("witai: failed to retrieve wit response")
 	}
 
 	return response

@@ -1,4 +1,4 @@
-// Package mocks provides testing utils and mocks to share accross test suites.
+// Package mocks provides testing utils and mocks to share across test suites.
 package mocks
 
 import (

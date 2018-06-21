@@ -235,7 +235,7 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	assert.Equal(suite.T(), BotResponse("Okay try again later"), response)
 	assert.Equal(suite.T(), -1, conversation.Step)
 
-	// After receiving a negative step, all future respones are empty
+	// After receiving a negative step, all future responses are empty
 	message = mocks.GetMockMessage("Hello?")
 	json.Unmarshal(message, &incMessage)
 	response = conversation.Respond(witResponse, incMessage, actions)
