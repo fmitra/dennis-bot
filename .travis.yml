@@ -15,15 +15,15 @@ before_script:
 stages:
   - stage: test
     script:
-      - make develop
-      - make dev_dependencies
-      - docker-compose up -d
-      - make test_and_lint
+    - make develop
+    - make dev_dependencies
+    - docker-compose up -d
+    - make test_and_lint
   - stage: build
     if: (tag =~ ^v)
     script:
-      - export REPO=fmitra/dennis-bot
-      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker build . -f Dockerfile -t $REPO
-      - docker tag $REPO $REPO:$TRAVIS_BUILD_NUMBER
-      - docker push $REPO
+    - export REPO=fmitra/dennis-bot
+    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+    - docker build . -f Dockerfile -t $REPO
+    - docker tag $REPO $REPO:$TRAVIS_BUILD_NUMBER
+    - docker push $REPO
