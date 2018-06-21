@@ -21,12 +21,10 @@ jobs:
         - docker-compose up -d
         - make test_and_lint
     - stage: build
+      if: tag =~ ^v
       script:
         - export REPO=fmitra/dennis-bot
-        - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+        - docker login --username $DOCKER_USER --password-stdin $DOCKER_PASS
         - docker build . -f Dockerfile -t $REPO
         - docker tag $REPO $REPO:$TRAVIS_BUILD_NUMBER
         - docker push $REPO
-    - stages:
-      - name: build
-        if: (tag =~ ^v)
