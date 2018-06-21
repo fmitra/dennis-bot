@@ -1,5 +1,6 @@
 package utils
 
+// CURRENCIES are all accepted currencies by the bot.
 var CURRENCIES = []string{
 	"AED",
 	"AFN",

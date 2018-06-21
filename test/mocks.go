@@ -1,3 +1,4 @@
+// Package mocks provides testing utils and mocks to share accross test suites.
 package mocks
 
 import (
@@ -7,8 +8,10 @@ import (
 	"time"
 )
 
-const TestUserId = uint(12345)
+// TestUserID is the common Telegram User ID we use in most test cases.
+const TestUserID = uint(12345)
 
+// TelegramMock mocks Telegram package.
 type TelegramMock struct {
 	Calls struct {
 		SetWebhook int
@@ -17,6 +20,7 @@ type TelegramMock struct {
 	}
 }
 
+// SessionMock mocks Session package.
 type SessionMock struct {
 	Calls struct {
 		Get    int
@@ -25,38 +29,45 @@ type SessionMock struct {
 	}
 }
 
+// Set mocks Session Set.
 func (s *SessionMock) Set(cacheKey string, v interface{}, timeInSeconds int) {
 	s.Calls.Set++
 }
 
+// Delete mocks Session Delete.
 func (s *SessionMock) Delete(cacheKey string) error {
 	s.Calls.Delete++
 	return nil
 }
 
+// Get mocks Session Get.
 func (s *SessionMock) Get(cacheKey string, v interface{}) error {
 	s.Calls.Get++
 	return nil
 }
 
+// SetWebhook mocks Telegram SetWebhook.
 func (t *TelegramMock) SetWebhook() int {
 	t.Calls.SetWebhook++
 	statusCode := 200
 	return statusCode
 }
 
-func (t *TelegramMock) Send(chatId int, message string) int {
+// Send mocks Telegram Send.
+func (t *TelegramMock) Send(chatID int, message string) int {
 	t.Calls.Send++
 	statusCode := 200
 	return statusCode
 }
 
-func (t *TelegramMock) SendAction(chatId int, action string) int {
+// SendAction mocks Telegram SendAction.
+func (t *TelegramMock) SendAction(chatID int, action string) int {
 	t.Calls.SendAction++
 	statusCode := 200
 	return statusCode
 }
 
+// MakeTestServer returns a test server with expected response.
 func MakeTestServer(response string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -64,6 +75,7 @@ func MakeTestServer(response string) *httptest.Server {
 	}))
 }
 
+// GetMockMessage returns a stub Telegram IncomingMessage.
 func GetMockMessage(userResponse string) []byte {
 	response := "Hello world"
 	if userResponse != "" {
@@ -94,14 +106,17 @@ func GetMockMessage(userResponse string) []byte {
 	return message
 }
 
+// MockTime implements CurrentTime interface.
 type MockTime struct {
 	CurrentTime time.Time
 }
 
+// Now returns the current time.
 func (m *MockTime) Now() time.Time {
 	return m.CurrentTime
 }
 
+// MessageMapMock replaces conversatio MessageMap with predictable results.
 var MessageMapMock = map[string][]string{
 	"default": []string{
 		"This is a default message",

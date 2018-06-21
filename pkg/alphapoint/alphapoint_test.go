@@ -14,7 +14,7 @@ func TestAlphapoint(t *testing.T) {
 		alphapoint := NewClient(token)
 
 		assert.Equal(t, "alphapointToken", alphapoint.Token)
-		assert.Equal(t, BaseUrl, alphapoint.BaseUrl)
+		assert.Equal(t, BaseURL, alphapoint.BaseURL)
 	})
 
 	t.Run("Converts currency", func(t *testing.T) {
@@ -29,7 +29,7 @@ func TestAlphapoint(t *testing.T) {
 
 		alphapoint := Client{
 			Token:   "alphapointToken",
-			BaseUrl: server.URL,
+			BaseURL: server.URL,
 		}
 
 		fromISO := "USD"

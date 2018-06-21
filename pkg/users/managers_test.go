@@ -28,33 +28,33 @@ func (suite *Suite) TestReturnsUserByTelegramID() {
 	manager := NewUserManager(suite.Env.Db)
 	password := "my-password"
 	user := &User{
-		TelegramID: mocks.TestUserId,
+		TelegramID: mocks.TestUserID,
 		Password:   password,
 	}
 	suite.Env.Db.Create(user)
 
-	queriedUser := manager.GetByTelegramId(mocks.TestUserId)
-	assert.Equal(suite.T(), mocks.TestUserId, queriedUser.TelegramID)
+	queriedUser := manager.GetByTelegramID(mocks.TestUserID)
+	assert.Equal(suite.T(), mocks.TestUserID, queriedUser.TelegramID)
 }
 
 func (suite *Suite) TestCreatesNewUser() {
 	manager := NewUserManager(suite.Env.Db)
 	user := &User{
-		TelegramID: mocks.TestUserId,
+		TelegramID: mocks.TestUserID,
 	}
-	isCreated := manager.Save(user)
-	assert.True(suite.T(), isCreated)
+	err := manager.Save(user)
+	assert.NoError(suite.T(), err)
 }
 
 func (suite *Suite) ValidatesUserPassword() {
 	hashedPassword, _ := crypto.HashText("my-password")
 	user := &User{
 		Password:   hashedPassword,
-		TelegramID: mocks.TestUserId,
+		TelegramID: mocks.TestUserID,
 	}
 
-	assert.True(suite.T(), user.IsPasswordValid("my-password"))
-	assert.False(suite.T(), user.IsPasswordValid("not-my-password"))
+	assert.NoError(suite.T(), user.ValidatePassword("my-password"))
+	assert.EqualError(suite.T(), user.ValidatePassword("not-my-password"), "")
 }
 
 func TestSuite(t *testing.T) {

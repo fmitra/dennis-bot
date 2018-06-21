@@ -1,3 +1,4 @@
+// Package config contains settings for the bot service and all related packages.
 package config
 
 import (
@@ -5,6 +6,7 @@ import (
 	"os"
 )
 
+// AppConfig is a JSON config for the bot.
 type AppConfig struct {
 	SecretKey string `json:"secret_key"`
 	Database  struct {
@@ -33,16 +35,16 @@ type AppConfig struct {
 	} `json:"wit"`
 }
 
-// Loads JSON config from file (ex. config/config.json)
+// LoadConfig loads a JSON config from file (ex. config/config.json)
 func LoadConfig(file string) AppConfig {
 	var config AppConfig
 
 	configFile, err := os.Open(file)
-	defer configFile.Close()
-
 	if err != nil {
 		panic(err)
 	}
+
+	defer configFile.Close()
 
 	jsonParser := json.NewDecoder(configFile)
 	jsonParser.Decode(&config)

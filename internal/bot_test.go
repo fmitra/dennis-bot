@@ -6,14 +6,12 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	convo "github.com/fmitra/dennis-bot/internal/conversation"
 	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
-	"github.com/fmitra/dennis-bot/pkg/users"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
@@ -49,12 +47,6 @@ func (suite *BotSuite) AfterTest(suiteName, testName string) {
 	mocks.CleanUpEnv(suite.Env)
 }
 
-func GetTestUser(db *gorm.DB) users.User {
-	var user users.User
-	db.Where("telegram_id = ?", mocks.TestUserId).First(&user)
-	return user
-}
-
 func (suite *BotSuite) TestHandlesTrackingIntent() {
 	var incMessage telegram.IncomingMessage
 	message := mocks.GetMockMessage("")
@@ -83,8 +75,8 @@ func (suite *BotSuite) TestHandlesTrackingIntent() {
 	defer witServer.Close()
 	defer alphapointServer.Close()
 
-	wit.BaseUrl = witServer.URL
-	alphapoint.BaseUrl = alphapointServer.URL
+	wit.BaseURL = witServer.URL
+	alphapoint.BaseURL = alphapointServer.URL
 	bot := &Bot{suite.BotEnv}
 
 	response := bot.BuildResponse(incMessage)
@@ -107,7 +99,7 @@ func (suite *BotSuite) TestHandlesExpenseTotalIntent() {
 		}
 	}`
 	witServer := mocks.MakeTestServer(witResponse)
-	wit.BaseUrl = witServer.URL
+	wit.BaseURL = witServer.URL
 	defer witServer.Close()
 
 	bot := &Bot{suite.BotEnv}
@@ -130,7 +122,7 @@ func (suite *BotSuite) TestReturnsDefaultMessage() {
 		}
 	}`
 	witServer := mocks.MakeTestServer(witResponse)
-	wit.BaseUrl = witServer.URL
+	wit.BaseURL = witServer.URL
 	defer witServer.Close()
 
 	bot := &Bot{suite.BotEnv}
@@ -155,12 +147,12 @@ func (suite *BotSuite) TestReturnsErrorMessage() {
 		}
 	}`
 	witServer := mocks.MakeTestServer(witResponse)
-	wit.BaseUrl = witServer.URL
+	wit.BaseURL = witServer.URL
 	defer witServer.Close()
 
 	bot := &Bot{suite.BotEnv}
 
-	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(mocks.TestUserId)))
+	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(mocks.TestUserID)))
 	suite.Env.Cache.Set(cacheKey, "my-password", 180)
 
 	response := bot.BuildResponse(incMessage)
@@ -190,8 +182,8 @@ func (suite *BotSuite) TestReceivesRespondsWithTelegram() {
 	}`
 	witServer := mocks.MakeTestServer(witResponse)
 	telegramServer := mocks.MakeTestServer("")
-	wit.BaseUrl = witServer.URL
-	telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
+	wit.BaseURL = witServer.URL
+	telegram.BaseURL = fmt.Sprintf("%s/", telegramServer.URL)
 	defer witServer.Close()
 	defer telegramServer.Close()
 
@@ -213,7 +205,7 @@ func (suite *BotSuite) TestReceivesIncomingMessage() {
 
 func (suite *BotSuite) TestSendsOutgoingMessage() {
 	telegramServer := mocks.MakeTestServer("")
-	telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
+	telegram.BaseURL = fmt.Sprintf("%s/", telegramServer.URL)
 	telegramMock := telegram.NewClient("", "")
 	defer telegramServer.Close()
 
@@ -237,7 +229,7 @@ func (suite *BotSuite) TestSendsOutgoingMessage() {
 
 func (suite *BotSuite) TestSendsTypingIndicator() {
 	telegramServer := mocks.MakeTestServer("")
-	telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
+	telegram.BaseURL = fmt.Sprintf("%s/", telegramServer.URL)
 	telegramMock := telegram.NewClient("", "")
 	defer telegramServer.Close()
 

@@ -1,18 +1,19 @@
+// Package users represents a User account with the Bot service.
 package users
 
 import (
 	"crypto/rsa"
 	"errors"
+	"log"
 
 	"github.com/jinzhu/gorm"
 
 	"github.com/fmitra/dennis-bot/pkg/crypto"
 )
 
-// Represents a User account associated with the bot.
-// We keep the user model separate from what is provided by the
-// Telegram API to budget for the possibility of moving to, or supporting
-// additional messenger platforms.
+// User is an account associated with the bot service. A Telegram User
+// is considered a user of the bot service when they create a password
+// and public/private key pair.
 type User struct {
 	gorm.Model
 	TelegramID uint   `gorm:"unique_index"`
@@ -21,10 +22,19 @@ type User struct {
 	PrivateKey string `gorm:"type:varchar(2500);not null"`
 }
 
+// BeforeCreate hashes a User's plaintext password and generates
+// a public/private key pair on their behalf prior to creating a DB
+// record.
 func (u *User) BeforeCreate(scope *gorm.Scope) error {
 	hashedPassword, err := crypto.HashText(u.Password)
+	if err != nil {
+		log.Printf("users: failed to hash password")
+		return err
+	}
+
 	publicKey, privateKey, err := crypto.CreateProtectedKeyPair(u.Password)
 	if err != nil {
+		log.Printf("users: failed to create protected key pair")
 		return err
 	}
 
@@ -34,13 +44,16 @@ func (u *User) BeforeCreate(scope *gorm.Scope) error {
 	return nil
 }
 
-func (u *User) IsPasswordValid(password string) bool {
+// ValidatePassword checks if a plaintext password string validates against
+// the User's stored password hash.
+func (u *User) ValidatePassword(password string) error {
 	return crypto.ValidateHash(u.Password, password)
 }
 
+// GetPrivateKey returns the decrypted rsa.PrivateKey of the User.
 func (u *User) GetPrivateKey(password string) (rsa.PrivateKey, error) {
-	if !u.IsPasswordValid(password) {
-		return rsa.PrivateKey{}, errors.New("Invalid password")
+	if err := u.ValidatePassword(password); err != nil {
+		return rsa.PrivateKey{}, errors.New("invalid password")
 	}
 
 	key, err := crypto.ParsePrivateKey(u.PrivateKey, password)
@@ -51,6 +64,7 @@ func (u *User) GetPrivateKey(password string) (rsa.PrivateKey, error) {
 	return key, nil
 }
 
+// GetPublicKey returns the rsa.PublicKey of the User.
 func (u *User) GetPublicKey() (rsa.PublicKey, error) {
 	return crypto.ParsePublicKey(u.PublicKey)
 }

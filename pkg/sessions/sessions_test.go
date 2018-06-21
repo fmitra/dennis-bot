@@ -21,10 +21,10 @@ func GetSession() *Client {
 	var config LocalConfig
 	file := "../../config/config.json"
 	configFile, err := os.Open(file)
-	defer configFile.Close()
 	if err != nil {
 		panic(err)
 	}
+	defer configFile.Close()
 	jsonParser := json.NewDecoder(configFile)
 	jsonParser.Decode(&config)
 
@@ -39,45 +39,45 @@ func GetSession() *Client {
 func TestSessions(t *testing.T) {
 	t.Run("Sets and gets and deletes from session", func(t *testing.T) {
 		type UserMock struct {
-			UserId    string
+			UserID    string
 			UserEmail string
 		}
 
 		session := GetSession()
 		userMock := UserMock{
-			"userId",
+			"userID",
 			"userEmail",
 		}
 
 		expiresIn := 60
 		var cachedUser UserMock
-		session.Set("userId", userMock, expiresIn)
-		session.Get("userId", &cachedUser)
+		session.Set("userID", userMock, expiresIn)
+		session.Get("userID", &cachedUser)
 
 		assert.Equal(t, userMock, cachedUser)
 
-		session.Delete("userId")
-		err := session.Get("userId", &cachedUser)
-		assert.EqualError(t, err, "No session found")
+		session.Delete("userID")
+		err := session.Get("userID", &cachedUser)
+		assert.EqualError(t, err, "no session found")
 	})
 
 	t.Run("Returns error if not found", func(t *testing.T) {
 		type UserMock struct {
-			UserId    string
+			UserID    string
 			UserEmail string
 		}
 
 		session := GetSession()
 		userMock := UserMock{
-			"userId",
+			"userID",
 			"userEmail",
 		}
 
 		expiresIn := 60
 		var wanted UserMock
-		session.Set("userId", userMock, expiresIn)
+		session.Set("userID", userMock, expiresIn)
 		err := session.Get("nonExistentUser", &wanted)
 
-		assert.EqualError(t, err, "No session found")
+		assert.EqualError(t, err, "no session found")
 	})
 }

@@ -79,9 +79,9 @@ func (suite *ExpenseManagerSuite) TestCreateExpense() {
 	assert.True(suite.T(), suite.Env.Db.NewRecord(expense))
 
 	expenseManager := NewExpenseManager(suite.Env.Db)
-	isCreated := expenseManager.Save(expense)
+	err := expenseManager.Save(expense)
 
-	assert.True(suite.T(), isCreated)
+	assert.NoError(suite.T(), err)
 	assert.False(suite.T(), suite.Env.Db.NewRecord(expense))
 }
 

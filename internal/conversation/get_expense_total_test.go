@@ -54,7 +54,7 @@ func (suite *ExpenseTotalSuite) TestGetExpenseTotalMessage() {
 			]
 		}
 	}`)
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
 	var incMessage telegram.IncomingMessage
@@ -86,7 +86,7 @@ func (suite *ExpenseTotalSuite) TestGetExpenseTotalError() {
 			]
 		}
 	}`)
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
 	var incMessage telegram.IncomingMessage
@@ -121,7 +121,7 @@ func (suite *ExpenseTotalSuite) TestAskForPassword() {
 			]
 		}
 	}`)
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
 	expenseTotal := &GetExpenseTotal{
@@ -153,10 +153,10 @@ func (suite *ExpenseTotalSuite) TestSkipsPasswordRequest() {
 			]
 		}
 	}`)
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
-	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(incMessage.GetUser().Id)))
+	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(incMessage.GetUser().ID)))
 	suite.Action.Cache.Set(cacheKey, "my-password", 180)
 
 	expenseTotal := &GetExpenseTotal{
@@ -188,7 +188,7 @@ func (suite *ExpenseTotalSuite) TestValidatesPassword() {
 			]
 		}
 	}`)
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
 	mocks.CreateTestUser(suite.Env.Db)
@@ -211,7 +211,7 @@ func (suite *ExpenseTotalSuite) TestSkipsPasswordValidation() {
 	message := mocks.GetMockMessage("")
 	json.Unmarshal(message, &incMessage)
 
-	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(incMessage.GetUser().Id)))
+	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(incMessage.GetUser().ID)))
 	suite.Action.Cache.Set(cacheKey, "my-password", 180)
 
 	expenseTotal := &GetExpenseTotal{
@@ -242,7 +242,7 @@ func (suite *ExpenseTotalSuite) TestFailsPasswordValidation() {
 	}
 
 	response, err := expenseTotal.ValidatePassword()
-	assert.EqualError(suite.T(), err, "Password invalid")
+	assert.EqualError(suite.T(), err, "password invalid")
 	assert.Equal(suite.T(), BotResponse("This password is invalid"), response)
 }
 

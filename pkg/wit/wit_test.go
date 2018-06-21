@@ -11,12 +11,12 @@ func TestWit(t *testing.T) {
 	t.Run("Returns client with default config", func(t *testing.T) {
 		witAi := NewClient("witAiToken")
 
-		assert.Equal(t, BaseUrl, witAi.BaseUrl)
-		assert.Equal(t, ApiVersion, witAi.ApiVersion)
+		assert.Equal(t, BaseURL, witAi.BaseURL)
+		assert.Equal(t, APIVersion, witAi.APIVersion)
 	})
 
-	t.Run("Returns WitResponse", func(t *testing.T) {
-		response := `{
+	t.Run("Returns Response", func(t *testing.T) {
+		rawResponse := `{
 			"entities": {
 				"amount": [
 					{ "value": "20 USD", "confidence": 100.00 }
@@ -29,30 +29,30 @@ func TestWit(t *testing.T) {
 				]
 			}
 		}`
-		server := mocks.MakeTestServer(response)
+		server := mocks.MakeTestServer(rawResponse)
 		defer server.Close()
 
 		witAi := Client{
 			Token:      "witAiToken",
-			BaseUrl:    server.URL,
-			ApiVersion: "20180128",
+			BaseURL:    server.URL,
+			APIVersion: "20180128",
 		}
 
-		witResponse := witAi.ParseMessage("Hello world")
-		assert.IsType(t, WitResponse{}, witResponse)
+		response := witAi.ParseMessage("Hello world")
+		assert.IsType(t, Response{}, response)
 	})
 
-	t.Run("Returns zero value WitResponse on error", func(t *testing.T) {
+	t.Run("Returns zero value Response on error", func(t *testing.T) {
 		server := mocks.MakeTestServer(`{not valid json}`)
 		defer server.Close()
 
 		witAi := Client{
 			Token:      "witAiToken",
-			BaseUrl:    server.URL,
-			ApiVersion: "20180128",
+			BaseURL:    server.URL,
+			APIVersion: "20180128",
 		}
 
-		witResponse := witAi.ParseMessage("Hello world")
-		assert.Equal(t, WitResponse{}, witResponse)
+		response := witAi.ParseMessage("Hello world")
+		assert.Equal(t, Response{}, response)
 	})
 }

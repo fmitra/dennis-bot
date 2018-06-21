@@ -1,3 +1,4 @@
+// Package utils provide common utility methods to share accross packages.
 package utils
 
 import (
@@ -8,7 +9,7 @@ import (
 	"github.com/kierdavis/dateparser"
 )
 
-// Checks if an input string is a currency ISO
+// isISO checks if an input string is a valid currency ISO.
 func isISO(s string) bool {
 	cleanString := strings.Replace(s, " ", "", -1)
 	upperS := strings.ToUpper(cleanString)
@@ -20,7 +21,9 @@ func isISO(s string) bool {
 	return false
 }
 
-// Parses an input string for an amount and currency
+// ParseAmount checks a string for possible currency and amount values,
+// for example "100 USD" should return 100 as a float and USD as
+// the currency ISO.
 func ParseAmount(s string) (amount float64, currency string) {
 	upperCase := strings.ToUpper(s)
 	for _, currency := range CURRENCIES {
@@ -42,14 +45,13 @@ func ParseAmount(s string) (amount float64, currency string) {
 	return parsedAmount, ""
 }
 
-// Parses an input string for a date value
+// ParseDate checks if a string is a possible date value.
 func ParseDate(s string) (inferredDate time.Time) {
 	lowerCase := strings.ToLower(s)
 	splitString := strings.Split(lowerCase, " ")
 	today := time.Now()
-	var date time.Time
+	date := today
 
-	date = today
 	if strings.Contains(lowerCase, "yesterday") {
 		date = today.AddDate(0, 0, -1)
 	}
@@ -66,7 +68,7 @@ func ParseDate(s string) (inferredDate time.Time) {
 	return date
 }
 
-// Parses an input string for a description
+// ParseDescription checks if a string is a description.
 func ParseDescription(s string) (description string) {
 	lowerCase := strings.ToLower(s)
 	if strings.HasPrefix(lowerCase, "for ") {

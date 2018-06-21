@@ -9,20 +9,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func getWitResponse(raw []byte) WitResponse {
-	var witResponse WitResponse
-	json.Unmarshal(raw, &witResponse)
-	return witResponse
+func getResponse(b []byte) Response {
+	var response Response
+	json.Unmarshal(b, &response)
+	return response
 }
 
 func TestWitParser(t *testing.T) {
 	t.Run("Returns unknown intent for empty response", func(t *testing.T) {
-		witResponse := &WitResponse{}
-		assert.Equal(t, "unknown_request", witResponse.GetMessageOverview())
+		response := &Response{}
+		assert.Equal(t, "unknown_request", response.GetMessageOverview())
 	})
 
 	t.Run("Returns amount", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [
@@ -38,13 +38,13 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		amount, currency, _ := witResponse.GetAmount()
+		amount, currency, _ := response.GetAmount()
 		assert.Equal(t, 20.0, amount)
 		assert.Equal(t, "USD", currency)
 	})
 
 	t.Run("Returns error if amount is empty", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [],
@@ -58,14 +58,14 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		amount, currency, err := witResponse.GetAmount()
+		amount, currency, err := response.GetAmount()
 		assert.Equal(t, 0.0, amount)
 		assert.Equal(t, "", currency)
-		assert.EqualError(t, err, "No amount")
+		assert.EqualError(t, err, "no amount")
 	})
 
 	t.Run("Returns error if amount is blank", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [
@@ -81,14 +81,14 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		amount, currency, err := witResponse.GetAmount()
+		amount, currency, err := response.GetAmount()
 		assert.Equal(t, 0.0, amount)
 		assert.Equal(t, "", currency)
-		assert.EqualError(t, err, "Invalid amount")
+		assert.EqualError(t, err, "invalid amount")
 	})
 
 	t.Run("Returns error if currency is blank", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [
@@ -104,14 +104,14 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		amount, currency, err := witResponse.GetAmount()
+		amount, currency, err := response.GetAmount()
 		assert.Equal(t, 0.0, amount)
 		assert.Equal(t, "", currency)
-		assert.EqualError(t, err, "Invalid amount")
+		assert.EqualError(t, err, "invalid amount")
 	})
 
 	t.Run("Returns description", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [],
@@ -123,12 +123,12 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		description, _ := witResponse.GetDescription()
+		description, _ := response.GetDescription()
 		assert.Equal(t, "Food", description)
 	})
 
 	t.Run("Returns error if description is blank", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [],
@@ -138,15 +138,15 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		description, err := witResponse.GetDescription()
+		description, err := response.GetDescription()
 		assert.Equal(t, "", description)
-		assert.EqualError(t, err, "No description")
+		assert.EqualError(t, err, "no description")
 	})
 
 	t.Run("Returns date", func(t *testing.T) {
 		parser := &dateparser.Parser{}
 		expectedDate, _ := parser.Parse("2018/10/10")
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [],
@@ -158,12 +158,12 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		date := witResponse.GetDate()
+		date := response.GetDate()
 		assert.Equal(t, expectedDate, date)
 	})
 
 	t.Run("Returns default date if blank", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [],
@@ -173,12 +173,12 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		date := witResponse.GetDate()
+		date := response.GetDate()
 		assert.IsType(t, time.Time{}, date)
 	})
 
 	t.Run("Infers tracking", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [
@@ -194,13 +194,13 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		isTracking, err := witResponse.IsTracking()
+		isTracking, err := response.IsTracking()
 		assert.True(t, isTracking)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Fails to infer tracking if missing amount", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [],
@@ -214,13 +214,13 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		isTracking, err := witResponse.IsTracking()
+		isTracking, err := response.IsTracking()
 		assert.False(t, isTracking)
-		assert.EqualError(t, err, "No amount")
+		assert.EqualError(t, err, "no amount")
 	})
 
 	t.Run("Fails to infer tracking if missing description", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [
@@ -234,13 +234,13 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		isTracking, err := witResponse.IsTracking()
+		isTracking, err := response.IsTracking()
 		assert.True(t, isTracking)
-		assert.EqualError(t, err, "No description")
+		assert.EqualError(t, err, "no description")
 	})
 
 	t.Run("Returns tracking error", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [
@@ -254,12 +254,12 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		overview := witResponse.GetMessageOverview()
-		assert.Equal(t, TRACKING_REQUESTED_ERROR, overview)
+		overview := response.GetMessageOverview()
+		assert.Equal(t, TrackingRequestedError, overview)
 	})
 
 	t.Run("Returns tracking success", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [
@@ -275,12 +275,12 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		overview := witResponse.GetMessageOverview()
-		assert.Equal(t, TRACKING_REQUESTED_SUCCESS, overview)
+		overview := response.GetMessageOverview()
+		assert.Equal(t, TrackingRequestedSuccess, overview)
 	})
 
 	t.Run("Returns period success", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [],
@@ -293,12 +293,12 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		overview := witResponse.GetMessageOverview()
-		assert.Equal(t, EXPENSE_TOTAL_REQUESTED_SUCCESS, overview)
+		overview := response.GetMessageOverview()
+		assert.Equal(t, ExpenseTotalRequestedSuccess, overview)
 	})
 
 	t.Run("Returns unknown intent", func(t *testing.T) {
-		witResponse := getWitResponse([]byte(`
+		response := getResponse([]byte(`
 			{
 				"entities": {
 					"amount": [],
@@ -309,7 +309,7 @@ func TestWitParser(t *testing.T) {
 			}
 		`))
 
-		overview := witResponse.GetMessageOverview()
-		assert.Equal(t, UNKNOWN_REQUEST, overview)
+		overview := response.GetMessageOverview()
+		assert.Equal(t, UnknownRequest, overview)
 	})
 }

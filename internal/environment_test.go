@@ -56,8 +56,8 @@ func (suite *EnvSuite) TestRespondsToWebhook() {
 	telegramServer := mocks.MakeTestServer("")
 	witServer := mocks.MakeTestServer(witResponse)
 
-	telegram.BaseUrl = fmt.Sprintf("%s/", telegramServer.URL)
-	wit.BaseUrl = witServer.URL
+	telegram.BaseURL = fmt.Sprintf("%s/", telegramServer.URL)
+	wit.BaseURL = witServer.URL
 	telegramClient := telegram.NewClient("", "")
 
 	env := &Env{

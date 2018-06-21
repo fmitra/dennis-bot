@@ -6,39 +6,41 @@ import (
 	"github.com/fmitra/dennis-bot/pkg/users"
 )
 
-// An Intent designed to track a user's expenses
+// TrackExpense is an Intent designed to track a user's expenses.
 type TrackExpense struct {
 	Context
 	actions *Actions
 }
 
+// GetResponses proccesses a list of response functions.
 func (i *TrackExpense) GetResponses() []func() (BotResponse, error) {
 	return []func() (BotResponse, error){
 		i.ConfirmExpense,
 	}
 }
 
+// Respond proccesses a list of response functions.
 func (i *TrackExpense) Respond() (BotResponse, *Context) {
 	responses := i.GetResponses()
 	return i.Process(responses)
 }
 
-// Sends a success or error response for an expense tracking request
-// based on Wit.ai's parsing.
+// ConfirmExpense starts an action to track the user's expense and returns
+// confirmation if it was successful or if it failed.
 func (i *TrackExpense) ConfirmExpense() (BotResponse, error) {
-	messageVar := ""
-	overview := i.WitResponse.GetMessageOverview()
+	var messageVar string
 	var response BotResponse
+	overview := i.WitResponse.GetMessageOverview()
 
-	telegramUserId := i.IncMessage.GetUser().Id
+	telegramUserID := i.IncMessage.GetUser().ID
 	manager := users.NewUserManager(i.actions.Db)
-	user := manager.GetByTelegramId(telegramUserId)
+	user := manager.GetByTelegramID(telegramUserID)
 	publicKey, _ := user.GetPublicKey()
 
-	response = GetMessage(TRACK_EXPENSE_ERROR, messageVar)
-	if overview == wit.TRACKING_REQUESTED_SUCCESS {
-		go i.actions.CreateNewExpense(i.WitResponse, i.BotUserId, publicKey)
-		response = GetMessage(TRACK_EXPENSE_SUCCESS, messageVar)
+	response = GetMessage(TrackExpenseError, messageVar)
+	if overview == wit.TrackingRequestedSuccess {
+		go i.actions.CreateNewExpense(i.WitResponse, i.BotUserID, publicKey)
+		response = GetMessage(TrackExpenseSuccess, messageVar)
 	}
 
 	i.EndConversation()

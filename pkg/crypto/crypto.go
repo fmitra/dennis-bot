@@ -1,3 +1,4 @@
+// Package crypto is a collection of encryption utility functions.
 package crypto
 
 import (
@@ -16,17 +17,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// InitializeGob registeres rsa PublicKey/PrivateKey so we may encode
+// using stdlib encoding/gob.
 func InitializeGob() {
 	gob.Register(rsa.PublicKey{})
 	gob.Register(rsa.PrivateKey{})
 }
 
-// Encrypts text using an rsa public key. Text is returned as a base64 encoded
-// string for convient storage
-func AsymEncrypt(text string, publicKey rsa.PublicKey) (string, error) {
-	reader := rand.Reader
-	forEncryption := []byte(text)
-	ciphertext, err := rsa.EncryptOAEP(sha256.New(), reader, &publicKey, forEncryption, nil)
+// AsymEncrypt encryptst ext using rsa.PublicKey. Text is returned as a base64 encoded
+// string for convenient storage.
+func AsymEncrypt(t string, pk rsa.PublicKey) (string, error) {
+	r := rand.Reader
+	b := []byte(t)
+	ciphertext, err := rsa.EncryptOAEP(sha256.New(), r, &pk, b, nil)
 	if err != nil {
 		return "", err
 	}
@@ -34,15 +37,15 @@ func AsymEncrypt(text string, publicKey rsa.PublicKey) (string, error) {
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-// Decrypts base64 encoded text using an rsa private key.
-func AsymDecrypt(text string, privateKey rsa.PrivateKey) (string, error) {
-	decodedText, err := base64.StdEncoding.DecodeString(text)
+// AsymDecrypt decrypts base64  encoded text using an rsa.PrivateKey.
+func AsymDecrypt(b64 string, pk rsa.PrivateKey) (string, error) {
+	text, err := base64.StdEncoding.DecodeString(b64)
 	if err != nil {
 		return "", err
 	}
 
-	reader := rand.Reader
-	plaintext, err := rsa.DecryptOAEP(sha256.New(), reader, &privateKey, decodedText, nil)
+	r := rand.Reader
+	plaintext, err := rsa.DecryptOAEP(sha256.New(), r, &pk, text, nil)
 	if err != nil {
 		return "", err
 	}
@@ -50,16 +53,19 @@ func AsymDecrypt(text string, privateKey rsa.PrivateKey) (string, error) {
 	return string(plaintext), nil
 }
 
-// Parses a base64 encoded string and type asserts the value
-// into an rsa private key
-func ParsePrivateKey(key string, password string) (rsa.PrivateKey, error) {
+// ParsePrivateKey parses a base64 encoded string and type asserts the value
+// into an rsa.PrivateKey
+func ParsePrivateKey(b64 string, password string) (rsa.PrivateKey, error) {
 	var err error
-	encodedKey := key
-	if password != "" {
-		encodedKey, err = Decrypt(key, password)
-		if err != nil {
-			return rsa.PrivateKey{}, err
-		}
+	isEncrypted := password != ""
+	encodedKey := b64
+
+	if isEncrypted {
+		encodedKey, err = Decrypt(b64, password)
+	}
+
+	if err != nil {
+		return rsa.PrivateKey{}, err
 	}
 
 	privateKeyInterface, err := decodeKey(encodedKey, &rsa.PrivateKey{})
@@ -70,10 +76,10 @@ func ParsePrivateKey(key string, password string) (rsa.PrivateKey, error) {
 	return privateKeyInterface.(rsa.PrivateKey), nil
 }
 
-// Parses a base64 encoded string and type asserts the value
-// into an rsa public key
-func ParsePublicKey(key string) (rsa.PublicKey, error) {
-	publicKeyInterface, err := decodeKey(key, &rsa.PublicKey{})
+// ParsePublicKey parsers a base64 encoded string and type asserts the value into
+// an rsa.PublicKey
+func ParsePublicKey(b64 string) (rsa.PublicKey, error) {
+	publicKeyInterface, err := decodeKey(b64, &rsa.PublicKey{})
 	if err != nil {
 		return rsa.PublicKey{}, err
 	}
@@ -81,39 +87,55 @@ func ParsePublicKey(key string) (rsa.PublicKey, error) {
 	return publicKeyInterface.(rsa.PublicKey), nil
 }
 
-// Creates a string encoded public/private key pair. Private keys
-// are password protected to ensure we are unable to access them on
+// CreateProtectedKeyPair creates a string encoded public/private key pair. Private
+// keys are password protected to ensure we are unable to access them on
 // behalf of the user.
 func CreateProtectedKeyPair(password string) (string, string, error) {
-	publicKey, privateKey := CreateKeyPair()
+	blankKey := ""
+	publicKey, privateKey, err := CreateKeyPair()
+	if err != nil {
+		return blankKey, blankKey, err
+	}
 
 	publicKeyStr, err := encodeKey(publicKey)
+	if err != nil {
+		return blankKey, blankKey, err
+	}
+
 	privateKeyStr, err := encodeKey(privateKey)
+	if err != nil {
+		return blankKey, blankKey, err
+	}
+
 	encryptedPrivateKeyStr, err := Encrypt(privateKeyStr, password)
 	if err != nil {
-		return "", "", err
+		return blankKey, blankKey, err
 	}
 
 	return publicKeyStr, encryptedPrivateKeyStr, nil
 }
 
-// Creates a public/private key pair.
-func CreateKeyPair() (rsa.PublicKey, rsa.PrivateKey) {
+// CreateKeyPair creates an rsa.PublicKey and rsa.PrivateKey pair.
+func CreateKeyPair() (rsa.PublicKey, rsa.PrivateKey, error) {
+	var publicKey rsa.PublicKey
+	var privateKey rsa.PrivateKey
+
 	reader := rand.Reader
 	bitSize := 1024
 
 	key, err := rsa.GenerateKey(reader, bitSize)
 	if err != nil {
-		log.Panicf("users: unable to generate key pair %s", err)
+		log.Printf("users: unable to generate key pair %s", err)
+		return publicKey, privateKey, err
 	}
 
-	publicKey := key.PublicKey
-	privateKey := *key
+	publicKey = key.PublicKey
+	privateKey = *key
 
-	return publicKey, privateKey
+	return publicKey, privateKey, nil
 }
 
-// Encrypts and base64 encodes a string with a password
+// Encrypt encrypts and base64 encodes a string with a password.
 func Encrypt(text string, password string) (string, error) {
 	key := sha256.New()
 	key.Write([]byte(password))
@@ -136,7 +158,7 @@ func Encrypt(text string, password string) (string, error) {
 	return encodedText, nil
 }
 
-// Decrypts a base64 encoded string with a password
+// Decrypt decrypts a base64 encoded string with a password.
 func Decrypt(text string, password string) (string, error) {
 	key := sha256.New()
 	key.Write([]byte(password))
@@ -163,6 +185,7 @@ func Decrypt(text string, password string) (string, error) {
 	return string(decodedText), nil
 }
 
+// HashText hashes a string text using bcrypt.
 func HashText(text string) (string, error) {
 	t := []byte(text)
 	cost := 10
@@ -175,17 +198,14 @@ func HashText(text string) (string, error) {
 	return string(hash), nil
 }
 
-func ValidateHash(hash, text string) bool {
+// ValidateHash validates a a string text against a bcrypt hash.
+func ValidateHash(hash, text string) error {
 	bHash := []byte(hash)
 	bText := []byte(text)
-	err := bcrypt.CompareHashAndPassword(bHash, bText)
-	if err != nil {
-		return false
-	}
-	return true
+	return bcrypt.CompareHashAndPassword(bHash, bText)
 }
 
-// Encodes a key type to a base64 encoded string for storage
+// encodeKey encodes a key type to a base64 encoded string for storage.
 func encodeKey(key interface{}) (string, error) {
 	b := bytes.Buffer{}
 	encoder := gob.NewEncoder(&b)
@@ -197,7 +217,8 @@ func encodeKey(key interface{}) (string, error) {
 	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
 
-// Returns an interface type of the encoded key for type assertion
+// decodeKey returns an interface type of the encoded key for type assertion
+// from a base65 encoded string.
 func decodeKey(key string, keyType interface{}) (interface{}, error) {
 	by, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {

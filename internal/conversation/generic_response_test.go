@@ -40,7 +40,7 @@ func (suite *GenericResponseSuite) TestReturnResponse() {
 			]
 		}
 	}`)
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
 	var incMessage telegram.IncomingMessage

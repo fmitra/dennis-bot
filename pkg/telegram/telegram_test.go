@@ -12,7 +12,7 @@ func TestTelegram(t *testing.T) {
 	t.Run("Returns client with default config", func(t *testing.T) {
 		telegram := NewClient("telegramToken", "https://localhost")
 
-		assert.Equal(t, BaseUrl, telegram.BaseUrl)
+		assert.Equal(t, BaseURL, telegram.BaseURL)
 	})
 
 	t.Run("Sets webhook", func(t *testing.T) {
@@ -21,7 +21,7 @@ func TestTelegram(t *testing.T) {
 		telegram := &Client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
-			BaseUrl: fmt.Sprintf("%s/", server.URL),
+			BaseURL: fmt.Sprintf("%s/", server.URL),
 		}
 
 		statusCode := telegram.SetWebhook()
@@ -34,12 +34,12 @@ func TestTelegram(t *testing.T) {
 		telegram := &Client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
-			BaseUrl: fmt.Sprintf("%s/", server.URL),
+			BaseURL: fmt.Sprintf("%s/", server.URL),
 		}
 
-		chatId := 5
+		chatID := 5
 		message := "Hello world"
-		statusCode := telegram.Send(chatId, message)
+		statusCode := telegram.Send(chatID, message)
 		assert.Equal(t, 200, statusCode)
 	})
 
@@ -49,12 +49,12 @@ func TestTelegram(t *testing.T) {
 		telegram := &Client{
 			Token:   "telegramToken",
 			Domain:  "https://localhost",
-			BaseUrl: fmt.Sprintf("%s/", server.URL),
+			BaseURL: fmt.Sprintf("%s/", server.URL),
 		}
 
-		chatId := 5
+		chatID := 5
 		action := "typing"
-		statusCode := telegram.SendAction(chatId, action)
+		statusCode := telegram.SendAction(chatID, action)
 		assert.Equal(t, 200, statusCode)
 	})
 }

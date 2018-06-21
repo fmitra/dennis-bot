@@ -1,50 +1,54 @@
 package telegram
 
-// ref: https://core.telegram.org/bots/api#update
-// Represents a Telegram Update object. This payload is sent
-// to the webhook whenever a user messages us. Message field
-// is optional but for our use case this all we care about at
-// the moment
+// IncomingMessage is a payload sent from Telegram representing
+// a User's message.
 type IncomingMessage struct {
-	UpdateId int     `json:"update_id"`
+	UpdateID int     `json:"update_id"`
 	Message  Message `json:"message"`
 }
 
+// Chat contains User data related to a Message.
 type Chat struct {
-	Id        int    `json:"id"`
+	ID        int    `json:"id"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	UserName  string `json:"username"`
 }
 
+// Message contains the the core content behind an
+// IncomingMessage.
 type Message struct {
-	MessageId int    `json:"message_id"`
+	MessageID int    `json:"message_id"`
 	Date      int    `json:"date"`
 	Text      string `json:"text"`
 	From      User   `json:"from"`
 	Chat      Chat   `json:"chat"`
 }
 
-// Represents a response to an `IncomingMessage`
+// OutgoingMessage is a response to an IncomingMessage.
 type OutgoingMessage struct {
-	ChatId int    `json:"chat_id"`
+	ChatID int    `json:"chat_id"`
 	Text   string `json:"text"`
 }
 
-// Represents a Telegram Chat Action (ex. Bot is typing indicator)
+// ChatAction is a UI indicator that the bot is preparing content, for
+// example a typing indicator or loading indicator.
 type ChatAction struct {
-	ChatId int `json:"chat_id"`
+	ChatID int    `json:"chat_id"`
 	Action string `json:"action"`
 }
 
-func (i IncomingMessage) GetChatId() (chatId int) {
-	return i.Message.Chat.Id
+// GetChatID returns the ID of an IncomingMessage.
+func (i IncomingMessage) GetChatID() (chatID int) {
+	return i.Message.Chat.ID
 }
 
+// GetMessage returns the text content of an IncomingMessaeg.
 func (i IncomingMessage) GetMessage() (message string) {
 	return i.Message.Text
 }
 
+// GetUser returns the sender of an IncomingMessage.
 func (i IncomingMessage) GetUser() User {
 	return i.Message.From
 }

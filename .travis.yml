@@ -14,6 +14,6 @@ before_script:
 
 script:
   - make develop
+  - make dev_dependencies
   - docker-compose up -d
-  - make deps
-  - go test -cover ./...
+  - make test_and_lint

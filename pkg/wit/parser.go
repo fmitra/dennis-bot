@@ -9,47 +9,55 @@ import (
 )
 
 const (
-	TRACKING_REQUESTED_SUCCESS = "tracking_requested_success"
+	// TrackingRequestedSuccess indicates the user is requesting to track an expense
+	TrackingRequestedSuccess = "tracking_requested_success"
 
-	TRACKING_REQUESTED_ERROR = "tracking_requested_error"
+	// TrackingRequestedError indicates the user is requested to track an expense
+	// but failed to provide the necessary data behind the expense
+	TrackingRequestedError = "tracking_requested_error"
 
-	EXPENSE_TOTAL_REQUESTED_SUCCESS = "expense_total_requested_success"
+	// ExpenseTotalRequestedSuccess indicates the user is attempting to
+	// get a sum of their expense history
+	ExpenseTotalRequestedSuccess = "expense_total_requested_success"
 
-	UNKNOWN_REQUEST = "unknown_request"
+	// UnknownRequest indicates Wit.ai failed to infer context around a message
+	UnknownRequest = "unknown_request"
 )
 
-// Wit.ai Entity
-type WitEntity []struct {
+// Entity is an item Wit.ai inferred from a response.
+// All Entities have a Confidence property indicating an
+// estimate of Wit.ai's inference.
+type Entity []struct {
 	Value      string  `json:"value"`
 	Confidence float64 `json:"confidence"`
 }
 
-// Wit.ai API Response
-type WitResponse struct {
+// Response is a a Response from Wit.ai containing a payload of Entities.
+type Response struct {
 	Entities struct {
-		Amount      WitEntity `json:"amount"`
-		DateTime    WitEntity `json:"datetime"`
-		Description WitEntity `json:"description"`
-		TotalSpent  WitEntity `json:"total_spent"`
+		Amount      Entity `json:"amount"`
+		DateTime    Entity `json:"datetime"`
+		Description Entity `json:"description"`
+		TotalSpent  Entity `json:"total_spent"`
 	} `json:"entities"`
 }
 
-// Checks if Wit.ai was able to infer a total spent query
-func (w WitResponse) GetSpendPeriod() (string, error) {
-	totalSpent := w.Entities.TotalSpent
+// GetSpendPeriod returns the spending period a user requested, for example,
+// a user may be interested in one `month` of spending history.
+func (r *Response) GetSpendPeriod() (string, error) {
+	totalSpent := r.Entities.TotalSpent
 	if len(totalSpent) == 0 {
-		return "", errors.New("No period specified")
+		return "", errors.New("no period specified")
 	}
 
 	return totalSpent[0].Value, nil
 }
 
-// Checks if Wit.ai was able to infer a valid
-// Amount Entity from the IncomingMessage.getMessage()
-func (w WitResponse) GetAmount() (float64, string, error) {
-	amount := w.Entities.Amount
+// GetAmount returns the total amount a user is trying to track.
+func (r *Response) GetAmount() (float64, string, error) {
+	amount := r.Entities.Amount
 	if len(amount) == 0 {
-		return 0, "", errors.New("No amount")
+		return 0, "", errors.New("no amount")
 	}
 
 	totalAmount, currency := utils.ParseAmount(amount[0].Value)
@@ -58,26 +66,24 @@ func (w WitResponse) GetAmount() (float64, string, error) {
 		return totalAmount, currency, nil
 	}
 
-	return 0, "", errors.New("Invalid amount")
+	return 0, "", errors.New("invalid amount")
 }
 
-// Checks if Wit.ai was able to infer a valid
-// Description Entity from the IncomingMessage.getMessage()
-func (w WitResponse) GetDescription() (string, error) {
-	description := w.Entities.Description
+// GetDescription returns the description of an expense.
+func (r *Response) GetDescription() (string, error) {
+	description := r.Entities.Description
 	if len(description) == 0 {
-		return "", errors.New("No description")
+		return "", errors.New("no description")
 	}
 
 	parsedDescription := utils.ParseDescription(description[0].Value)
 	return parsedDescription, nil
 }
 
-// Checks if Wit.ai was able to infer a valid
-// Date Entity from the IncomingMessage.getMessage()
-// If no date is provided, it will always default to today
-func (w WitResponse) GetDate() time.Time {
-	dateTime := w.Entities.DateTime
+// GetDate returns the date of an expense. If no date is provided,
+// we default to today.
+func (r *Response) GetDate() time.Time {
+	dateTime := r.Entities.DateTime
 	stringDate := ""
 	if len(dateTime) != 0 {
 		stringDate = dateTime[0].Value
@@ -87,47 +93,47 @@ func (w WitResponse) GetDate() time.Time {
 	return parsedDate
 }
 
-// Infers whether the User is attempting to track an expense
-func (w WitResponse) IsTracking() (bool, error) {
-	_, _, err := w.GetAmount()
+// IsTracking infers whether the user is trying to track an expense.
+func (r Response) IsTracking() (bool, error) {
+	_, _, err := r.GetAmount()
 	if err != nil {
-		log.Printf("wit: cannot infer without amount")
 		return false, err
 	}
 
-	_, err = w.GetDescription()
+	_, err = r.GetDescription()
 	if err != nil {
-		log.Printf("wit: cannot infer without description")
+		log.Printf("wit: cannot infer tracking without description")
 		return true, err
 	}
 
 	return true, nil
 }
 
-func (w WitResponse) IsRequestingTotal() (bool, error) {
-	_, err := w.GetSpendPeriod()
+// IsRequestingTotal infers whether the user is requesting a sum
+// of their expense history.
+func (r Response) IsRequestingTotal() (bool, error) {
+	_, err := r.GetSpendPeriod()
 	if err != nil {
-		log.Printf("wit: cannot infer spend period")
+		log.Printf("wit: cannot infer expense total without spend period")
 		return false, err
 	}
 
 	return true, nil
 }
 
-// Returns an overview of a message based on Wit.ai's parsing
-// We use this to provide context to infer a direction the bot should
-// take when talking to a user
-func (w WitResponse) GetMessageOverview() string {
-	isTracking, trackingErr := w.IsTracking()
-	isRequestingTotal, totalErr := w.IsRequestingTotal()
+// GetMessageOverview returns a a description of what Wit.ai
+// inferred from a user's message.
+func (r Response) GetMessageOverview() string {
+	isTracking, trackingErr := r.IsTracking()
+	isRequestingTotal, totalErr := r.IsRequestingTotal()
 
 	if isTracking && trackingErr != nil {
-		return TRACKING_REQUESTED_ERROR
+		return TrackingRequestedError
 	} else if isTracking && trackingErr == nil {
-		return TRACKING_REQUESTED_SUCCESS
+		return TrackingRequestedSuccess
 	} else if isRequestingTotal && totalErr == nil {
-		return EXPENSE_TOTAL_REQUESTED_SUCCESS
-	} else {
-		return UNKNOWN_REQUEST
+		return ExpenseTotalRequestedSuccess
 	}
+
+	return UnknownRequest
 }

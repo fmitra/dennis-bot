@@ -85,7 +85,7 @@ func (suite *OnboardUserSuite) TestValidatesPassword() {
 
 	response, err := onboardUser.ValidatePassword()
 	assert.Equal(suite.T(), BotResponse("Okay try again later"), response)
-	assert.EqualError(suite.T(), err, "Password rejected")
+	assert.EqualError(suite.T(), err, "password rejected")
 
 	message = mocks.GetMockMessage("YES")
 	json.Unmarshal(message, &incMessage)
@@ -115,7 +115,7 @@ func (suite *OnboardUserSuite) TestValidatesPassword() {
 
 	response, err = onboardUser.ValidatePassword()
 	assert.Equal(suite.T(), BotResponse("I didn't understand that"), response)
-	assert.EqualError(suite.T(), err, "Response invalid")
+	assert.EqualError(suite.T(), err, "response invalid")
 }
 
 func (suite *OnboardUserSuite) TestCreatesUser() {
@@ -134,9 +134,9 @@ func (suite *OnboardUserSuite) TestCreatesUser() {
 	response, err := onboardUser.ValidatePassword()
 
 	var user users.User
-	suite.Env.Db.Where("telegram_id = ?", mocks.TestUserId).First(&user)
+	suite.Env.Db.Where("telegram_id = ?", mocks.TestUserID).First(&user)
 
-	assert.Equal(suite.T(), user.TelegramID, mocks.TestUserId)
+	assert.Equal(suite.T(), user.TelegramID, mocks.TestUserID)
 	assert.Equal(suite.T(), BotResponse(""), response)
 	assert.NoError(suite.T(), err)
 }
@@ -157,7 +157,7 @@ func (suite *OnboardUserSuite) TestReturnsErrorForFailedAccountCreation() {
 
 	response, err := onboardUser.ValidatePassword()
 
-	assert.EqualError(suite.T(), err, "Account creation failed")
+	assert.EqualError(suite.T(), err, "account creation failed")
 	assert.Equal(suite.T(), BotResponse("Couldn't create account"), response)
 }
 

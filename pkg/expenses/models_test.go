@@ -16,7 +16,7 @@ func TestExpenseModel(t *testing.T) {
 			Historical:  "1.58",
 			Currency:    "RUB",
 		}
-		publicKey, privateKey := crypto.CreateKeyPair()
+		publicKey, privateKey, _ := crypto.CreateKeyPair()
 
 		expense.Encrypt(publicKey)
 		assert.NotEqual(t, expense.Total, "100.00")

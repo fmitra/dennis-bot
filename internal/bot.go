@@ -15,10 +15,10 @@ type Bot struct {
 	env *Env
 }
 
-// Entry point to communicate with the bot. We parse an incoming message
-// and map it to  to a key word trigger to determine a response
-func (bot *Bot) Converse(payload []byte) int {
-	incMessage, err := bot.ReceiveMessage(payload)
+// Converse is the entry point to communicate with the bot. We parse an incoming
+// message and map it to  to a key word trigger to determine a response.
+func (bot *Bot) Converse(b []byte) int {
+	incMessage, err := bot.ReceiveMessage(b)
 	if err != nil {
 		log.Printf("bot: cannot respond to unsupported payload - %s", err)
 		errorCode := 400
@@ -31,39 +31,42 @@ func (bot *Bot) Converse(payload []byte) int {
 	return bot.SendMessage(response, incMessage)
 }
 
-// Parses an incoming telegram message
-func (bot *Bot) ReceiveMessage(payload []byte) (telegram.IncomingMessage, error) {
-	var incMessage telegram.IncomingMessage
-	err := json.Unmarshal(payload, &incMessage)
+// ReceiveMessage unmarshals a byte response into a telegram IncomingMessage.
+func (bot *Bot) ReceiveMessage(b []byte) (telegram.IncomingMessage, error) {
+	var incM telegram.IncomingMessage
+	err := json.Unmarshal(b, &incM)
 	if err != nil {
-		return telegram.IncomingMessage{}, err
+		return incM, err
 	}
 
-	return incMessage, nil
+	return incM, nil
 }
 
-// Sends a message back through telegram
-func (bot *Bot) SendMessage(r convo.BotResponse, incMessage telegram.IncomingMessage) int {
-	chatId := incMessage.GetChatId()
+// SendMessage sends a a message back through Telegram.
+func (bot *Bot) SendMessage(r convo.BotResponse, incM telegram.IncomingMessage) int {
+	chatID := incM.GetChatID()
 
-	return bot.env.telegram.Send(chatId, string(r))
+	return bot.env.telegram.Send(chatID, string(r))
 }
 
-func (bot *Bot) SendTypingIndicator(incMessage telegram.IncomingMessage) int {
-	chatId := incMessage.GetChatId()
+// SendTypingIndicator sends a typign indicator to the user to alert them
+// that we have received and processing their mssage.
+func (bot *Bot) SendTypingIndicator(incM telegram.IncomingMessage) int {
+	chatID := incM.GetChatID()
 	action := "typing"
-	return bot.env.telegram.SendAction(chatId, action)
+	return bot.env.telegram.SendAction(chatID, action)
 }
 
-// Processes an incoming message and retrieves the appropriate response
-func (bot *Bot) BuildResponse(incMessage telegram.IncomingMessage) convo.BotResponse {
+// BuildResponse coordinates with the action layer to to determine context behind
+// a user's message and return an appropriate response.
+func (bot *Bot) BuildResponse(incM telegram.IncomingMessage) convo.BotResponse {
 	w := wit.NewClient(bot.env.config.Wit.Token)
-	witResponse := w.ParseMessage(incMessage.GetMessage())
+	witResponse := w.ParseMessage(incM.GetMessage())
 	actions := &convo.Actions{
 		bot.env.db,
 		bot.env.cache,
 		bot.env.config,
 	}
-	botResponse := convo.GetResponse(witResponse, incMessage, actions)
+	botResponse := convo.GetResponse(witResponse, incM, actions)
 	return botResponse
 }

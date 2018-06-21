@@ -55,15 +55,15 @@ func (suite *ActionSuite) TestCreatesNewExpense() {
 	alphapointServer := mocks.MakeTestServer(alphapointResponse)
 	defer alphapointServer.Close()
 
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
-	alphapoint.BaseUrl = alphapointServer.URL
+	alphapoint.BaseURL = alphapointServer.URL
 
 	action := suite.Action
 	publicKey := rsa.PublicKey{}
-	isCreated := action.CreateNewExpense(witResponse, mocks.TestUserId, publicKey)
-	assert.True(suite.T(), isCreated)
+	err := action.CreateNewExpense(witResponse, mocks.TestUserID, publicKey)
+	assert.NoError(suite.T(), err)
 }
 
 func (suite *ActionSuite) TestCreatesNewExpenseFromCache() {
@@ -87,21 +87,21 @@ func (suite *ActionSuite) TestCreatesNewExpenseFromCache() {
 	}`
 	alphapointServer := mocks.MakeTestServer(alphapointResponse)
 
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
-	alphapoint.BaseUrl = alphapointServer.URL
+	alphapoint.BaseURL = alphapointServer.URL
 
 	publicKey := rsa.PublicKey{}
 
 	action := suite.Action
 	// Initial call without cache
-	action.CreateNewExpense(witResponse, mocks.TestUserId, publicKey)
+	action.CreateNewExpense(witResponse, mocks.TestUserID, publicKey)
 
 	// Second call should not hit server
 	alphapointServer.Close()
-	isCreated := action.CreateNewExpense(witResponse, mocks.TestUserId, publicKey)
-	assert.True(suite.T(), isCreated)
+	err := action.CreateNewExpense(witResponse, mocks.TestUserID, publicKey)
+	assert.NoError(suite.T(), err)
 }
 
 func (suite *ActionSuite) TestGetsExpenseTotal() {
@@ -122,7 +122,7 @@ func (suite *ActionSuite) TestReturnsErrorForInvalidPeriod() {
 
 	privateKey := rsa.PrivateKey{}
 	period := "foo"
-	_, err := action.GetExpenseTotal(period, mocks.TestUserId, privateKey)
+	_, err := action.GetExpenseTotal(period, mocks.TestUserID, privateKey)
 	assert.EqualError(suite.T(), err, "foo is an invalid period")
 }
 
@@ -130,8 +130,8 @@ func (suite *ActionSuite) TestCreatesNewUser() {
 	action := suite.Action
 	password := "my-password"
 
-	isCreated := action.CreateNewUser(mocks.TestUserId, password)
-	assert.True(suite.T(), isCreated)
+	err := action.CreateNewUser(mocks.TestUserID, password)
+	assert.NoError(suite.T(), err)
 }
 
 func TestActionSuite(t *testing.T) {

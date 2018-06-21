@@ -55,7 +55,7 @@ func (suite *TrackExpenseSuite) TestReturnsSuccessMessage() {
 			]
 		}
 	}`)
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
 	var incMessage telegram.IncomingMessage
@@ -85,7 +85,7 @@ func (suite *TrackExpenseSuite) TestReturnsErrorMessage() {
 			"description": []
 		}
 	}`)
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
 	var incMessage telegram.IncomingMessage

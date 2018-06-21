@@ -9,30 +9,41 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
+	// Register SQL driver for DB
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 const (
+	// MONTH is a one month period of expenses
 	MONTH = "month"
-	WEEK  = "week"
+
+	// WEEK is a one week period of expenses
+	WEEK = "week"
+
+	// TODAY is a one day period of expenses
 	TODAY = "today"
 )
 
+// Clock is an interface that provides a Now method.
 type Clock interface {
 	Now() time.Time
 }
 
+// ExpenseManagerClock uses stdlib time to satisfy the Clock interface
 type ExpenseManagerClock struct{}
 
+// ExpenseManager exposes methods to interface with an Expense in our database.
 type ExpenseManager struct {
 	clock Clock
 	db    *gorm.DB
 }
 
+// Now returns the current time.
 func (em *ExpenseManagerClock) Now() time.Time {
 	return time.Now()
 }
 
+// NewExpenseManager returns an ExpenseManager with a default clock.
 func NewExpenseManager(db *gorm.DB) *ExpenseManager {
 	return &ExpenseManager{
 		db:    db,
@@ -40,18 +51,18 @@ func NewExpenseManager(db *gorm.DB) *ExpenseManager {
 	}
 }
 
-func (m *ExpenseManager) Save(expense *Expense) bool {
+// Save saves an Expense into our DB.
+func (m *ExpenseManager) Save(expense *Expense) error {
 	if m.db.NewRecord(expense) {
 		m.db.Create(expense)
-		return true
+		return nil
 	}
 
-	log.Printf("models: attempting insert record with existing pk - %s", expense)
-	return false
+	log.Printf("models: attempting insert record with existing pk - %v", expense)
+	return errors.New("expense ID already exists")
 }
 
-// Parses a descriptive time period (month, week) into a time.Time object
-// time.Time object
+// ParseTimePeriod parses a string period (ex. month) into a time.Time object.
 func (m *ExpenseManager) ParseTimePeriod(period string) (time.Time, error) {
 	today := m.clock.Now()
 	weekday := int(today.Weekday())
@@ -71,7 +82,8 @@ func (m *ExpenseManager) ParseTimePeriod(period string) (time.Time, error) {
 	}
 }
 
-func (m *ExpenseManager) QueryByPeriod(period string, userId uint) ([]Expense, error) {
+// QueryByPeriod finds all expenses within a specific period.
+func (m *ExpenseManager) QueryByPeriod(period string, userID uint) ([]Expense, error) {
 	var expenses []Expense
 
 	timePeriod, err := m.ParseTimePeriod(period)
@@ -84,17 +96,17 @@ func (m *ExpenseManager) QueryByPeriod(period string, userId uint) ([]Expense, e
 		query = "user_id = ? AND date = ?"
 	}
 
-	result := m.db.Where(query, userId, timePeriod).Find(&expenses)
-	if result.Error != nil {
-		return expenses, result.Error
+	if err = m.db.Where(query, userID, timePeriod).Find(&expenses).Error; err != nil {
+		return expenses, err
 	}
 
 	return expenses, nil
 }
 
-func (m *ExpenseManager) TotalByPeriod(period string, userId uint, privateKey rsa.PrivateKey) (float64, error) {
+// TotalByPeriod sums the total historical value of a list of Expenses.
+func (m *ExpenseManager) TotalByPeriod(period string, userID uint, pk rsa.PrivateKey) (float64, error) {
 	expenseTotal := 0.0
-	expenses, err := m.QueryByPeriod(period, userId)
+	expenses, err := m.QueryByPeriod(period, userID)
 	if err != nil {
 		return expenseTotal, err
 	}
@@ -103,7 +115,7 @@ func (m *ExpenseManager) TotalByPeriod(period string, userId uint, privateKey rs
 	// as an encrypted string in the DB, so we must first query for the relevant
 	// records, decrypt, and sum it ourselves
 	for _, expense := range expenses {
-		expense.Decrypt(privateKey)
+		expense.Decrypt(pk)
 		amount, err := strconv.ParseFloat(expense.Historical, 64)
 		if err != nil {
 			return 0.0, err

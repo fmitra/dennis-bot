@@ -60,20 +60,20 @@ func (suite *ConvoSuite) TestCreatesNewConversation() {
 			]
 		}
 	}`)
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 	action := &Actions{
 		Db: suite.Env.Db,
 	}
 
-	conversation := NewConversation(mocks.TestUserId, witResponse, action)
-	assert.Equal(suite.T(), mocks.TestUserId, conversation.UserId)
-	assert.Equal(suite.T(), ONBOARD_USER_INTENT, conversation.Intent)
+	conversation := NewConversation(mocks.TestUserID, witResponse, action)
+	assert.Equal(suite.T(), mocks.TestUserID, conversation.UserID)
+	assert.Equal(suite.T(), OnboardUserIntent, conversation.Intent)
 }
 
 func (suite *ConvoSuite) TestInfersUserIntentFromWitResponse() {
 	var rawWitResponse []byte
-	var witResponse wit.WitResponse
+	var witResponse wit.Response
 
 	rawWitResponse = []byte(`{
 		"entities": {
@@ -89,7 +89,7 @@ func (suite *ConvoSuite) TestInfersUserIntentFromWitResponse() {
 		}
 	}`)
 	json.Unmarshal(rawWitResponse, &witResponse)
-	assert.Equal(suite.T(), ONBOARD_USER_INTENT, InferIntent(witResponse, uint(0)))
+	assert.Equal(suite.T(), OnboardUserIntent, InferIntent(witResponse, uint(0)))
 
 	rawWitResponse = []byte(`{
 		"entities": {
@@ -105,7 +105,7 @@ func (suite *ConvoSuite) TestInfersUserIntentFromWitResponse() {
 		}
 	}`)
 	json.Unmarshal(rawWitResponse, &witResponse)
-	assert.Equal(suite.T(), TRACK_EXPENSE_INTENT, InferIntent(witResponse, uint(123)))
+	assert.Equal(suite.T(), TrackExpenseIntent, InferIntent(witResponse, uint(123)))
 
 	rawWitResponse = []byte(`{
 		"entities": {
@@ -119,7 +119,7 @@ func (suite *ConvoSuite) TestInfersUserIntentFromWitResponse() {
 		}
 	}`)
 	json.Unmarshal(rawWitResponse, &witResponse)
-	assert.Equal(suite.T(), TRACK_EXPENSE_INTENT, InferIntent(witResponse, uint(123)))
+	assert.Equal(suite.T(), TrackExpenseIntent, InferIntent(witResponse, uint(123)))
 
 	rawWitResponse = []byte(`{
 		"entities": {
@@ -132,7 +132,7 @@ func (suite *ConvoSuite) TestInfersUserIntentFromWitResponse() {
 		}
 	}`)
 	json.Unmarshal(rawWitResponse, &witResponse)
-	assert.Equal(suite.T(), GET_EXPENSE_TOTAL_INTENT, InferIntent(witResponse, uint(123)))
+	assert.Equal(suite.T(), GetExpenseTotalIntent, InferIntent(witResponse, uint(123)))
 
 	rawWitResponse = []byte(`{
 		"entities": {
@@ -149,14 +149,14 @@ func (suite *ConvoSuite) TestInfersUserIntentFromWitResponse() {
 func (suite *ConvoSuite) TestGetsConversationFromCache() {
 	cache := suite.Env.Cache
 	conversation := Conversation{
-		Intent: ONBOARD_USER_INTENT,
-		UserId: mocks.TestUserId,
+		Intent: OnboardUserIntent,
+		UserID: mocks.TestUserID,
 	}
-	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserId)))
+	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserID)))
 
 	oneMinute := 60
 	cache.Set(cacheKey, conversation, oneMinute)
-	cachedConversation, err := GetConversation(mocks.TestUserId, cache)
+	cachedConversation, err := GetConversation(mocks.TestUserID, cache)
 
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), conversation, cachedConversation)
@@ -164,44 +164,44 @@ func (suite *ConvoSuite) TestGetsConversationFromCache() {
 
 func (suite *ConvoSuite) TestReturnsErrorFetchingFromCache() {
 	cache := suite.Env.Cache
-	cachedConversation, err := GetConversation(mocks.TestUserId, cache)
-	assert.EqualError(suite.T(), err, "No conversation found")
+	cachedConversation, err := GetConversation(mocks.TestUserID, cache)
+	assert.EqualError(suite.T(), err, "no conversation found")
 	assert.Equal(suite.T(), cachedConversation, Conversation{})
 
 	conversation := Conversation{
-		Intent: ONBOARD_USER_INTENT,
-		UserId: mocks.TestUserId,
+		Intent: OnboardUserIntent,
+		UserID: mocks.TestUserID,
 		Step:   -1,
 	}
-	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserId)))
+	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserID)))
 	oneMinute := 60
 	cache.Set(cacheKey, conversation, oneMinute)
-	_, err = GetConversation(mocks.TestUserId, cache)
-	assert.EqualError(suite.T(), err, "No responses available")
+	_, err = GetConversation(mocks.TestUserID, cache)
+	assert.EqualError(suite.T(), err, "no responses available")
 }
 
 func (suite *ConvoSuite) TestRetrievesIntent() {
 	conversation := &Conversation{
-		Intent: ONBOARD_USER_INTENT,
+		Intent: OnboardUserIntent,
 	}
-	witResponse := wit.WitResponse{}
+	witResponse := wit.Response{}
 	incMessage := telegram.IncomingMessage{}
 	actions := &Actions{}
-	botUserId := uint(0)
-	intent := conversation.GetIntent(witResponse, incMessage, actions, botUserId)
+	botUserID := uint(0)
+	intent := conversation.GetIntent(witResponse, incMessage, actions, botUserID)
 	assert.IsType(suite.T(), &OnboardUser{}, intent)
 }
 
 func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	conversation := &Conversation{
-		Intent: ONBOARD_USER_INTENT,
+		Intent: OnboardUserIntent,
 	}
 	actions := &Actions{
 		suite.Env.Db,
 		suite.Env.Cache,
 		suite.Env.Config,
 	}
-	witResponse := wit.WitResponse{}
+	witResponse := wit.Response{}
 	incMessage := telegram.IncomingMessage{}
 	message := mocks.GetMockMessage("")
 	json.Unmarshal(message, &incMessage)
@@ -255,12 +255,12 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 }
 
 func (suite *ConvoSuite) TestCachesConversationsWithRemainingResponses() {
-	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserId)))
+	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserID)))
 	actions := &Actions{
 		Cache: suite.Env.Cache,
 		Db:    suite.Env.Db,
 	}
-	witResponse := wit.WitResponse{}
+	witResponse := wit.Response{}
 	incMessage := telegram.IncomingMessage{}
 	message := mocks.GetMockMessage("")
 	json.Unmarshal(message, &incMessage)
@@ -269,7 +269,7 @@ func (suite *ConvoSuite) TestCachesConversationsWithRemainingResponses() {
 
 	var cachedConvo Conversation
 	suite.Env.Cache.Get(cacheKey, &cachedConvo)
-	assert.Equal(suite.T(), ONBOARD_USER_INTENT, cachedConvo.Intent)
+	assert.Equal(suite.T(), OnboardUserIntent, cachedConvo.Intent)
 }
 
 func TestConvoSuite(t *testing.T) {

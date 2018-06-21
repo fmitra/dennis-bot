@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/jinzhu/gorm"
+	// Register SQL driver for DB
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"github.com/fmitra/dennis-bot/config"
@@ -17,7 +18,9 @@ import (
 	"github.com/fmitra/dennis-bot/pkg/users"
 )
 
-// Working environment for the application
+// Env is the working environment. It exposes HTTP handlers
+// to communicate with the bot and the DB/Cache layer as well
+// as application configuration.
 type Env struct {
 	db       *gorm.DB
 	cache    sessions.Session
@@ -25,12 +28,14 @@ type Env struct {
 	telegram telegram.Telegram
 }
 
+// HealthCheck ensures application is running.
 func (env *Env) HealthCheck() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	}
 }
 
+// Webhook accepts payload from Telegram API for incoming messages.
 func (env *Env) Webhook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, _ := ioutil.ReadAll(r.Body)
@@ -43,6 +48,7 @@ func (env *Env) Webhook() http.HandlerFunc {
 	}
 }
 
+// Start sets the Telegram webhook and starts the HTTP server.
 func (env *Env) Start() {
 	go env.telegram.SetWebhook()
 
@@ -58,6 +64,7 @@ func (env *Env) Start() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
+// LoadEnv initializes dependencies and attaches them to the environment.
 func LoadEnv(config config.AppConfig) *Env {
 	db, err := gorm.Open(
 		"postgres",

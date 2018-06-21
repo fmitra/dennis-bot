@@ -11,7 +11,7 @@ func TestKeys(t *testing.T) {
 	t.Run("Should encode and decode a private/public key pair", func(t *testing.T) {
 		InitializeGob()
 
-		publicKey, privateKey := CreateKeyPair()
+		publicKey, privateKey, _ := CreateKeyPair()
 
 		publicKeyStr, _ := encodeKey(publicKey)
 		privateKeyStr, _ := encodeKey(privateKey)
@@ -78,7 +78,7 @@ func TestKeys(t *testing.T) {
 	})
 
 	t.Run("Should parse encoded text to private key", func(t *testing.T) {
-		_, key := CreateKeyPair()
+		_, key, _ := CreateKeyPair()
 		privateKeyStr, _ := encodeKey(key)
 		password := ""
 
@@ -101,7 +101,7 @@ func TestKeys(t *testing.T) {
 		hashedPassword, _ := HashText(password)
 		assert.NotEqual(t, password, hashedPassword)
 
-		isValid := ValidateHash(hashedPassword, password)
-		assert.True(t, isValid)
+		err := ValidateHash(hashedPassword, password)
+		assert.NoError(t, err)
 	})
 }

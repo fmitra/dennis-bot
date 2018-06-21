@@ -70,16 +70,38 @@ The test suite requires Postgres and Redis to be set up as well as a valid
 configuraiton file. The `config.example.json` file is already prepared to use the
 default settings in the sample `docker-compose.example.yml`.
 
+The command below will generate a test config and spin up docker and redis
+
 ```
 make develop
 docker-compose up -d
+```
+
+This project uses `Dep` for dependency mangagement and `Megacheck` and `golint` as a linter.
+If these packages are not installed on your system, run:
+
+```
+make dev_dependencies
+```
+
+Otherwise just install the app's third party packages.
+
+```
 dep ensure -vendor-only -v
 ```
 
 #### 2. Confirm tests are passing
 
+Run all tests:
+
 ```
 go test ./...
+```
+
+You can also run vet, golint, megacheck and test in one command:
+
+```
+make test_and_lint
 ```
 
 #### 3. Run Ngrok

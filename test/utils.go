@@ -8,29 +8,36 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
+	// Register SQL driver for DB related tests
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/fmitra/dennis-bot/config"
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/sessions"
 )
 
+// We use global variables here to implement testEnv as a singleton
+// accross the different test suites.
 var (
 	testEnv *TestEnv
 	once    sync.Once
 )
 
-// Working environmenet for test suites.
+// TestEnv is the working environmenet for test suites.
 type TestEnv struct {
 	Db     *gorm.DB
 	Cache  *sessions.Client
 	Config config.AppConfig
 }
 
+// GetTestEnv returns TestEnv as a singleton.
 func GetTestEnv(configFile string) *TestEnv {
 	// We only need a single Postgres/Redis connection
 	// to share accross tests
 	once.Do(func() {
+		crypto.InitializeGob()
+
 		appConfig := config.LoadConfig(configFile)
 		db := getDb(appConfig)
 		cache := getSessions(appConfig)
@@ -44,18 +51,18 @@ func GetTestEnv(configFile string) *TestEnv {
 	return testEnv
 }
 
-// Creates default test user with telegram user ID specified in mocks
+// CreateTestUser creates default test user with telegram user ID specified in mocks.
 func CreateTestUser(db *gorm.DB) {
 	password, _ := bcrypt.GenerateFromPassword([]byte("my-password"), 10)
 	user := &user{
-		TelegramID: TestUserId,
+		TelegramID: TestUserID,
 		Password:   string(password),
 	}
 	db.Create(user)
 }
 
-// Clears common DB and cached objects. Intended to be run after any test
-// suite with a DB dependency
+// CleanUpEnv cleans common DB and cached objects. Intended to be run after any test
+// suite with a DB dependency.
 func CleanUpEnv(testEnv *TestEnv) {
 	// TODO There is a race condition that needs to be investigated where test tear down
 	// methods do not finish clearing out the DB before the next suite starts. Setting
@@ -64,8 +71,8 @@ func CleanUpEnv(testEnv *TestEnv) {
 	testEnv.Db.Exec("DELETE FROM expenses e USING users u WHERE e.user_id = u.id and u.telegram_id != 100;")
 	testEnv.Db.Exec("DELETE FROM users;")
 
-	defaultUserCache := fmt.Sprintf("%s_conversation", strconv.Itoa(int(TestUserId)))
-	defaultPassCache := fmt.Sprintf("%s_password", strconv.Itoa(int(TestUserId)))
+	defaultUserCache := fmt.Sprintf("%s_conversation", strconv.Itoa(int(TestUserID)))
+	defaultPassCache := fmt.Sprintf("%s_password", strconv.Itoa(int(TestUserID)))
 	defaultCurrencyCache := "SGD_USD"
 	testEnv.Cache.Delete(defaultUserCache)
 	testEnv.Cache.Delete(defaultPassCache)
@@ -76,7 +83,7 @@ func CleanUpEnv(testEnv *TestEnv) {
 }
 
 // Duplicate of the users pkg model. We define this here to prevent circular
-// imports when creating the test enviroment
+// imports when creating the test enviroment.
 type user struct {
 	gorm.Model
 	Password   string `gorm:"type:varchar(2000);not null"`
@@ -86,7 +93,7 @@ type user struct {
 }
 
 // Duplicate of the expense pkg model. We define this here to prevent circular
-// imports when creating the test environment
+// imports when creating the test environment.
 type expense struct {
 	gorm.Model
 	Date        time.Time `gorm:"index;not null"` // Date the expense was made
@@ -99,7 +106,7 @@ type expense struct {
 	UserID      uint
 }
 
-// Returns sessions cache for test environment
+// getSessions returns sessions cache for test environment.
 func getSessions(cacheConfig config.AppConfig) *sessions.Client {
 	return sessions.NewClient(sessions.Config{
 		cacheConfig.Redis.Host,
@@ -109,7 +116,7 @@ func getSessions(cacheConfig config.AppConfig) *sessions.Client {
 	})
 }
 
-// Returns a DB for the test environment with initial migrations
+// getDb returns a DB for the test environment with initial migrations.
 func getDb(dbConfig config.AppConfig) *gorm.DB {
 	db, err := gorm.Open(
 		"postgres",

@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"github.com/fmitra/dennis-bot/config"
 	"github.com/fmitra/dennis-bot/pkg/alphapoint"
@@ -26,19 +25,23 @@ type Actions struct {
 	Config config.AppConfig
 }
 
-func (a *Actions) CreateNewExpense(witResponse wit.WitResponse, userId uint, publicKey rsa.PublicKey) bool {
-	date := witResponse.GetDate()
-	amount, fromCurrency, _ := witResponse.GetAmount()
+// CreateNewExpense creates and saves a new Expense entry to the DB.
+func (a *Actions) CreateNewExpense(wr wit.Response, userID uint, pk rsa.PublicKey) error {
+	date := wr.GetDate()
+	amount, fromCurrency, _ := wr.GetAmount()
 	targetCurrency := "USD"
-	description, _ := witResponse.GetDescription()
+	description, _ := wr.GetDescription()
 
 	var conversion alphapoint.Conversion
 	var newConversion *alphapoint.Conversion
+	var historicalAmount float64
 	cacheKey := fmt.Sprintf("%s_%s", fromCurrency, targetCurrency)
-	a.Cache.Get(cacheKey, &conversion)
+	err := a.Cache.Get(cacheKey, &conversion)
+	historicalAmount = conversion.Rate * amount
 
-	historicalAmount := conversion.Rate * amount
-	if conversion.Rate == 0 {
+	// We ping alphapoint for an updated conversation rate if is not
+	// already stored in our cache.
+	if err != nil {
 		ap := alphapoint.NewClient(a.Config.AlphaPoint.Token)
 		historicalAmount, newConversion = ap.Convert(
 			fromCurrency,
@@ -55,27 +58,29 @@ func (a *Actions) CreateNewExpense(witResponse wit.WitResponse, userId uint, pub
 		Total:       strconv.FormatFloat(amount, 'f', -1, 64),
 		Historical:  strconv.FormatFloat(historicalAmount, 'f', -1, 64),
 		Currency:    fromCurrency,
-		UserID:      userId,
+		UserID:      userID,
 	}
-	expense.Encrypt(publicKey)
+	expense.Encrypt(pk)
 	manager := expenses.NewExpenseManager(a.Db)
 	return manager.Save(expense)
 }
 
-func (a *Actions) GetExpenseTotal(expensePeriod string, userId uint, privateKey rsa.PrivateKey) (string, error) {
+// GetExpenseTotal returns the sum of historical expense history over a period of time.
+func (a *Actions) GetExpenseTotal(period string, userID uint, pk rsa.PrivateKey) (string, error) {
 	manager := expenses.NewExpenseManager(a.Db)
-	total, err := manager.TotalByPeriod(expensePeriod, userId, privateKey)
-	messageVar := strconv.FormatFloat(total, 'f', 2, 64)
+	total, err := manager.TotalByPeriod(period, userID, pk)
 	if err != nil {
 		log.Printf("actions: failed to query expenses %s", err)
 	}
 
+	messageVar := strconv.FormatFloat(total, 'f', 2, 64)
 	return messageVar, err
 }
 
-func (a *Actions) CreateNewUser(userId uint, password string) bool {
+// CreateNewUser saves a user to the DB.
+func (a *Actions) CreateNewUser(userID uint, password string) error {
 	user := &users.User{
-		TelegramID: userId,
+		TelegramID: userID,
 		Password:   password,
 	}
 	manager := users.NewUserManager(a.Db)
