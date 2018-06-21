@@ -24,7 +24,7 @@ jobs:
       if: tag =~ ^v
       script:
         - export REPO=fmitra/dennis-bot
-        - docker login --username $DOCKER_USER --password-stdin $DOCKER_PASS
+        - docker login -u $DOCKER_USER -p $DOCKER_PASS
         - docker build . -f Dockerfile -t $REPO
-        - docker tag $REPO $REPO:$TRAVIS_BUILD_NUMBER
+        - docker tag $REPO $REPO:$TRAVIS_TAG
         - docker push $REPO
