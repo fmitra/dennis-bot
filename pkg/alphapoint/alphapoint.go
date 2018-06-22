@@ -53,7 +53,7 @@ func NewClient(token string) *Client {
 	}
 }
 
-// Convert converst from one currency to another using AlphaPoints' API.
+// Convert converts from one currency to another using AlphaPoints' API.
 func (c *Client) Convert(fromISO string, toISO string, total float64) (float64, *Conversion) {
 	var currencyDetails CurrencyDetails
 

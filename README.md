@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/fmitra/dennis-bot.svg?branch=master)](https://travis-ci.org/fmitra/dennis-bot)
+[![Build Status](https://travis-ci.org/fmitra/dennis-bot.svg?branch=master)](https://travis-ci.org/fmitra/dennis-bot) [![Report Card](https://goreportcard.com/badge/github.com/fmitra/dennis-bot)](https://goreportcard.com/badge/github.com/fmitra/dennis-bot)
 
 # Dennis
 
@@ -139,3 +139,9 @@ the entire test suite is run with `go test ./...`. Isolated they run fine.
 
 Telegram does not send any authentication headers in their requests, and instead recommends
 you instead use the token as the path of your webhook.
+
+
+#### Docker
+
+Tagged builds are available on [docker hub](https://hub.docker.com/r/fmitra/dennis-bot/tags/). They sould be configured with an environment variable
+`DENNIS_BOT_CONFIG` that points to a JSON config on a local volume.

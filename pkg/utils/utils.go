@@ -1,4 +1,4 @@
-// Package utils provide common utility methods to share accross packages.
+// Package utils provide common utility methods to share across packages.
 package utils
 
 import (

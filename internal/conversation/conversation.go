@@ -39,7 +39,7 @@ type Intent interface {
 	GetResponses() []func() (BotResponse, error)
 }
 
-// Context is embeded into all Intents to provides necessary info and
+// Context is embedded into all Intents to provides necessary info and
 // methods to process a response
 type Context struct {
 	Step        int
@@ -103,7 +103,7 @@ func (c *Conversation) HasResponse() bool {
 	return c.Step > finalStep
 }
 
-// GetIntent creates an a new Intent with embeded Context. A Conversation create's an
+// GetIntent creates an a new Intent with embedded Context. A Conversation create's an
 // Intent in order to formulate a BotResponse.
 func (c *Conversation) GetIntent(w wit.Response, inc t.IncomingMessage, a *Actions, userID uint) Intent {
 	context := Context{

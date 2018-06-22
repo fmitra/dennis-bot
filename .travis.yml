@@ -12,8 +12,19 @@ services:
 before_script:
   - sudo /etc/init.d/postgresql stop
 
-script:
-  - make develop
-  - make dev_dependencies
-  - docker-compose up -d
-  - make test_and_lint
+jobs:
+  include:
+    - stage: test
+      script:
+        - make develop
+        - make dev_dependencies
+        - docker-compose up -d
+        - make test_and_lint
+    - stage: build
+      if: tag =~ ^v
+      script:
+        - export REPO=fmitra/dennis-bot
+        - docker login -u $DOCKER_USER -p $DOCKER_PASS
+        - docker build . -f Dockerfile -t $REPO
+        - docker tag $REPO $REPO:$TRAVIS_TAG
+        - docker push $REPO

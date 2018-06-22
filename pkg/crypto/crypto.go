@@ -17,7 +17,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// InitializeGob registeres rsa PublicKey/PrivateKey so we may encode
+// InitializeGob registers rsa PublicKey/PrivateKey so we may encode
 // using stdlib encoding/gob.
 func InitializeGob() {
 	gob.Register(rsa.PublicKey{})
