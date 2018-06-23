@@ -11,6 +11,7 @@ import (
 
 	convo "github.com/fmitra/dennis-bot/internal/conversation"
 	"github.com/fmitra/dennis-bot/pkg/alphapoint"
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
@@ -153,7 +154,8 @@ func (suite *BotSuite) TestReturnsErrorMessage() {
 	bot := &Bot{suite.BotEnv}
 
 	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(mocks.TestUserID)))
-	suite.Env.Cache.Set(cacheKey, "my-password", 180)
+	password, _ := crypto.Encrypt("my-password", suite.Env.Config.SecretKey)
+	suite.Env.Cache.Set(cacheKey, password, 180)
 
 	response := bot.BuildResponse(incMessage)
 	assert.Equal(suite.T(), convo.BotResponse("Whoops!"), response)

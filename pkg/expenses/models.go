@@ -22,7 +22,7 @@ type Expense struct {
 	Currency    string    `gorm:"not null"`         // Currency ISO of the total
 	Category    string    `gorm:"type:varchar(30)"` // Category of the expense
 	User        users.User
-	UserID      uint
+	UserID      uint `gorm:"index;not null"`
 }
 
 // Encrypt encrypts sensitive fields in an Expense record.

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
@@ -71,7 +72,7 @@ func (suite *ExpenseTotalSuite) TestGetExpenseTotalMessage() {
 		suite.Action,
 	}
 	response, cx := expenseTotal.Respond()
-	assert.Equal(suite.T(), BotResponse("You spent 0.00"), response)
+	assert.Equal(suite.T(), BotResponse("You spent 0.00 USD"), response)
 	assert.Equal(suite.T(), -1, cx.Step)
 }
 
@@ -157,7 +158,8 @@ func (suite *ExpenseTotalSuite) TestSkipsPasswordRequest() {
 	json.Unmarshal(rawWitResponse, &witResponse)
 
 	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(incMessage.GetUser().ID)))
-	suite.Action.Cache.Set(cacheKey, "my-password", 180)
+	password, _ := crypto.Encrypt("my-password", suite.Env.Config.SecretKey)
+	suite.Action.Cache.Set(cacheKey, password, 180)
 
 	expenseTotal := &GetExpenseTotal{
 		Context{
@@ -174,22 +176,10 @@ func (suite *ExpenseTotalSuite) TestSkipsPasswordRequest() {
 }
 
 func (suite *ExpenseTotalSuite) TestValidatesPassword() {
+	var witResponse wit.Response
 	var incMessage telegram.IncomingMessage
 	message := mocks.GetMockMessage("my-password")
 	json.Unmarshal(message, &incMessage)
-
-	rawWitResponse := []byte(`{
-		"entities": {
-			"amount": [],
-			"datetime": [],
-			"description": [],
-			"total_spent": [
-				{ "value": "month", "confidence": 100.00 }
-			]
-		}
-	}`)
-	var witResponse wit.Response
-	json.Unmarshal(rawWitResponse, &witResponse)
 
 	mocks.CreateTestUser(suite.Env.Db)
 	expenseTotal := &GetExpenseTotal{
@@ -206,13 +196,35 @@ func (suite *ExpenseTotalSuite) TestValidatesPassword() {
 	assert.Equal(suite.T(), BotResponse(""), response)
 }
 
+func (suite *ExpenseTotalSuite) TestShouldCancelPasswordValidation() {
+	var witResponse wit.Response
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("cancel")
+	json.Unmarshal(message, &incMessage)
+
+	mocks.CreateTestUser(suite.Env.Db)
+	expenseTotal := &GetExpenseTotal{
+		Context{
+			Step:        0,
+			IncMessage:  incMessage,
+			WitResponse: witResponse,
+		},
+		suite.Action,
+	}
+
+	response, err := expenseTotal.ValidatePassword()
+	assert.EqualError(suite.T(), err, "user requested cancel")
+	assert.Equal(suite.T(), BotResponse("Ok I'll stop asking"), response)
+}
+
 func (suite *ExpenseTotalSuite) TestSkipsPasswordValidation() {
 	var incMessage telegram.IncomingMessage
 	message := mocks.GetMockMessage("")
 	json.Unmarshal(message, &incMessage)
 
 	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(incMessage.GetUser().ID)))
-	suite.Action.Cache.Set(cacheKey, "my-password", 180)
+	password, _ := crypto.Encrypt("my-password", suite.Env.Config.SecretKey)
+	suite.Action.Cache.Set(cacheKey, password, 180)
 
 	expenseTotal := &GetExpenseTotal{
 		Context{

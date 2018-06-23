@@ -243,7 +243,7 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	assert.Equal(suite.T(), -1, conversation.Step)
 
 	// Manually edit the step so we can continue the final tests
-	conversation.Step = 2
+	conversation.Step = 5
 
 	// When steps are iterated past the number of responses, we should
 	// reset the step to -1 to end the conversation

@@ -8,9 +8,9 @@ A pet project to learn Go, Dennis is a privacy friendly Telegram bot to manage e
 
 ## Overview
 
-Dennis was written as a way to track international expenses in USD. He keeps an encrypted log of
-expenses in any currency and returns the total (daily, weekly, monthly) converted to USD. At the
-moment he supports the following commands:
+Dennis was written as a way to track international expenses in a single currency. He keeps an encrypted log
+of international expenses and returns the total (daily, weekly, monthly) in the user's preferred currency.
+At the moment, he suppoorts the following commands:
 
 * Track an expense
 

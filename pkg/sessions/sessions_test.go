@@ -28,12 +28,13 @@ func GetSession() *Client {
 	jsonParser := json.NewDecoder(configFile)
 	jsonParser.Decode(&config)
 
-	return NewClient(Config{
+	client, _ := NewClient(Config{
 		config.Redis.Host,
 		config.Redis.Port,
 		config.Redis.Password,
 		config.Redis.Db,
 	})
+	return client
 }
 
 func TestSessions(t *testing.T) {

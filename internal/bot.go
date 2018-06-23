@@ -63,9 +63,9 @@ func (bot *Bot) BuildResponse(incM telegram.IncomingMessage) convo.BotResponse {
 	w := wit.NewClient(bot.env.config.Wit.Token)
 	witResponse := w.ParseMessage(incM.GetMessage())
 	actions := &convo.Actions{
-		bot.env.db,
-		bot.env.cache,
-		bot.env.config,
+		Db:     bot.env.db,
+		Cache:  bot.env.cache,
+		Config: bot.env.config,
 	}
 	botResponse := convo.GetResponse(witResponse, incM, actions)
 	return botResponse

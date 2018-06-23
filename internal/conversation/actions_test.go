@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/fmitra/dennis-bot/pkg/alphapoint"
+	"github.com/fmitra/dennis-bot/pkg/users"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
@@ -109,7 +110,34 @@ func (suite *ActionSuite) TestGetsExpenseTotal() {
 	privateKey := rsa.PrivateKey{}
 	period := "month"
 	total, err := action.GetExpenseTotal(period, uint(200), privateKey)
-	assert.Equal(suite.T(), "0.00", total)
+	assert.Equal(suite.T(), "0.00 USD", total)
+	assert.NoError(suite.T(), err)
+}
+
+func (suite *ActionSuite) TestGetsConvertedExpenseTotal() {
+	alphapointResponse := `{
+		"Realtime Currency Exchange Rate": {
+			"5. Exchange Rate": ".7"
+		}
+	}`
+	alphapointServer := mocks.MakeTestServer(alphapointResponse)
+	defer alphapointServer.Close()
+	alphapoint.BaseURL = alphapointServer.URL
+
+	user := users.User{
+		TelegramID: uint(201),
+		Password:   "my-password",
+	}
+	suite.Env.Db.Create(&user)
+
+	manager := users.NewSettingManager(suite.Env.Db)
+	manager.UpdateCurrency(user.ID, "PHP")
+
+	action := suite.Action
+	privateKey := rsa.PrivateKey{}
+	period := "month"
+	total, err := action.GetExpenseTotal(period, user.ID, privateKey)
+	assert.Equal(suite.T(), "0.00 PHP", total)
 	assert.NoError(suite.T(), err)
 }
 

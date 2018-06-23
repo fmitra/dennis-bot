@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/sessions"
 	"github.com/fmitra/dennis-bot/pkg/users"
 )
@@ -40,7 +41,9 @@ func (i *GetExpenseTotal) AskForPassword() (BotResponse, error) {
 	i.AuxData = expensePeriod
 	telegramUserID := i.IncMessage.GetUser().ID
 
-	if err := passwordInCache(telegramUserID, i.actions.Cache); err == nil {
+	key := i.actions.Config.SecretKey
+	_, err = passwordInCache(telegramUserID, key, i.actions.Cache)
+	if err == nil {
 		return i.SkipResponse()
 	}
 
@@ -53,45 +56,53 @@ func (i *GetExpenseTotal) AskForPassword() (BotResponse, error) {
 // in line.
 func (i *GetExpenseTotal) ValidatePassword() (BotResponse, error) {
 	telegramUserID := i.IncMessage.GetUser().ID
+	key := i.actions.Config.SecretKey
 
-	if err := passwordInCache(telegramUserID, i.actions.Cache); err == nil {
+	_, err := passwordInCache(telegramUserID, key, i.actions.Cache)
+	if err == nil {
 		return i.SkipResponse()
 	}
 
-	shouldStop := i.IncMessage.GetMessage() == "stop"
-	if shouldStop {
+	shouldEnd := i.IncMessage.GetMessage() == "cancel"
+	if shouldEnd {
 		i.EndConversation()
-		return BotResponse(""), errors.New("user requested to stop")
+		return GetMessage(GetExpenseTotalCancel, ""), errors.New("user requested cancel")
 	}
 
 	password := i.IncMessage.GetMessage()
+	encryptedPass, err := crypto.Encrypt(password, i.actions.Config.SecretKey)
+	if err != nil {
+		response := GetMessage(GetExpenseTotalPasswordInvalid, "")
+		return response, err
+	}
+
 	manager := users.NewUserManager(i.actions.Db)
 	user := manager.GetByTelegramID(telegramUserID)
 
-	if err := user.ValidatePassword(password); err != nil {
+	if err = user.ValidatePassword(password); err != nil {
 		response := GetMessage(GetExpenseTotalPasswordInvalid, "")
-		err := errors.New("password invalid")
+		err = errors.New("password invalid")
 		return response, err
 	}
 
 	threeMinutes := 180
 	cacheKey := passwordCacheKey(telegramUserID)
-	i.actions.Cache.Set(cacheKey, password, threeMinutes)
+	i.actions.Cache.Set(cacheKey, encryptedPass, threeMinutes)
 	return i.SkipResponse()
 }
 
 // CalculateTotal runs an action to check for the total sum of user expenses
 // for a specific period in time.
 func (i *GetExpenseTotal) CalculateTotal() (BotResponse, error) {
-	var password string
 	telegramUserID := i.IncMessage.GetUser().ID
-	cacheKey := passwordCacheKey(telegramUserID)
-	i.actions.Cache.Get(cacheKey, &password)
+	key := i.actions.Config.SecretKey
+
+	// No need to handle this error or below. Bot will return an error
+	// response if the private key is invalid
+	password, _ := passwordInCache(telegramUserID, key, i.actions.Cache)
 
 	manager := users.NewUserManager(i.actions.Db)
 	user := manager.GetByTelegramID(telegramUserID)
-	// No need to handle this error. Bot will return an error response
-	// if the private key is invalid
 	privateKey, _ := user.GetPrivateKey(password)
 
 	expensePeriod := i.AuxData
@@ -112,8 +123,18 @@ func passwordCacheKey(userID uint) string {
 // passwordInCache checks for a password in cache, indicating the user completed
 // this flow within the past few minutes. We do not require users to re-enter password
 // for consecutive queries within the cache timeout.
-func passwordInCache(userID uint, cache sessions.Session) error {
+func passwordInCache(userID uint, secretKey string, cache sessions.Session) (string, error) {
 	var password string
 	cacheKey := passwordCacheKey(userID)
-	return cache.Get(cacheKey, &password)
+	err := cache.Get(cacheKey, &password)
+	if err != nil {
+		return "", err
+	}
+
+	decryptedPass, err := crypto.Decrypt(password, secretKey)
+	if err != nil {
+		return "", err
+	}
+
+	return decryptedPass, nil
 }

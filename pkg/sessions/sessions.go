@@ -29,17 +29,22 @@ type Session interface {
 
 // Client provides methods to interact with the cache layer.
 type Client struct {
-	codec cache.Codec
+	codec *cache.Codec
 }
 
 // NewClient returns a Client connected to the cache layer.
-func NewClient(c Config) *Client {
+func NewClient(c Config) (*Client, error) {
 	address := fmt.Sprintf("%s:%s", c.Host, strconv.Itoa(int(c.Port)))
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     address,
 		Password: c.Password,
 		DB:       c.Db,
 	})
+
+	_, err := redisClient.Ping().Result()
+	if err != nil {
+		return &Client{}, err
+	}
 
 	codec := cache.Codec{
 		Redis: redisClient,
@@ -51,7 +56,7 @@ func NewClient(c Config) *Client {
 		},
 	}
 
-	return &Client{codec}
+	return &Client{codec: &codec}, nil
 }
 
 // Delete removes an item from the cache.

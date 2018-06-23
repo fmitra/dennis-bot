@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/fmitra/dennis-bot/pkg/crypto"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
 
@@ -46,15 +45,46 @@ func (suite *Suite) TestCreatesNewUser() {
 	assert.NoError(suite.T(), err)
 }
 
-func (suite *Suite) ValidatesUserPassword() {
-	hashedPassword, _ := crypto.HashText("my-password")
-	user := &User{
-		Password:   hashedPassword,
-		TelegramID: mocks.TestUserID,
+func (suite *Suite) TestUpdateCurrency() {
+	password := "my-password"
+	user := User{
+		TelegramID: uint(400),
+		Password:   password,
 	}
+	suite.Env.Db.Create(&user)
 
-	assert.NoError(suite.T(), user.ValidatePassword("my-password"))
-	assert.EqualError(suite.T(), user.ValidatePassword("not-my-password"), "")
+	manager := NewSettingManager(suite.Env.Db)
+	err := manager.UpdateCurrency(user.ID, "ABC")
+	assert.EqualError(suite.T(), err, "invalid currency")
+
+	err = manager.UpdateCurrency(user.ID, "php")
+	assert.NoError(suite.T(), err)
+
+	err = manager.UpdateCurrency(user.ID, "SGD")
+	assert.NoError(suite.T(), err)
+
+	var setting Setting
+	suite.Env.Db.Where("user_id = ?", user.ID).First(&setting)
+	assert.Equal(suite.T(), setting.UserID, user.ID)
+	assert.Equal(suite.T(), setting.Currency, "SGD")
+}
+
+func (suite *Suite) TestGetCurrency() {
+	password := "my-password"
+	user := User{
+		TelegramID: uint(400),
+		Password:   password,
+	}
+	suite.Env.Db.Create(&user)
+
+	manager := NewSettingManager(suite.Env.Db)
+	currency := manager.GetCurrency(user.ID)
+
+	assert.Equal(suite.T(), "USD", currency)
+
+	manager.UpdateCurrency(user.ID, "JPY")
+	currency = manager.GetCurrency(user.ID)
+	assert.Equal(suite.T(), "JPY", currency)
 }
 
 func TestSuite(t *testing.T) {

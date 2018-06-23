@@ -8,22 +8,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIsISO(t *testing.T) {
+func TestParseISO(t *testing.T) {
 	var isoTests = []struct {
 		input    string
-		expected bool
+		expected string
 	}{
-		{"USD", true},
-		{"PHP", true},
-		{"JPY", true},
-		{"BTC", true},
-		{"SGD", true},
-		{"ETH", true},
-		{"AAA", false},
+		{"USD", "USD"},
+		{"php", "PHP"},
+		{"JPY", "JPY"},
+		{"BTC", "BTC"},
+		{" SGD", "SGD"},
+		{"ETH", "ETH"},
+		{"AAA", ""},
 	}
 
 	for _, test := range isoTests {
-		result := isISO(test.input)
+		result, _ := ParseISO(test.input)
 		assert.Equal(t, test.expected, result)
 	}
 }

@@ -78,19 +78,25 @@ func LoadEnv(config config.AppConfig) *Env {
 			config.Database.SSLMode,
 		),
 	)
-
 	if err != nil {
 		log.Panicf("environment: database connection failed - %s", err)
 	}
 
-	db.AutoMigrate(&users.User{}, &expenses.Expense{})
+	db.AutoMigrate(
+		&users.User{},
+		&users.Setting{},
+		&expenses.Expense{},
+	)
 
-	cache := sessions.NewClient(sessions.Config{
-		config.Redis.Host,
-		config.Redis.Port,
-		config.Redis.Password,
-		config.Redis.Db,
+	cache, err := sessions.NewClient(sessions.Config{
+		Host:     config.Redis.Host,
+		Port:     config.Redis.Port,
+		Password: config.Redis.Password,
+		Db:       config.Redis.Db,
 	})
+	if err != nil {
+		log.Panicf("environment: redis connection failed - %s", err)
+	}
 
 	telegram := telegram.NewClient(
 		config.Telegram.Token,

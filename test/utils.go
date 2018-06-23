@@ -70,6 +70,7 @@ func CleanUpEnv(testEnv *TestEnv) {
 	// with custom SQL and a sleeper until we find a more elegant solution.
 	testEnv.Db.Exec("DELETE FROM expenses e USING users u WHERE e.user_id = u.id and u.telegram_id != 100;")
 	testEnv.Db.Exec("DELETE FROM users;")
+	testEnv.Db.Exec("DELETE FROM settings;")
 
 	defaultUserCache := fmt.Sprintf("%s_conversation", strconv.Itoa(int(TestUserID)))
 	defaultPassCache := fmt.Sprintf("%s_password", strconv.Itoa(int(TestUserID)))
@@ -92,6 +93,15 @@ type user struct {
 	PrivateKey string `gorm:"type:varchar(2500);not null"`
 }
 
+// Duplicate of the users pkg model. We define this here to prevent circular
+// imports when creating the test environment.
+type setting struct {
+	gorm.Model
+	Currency string `gorm:"type:varchar(30)"`
+	User     user
+	UserID   uint `gorm:"unique_index"`
+}
+
 // Duplicate of the expense pkg model. We define this here to prevent circular
 // imports when creating the test environment.
 type expense struct {
@@ -108,12 +118,13 @@ type expense struct {
 
 // getSessions returns sessions cache for test environment.
 func getSessions(cacheConfig config.AppConfig) *sessions.Client {
-	return sessions.NewClient(sessions.Config{
-		cacheConfig.Redis.Host,
-		cacheConfig.Redis.Port,
-		cacheConfig.Redis.Password,
-		cacheConfig.Redis.Db,
+	client, _ := sessions.NewClient(sessions.Config{
+		Host:     cacheConfig.Redis.Host,
+		Port:     cacheConfig.Redis.Port,
+		Password: cacheConfig.Redis.Password,
+		Db:       cacheConfig.Redis.Db,
 	})
+	return client
 }
 
 // getDb returns a DB for the test environment with initial migrations.
@@ -134,6 +145,6 @@ func getDb(dbConfig config.AppConfig) *gorm.DB {
 		log.Panicf("test environment: database connection failed - %s", err)
 	}
 
-	db.AutoMigrate(&user{}, &expense{})
+	db.AutoMigrate(&user{}, &expense{}, &setting{})
 	return db
 }

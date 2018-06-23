@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/users"
 	mocks "github.com/fmitra/dennis-bot/test"
@@ -38,7 +39,7 @@ func (suite *OnboardUserSuite) AfterTest(suiteName, testName string) {
 
 func (suite *OnboardUserSuite) TestGetResponseList() {
 	onboardUser := &OnboardUser{}
-	assert.Equal(suite.T(), 4, len(onboardUser.GetResponses()))
+	assert.Equal(suite.T(), 6, len(onboardUser.GetResponses()))
 }
 
 func (suite *OnboardUserSuite) TestAsksForPassword() {
@@ -99,8 +100,8 @@ func (suite *OnboardUserSuite) TestValidatesPassword() {
 	}
 
 	response, err = onboardUser.ValidatePassword()
-	assert.Equal(suite.T(), BotResponse(""), response)
-	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), BotResponse("I'm having trouble with this password"), response)
+	assert.EqualError(suite.T(), err, "cipher text too short")
 
 	message = mocks.GetMockMessage("Invalid")
 	json.Unmarshal(message, &incMessage)
@@ -116,17 +117,36 @@ func (suite *OnboardUserSuite) TestValidatesPassword() {
 	response, err = onboardUser.ValidatePassword()
 	assert.Equal(suite.T(), BotResponse("I didn't understand that"), response)
 	assert.EqualError(suite.T(), err, "response invalid")
+
+	message = mocks.GetMockMessage("YES")
+	json.Unmarshal(message, &incMessage)
+	password, _ := crypto.Encrypt("password", suite.Env.Config.SecretKey)
+
+	onboardUser = &OnboardUser{
+		Context{
+			Step:       2,
+			IncMessage: incMessage,
+			AuxData:    password,
+		},
+		suite.Action,
+	}
+
+	response, err = onboardUser.ValidatePassword()
+	assert.Equal(suite.T(), BotResponse(""), response)
+	assert.NoError(suite.T(), err)
 }
 
 func (suite *OnboardUserSuite) TestCreatesUser() {
 	var incMessage telegram.IncomingMessage
 	message := mocks.GetMockMessage("Yes")
 	json.Unmarshal(message, &incMessage)
+	password, _ := crypto.Encrypt("password", suite.Env.Config.SecretKey)
 
 	onboardUser := &OnboardUser{
 		Context{
 			Step:       2,
 			IncMessage: incMessage,
+			AuxData:    password,
 		},
 		suite.Action,
 	}
@@ -146,11 +166,13 @@ func (suite *OnboardUserSuite) TestReturnsErrorForFailedAccountCreation() {
 	message := mocks.GetMockMessage("Yes")
 	json.Unmarshal(message, &incMessage)
 	mocks.CreateTestUser(suite.Env.Db)
+	password, _ := crypto.Encrypt("password", suite.Env.Config.SecretKey)
 
 	onboardUser := &OnboardUser{
 		Context{
 			Step:       2,
 			IncMessage: incMessage,
+			AuxData:    password,
 		},
 		suite.Action,
 	}
@@ -161,10 +183,52 @@ func (suite *OnboardUserSuite) TestReturnsErrorForFailedAccountCreation() {
 	assert.Equal(suite.T(), BotResponse("Couldn't create account"), response)
 }
 
+func (suite *OnboardUserSuite) TestAsksForCurrency() {
+	onboardUser := &OnboardUser{
+		Context{},
+		suite.Action,
+	}
+	response, err := onboardUser.AskForCurrency()
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), BotResponse("What currency do you want to use?"), response)
+}
+
+func (suite *OnboardUserSuite) TestValidatesCurrency() {
+	var incMessage telegram.IncomingMessage
+	message := mocks.GetMockMessage("abc")
+	json.Unmarshal(message, &incMessage)
+	mocks.CreateTestUser(suite.Env.Db)
+
+	onboardUser := &OnboardUser{
+		Context{
+			IncMessage: incMessage,
+		},
+		suite.Action,
+	}
+
+	response, err := onboardUser.ValidateCurrency()
+	assert.EqualError(suite.T(), err, "invalid currency")
+	assert.Equal(suite.T(), BotResponse("Currency is invalid"), response)
+
+	message = mocks.GetMockMessage("SGD")
+	json.Unmarshal(message, &incMessage)
+
+	onboardUser = &OnboardUser{
+		Context{
+			IncMessage: incMessage,
+		},
+		suite.Action,
+	}
+
+	response, err = onboardUser.ValidateCurrency()
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), BotResponse(""), response)
+}
+
 func (suite *OnboardUserSuite) TestSaysOutro() {
 	onboardUser := &OnboardUser{
 		Context{
-			Step: 3,
+			Step: 5,
 		},
 		suite.Action,
 	}

@@ -22,6 +22,16 @@ type User struct {
 	PrivateKey string `gorm:"type:varchar(2500);not null"`
 }
 
+// Setting describes User specific settings for the bot. For example it
+// controls whether the bot returns expense history in the default currency,
+// USD or a user specified currency.
+type Setting struct {
+	gorm.Model
+	Currency string `gorm:"type:varchar(30)"`
+	User     User
+	UserID   uint `gorm:"unique_index"`
+}
+
 // BeforeCreate hashes a User's plaintext password and generates
 // a public/private key pair on their behalf prior to creating a DB
 // record.

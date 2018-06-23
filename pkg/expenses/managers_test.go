@@ -87,7 +87,9 @@ func (suite *ExpenseManagerSuite) TestCreateExpense() {
 
 func (suite *ExpenseManagerSuite) TestQueryExpensesByPeriod() {
 	currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
-	mockTime := &mocks.MockTime{currentTime}
+	mockTime := &mocks.MockTime{
+		CurrentTime: currentTime,
+	}
 	expenseManager := &ExpenseManager{
 		db:    suite.Env.Db,
 		clock: mockTime,
@@ -115,7 +117,9 @@ func (suite *ExpenseManagerSuite) TestQueryExpensesByPeriod() {
 
 func (suite *ExpenseManagerSuite) TestQueryInvalidPeriodWillError() {
 	currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
-	mockTime := &mocks.MockTime{currentTime}
+	mockTime := &mocks.MockTime{
+		CurrentTime: currentTime,
+	}
 	expenseManager := &ExpenseManager{
 		db:    suite.Env.Db,
 		clock: mockTime,
@@ -132,7 +136,9 @@ func (suite *ExpenseManagerSuite) TestQueryInvalidPeriodWillError() {
 
 func (suite *ExpenseManagerSuite) TestParseStringOptionToTime() {
 	currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
-	mockTime := &mocks.MockTime{currentTime}
+	mockTime := &mocks.MockTime{
+		CurrentTime: currentTime,
+	}
 	expenseManager := &ExpenseManager{
 		db:    suite.Env.Db,
 		clock: mockTime,
@@ -156,7 +162,9 @@ func (suite *ExpenseManagerSuite) TestParseStringOptionToTime() {
 
 func (suite *ExpenseManagerSuite) TestSumsHistoricalTotalsByPeriod() {
 	currentTime := time.Date(2018, 3, 12, 0, 0, 0, 0, time.UTC)
-	mockTime := &mocks.MockTime{currentTime}
+	mockTime := &mocks.MockTime{
+		CurrentTime: currentTime,
+	}
 	expenseManager := &ExpenseManager{
 		db:    suite.Env.Db,
 		clock: mockTime,

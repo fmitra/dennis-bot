@@ -22,12 +22,28 @@ const (
 	OnboardUserConfirmPassword = "onboard_user_confirm_password"
 
 	// OnboardUserConfirmPasswordError is a response when a user responds to a password
-	// confirmation prompt with invalid text
+	// confirmation prompt with invalid text.
 	OnboardUserConfirmPasswordError = "onboard_user_confirm_password_error"
+
+	// OnboardUserConfirmPasswordInvalid is a response when we receive an error while
+	// encrypting a password.
+	OnboardUserConfirmPasswordInvalid = "onboard_user_confirm_password_invalid"
 
 	// OnboardUserAccountCreationFailed is a rsponse when we are unable to create
 	// an account during the onboarding flow
 	OnboardUserAccountCreationFailed = "onboard_user_account_creation_failed"
+
+	// OnboardUserDecryptionFailed is a response when we fail to decrypt the user password
+	// from cache.
+	OnboardUserDecryptionFailed = "onboard_user_decryption_failed"
+
+	// OnboardUserAskForCurrency is a response to check what currency the user would
+	// like to receive expense history in.
+	OnboardUserAskForCurrency = "onboard_user_ask_for_currency"
+
+	// OnboardUserInvalidCurrency is a response when a user does not it give us a valid
+	// currency ISO.
+	OnboardUserInvalidCurrency = "onboard_user_invalid_currency"
 
 	// OnboardUserSayOutro is sent when a user successfully sets a password
 	OnboardUserSayOutro = "onboard_user_say_outro"
@@ -54,6 +70,10 @@ const (
 	// GetExpenseTotalInvalidPeriod is a response when an invalid time range is requested
 	// by the user
 	GetExpenseTotalInvalidPeriod = "get_expense_total_invalid_period"
+
+	// GetExpenseTotalCancel is a response when the user requests the bot to cancel
+	// the query
+	GetExpenseTotalCancel = "get_expense_total_cancel"
 )
 
 // BotResponse is a message delivered to the User from the Bot
@@ -78,11 +98,11 @@ var MessageMap = map[string][]string{
 		"ehhh oh no... Idk what happened. Try again later.",
 	},
 	GetExpenseTotalSuccess: []string{
-		"You spent {{var}} USD",
+		"You spent {{var}}",
 
-		"lets see now... looks like {{var}} USD",
+		"lets see now... looks like {{var}}",
 
-		"hmmm.... {{var}} USD",
+		"hmmm.... {{var}}",
 	},
 	GetExpenseTotalInvalidPeriod: []string{
 		"I'm not that smart. Ask me something like 'how much did I spend today'",
@@ -100,6 +120,9 @@ var MessageMap = map[string][]string{
 		"wat! that password's not rigiht. Try again or say 'cancel'",
 
 		"hold up! that's not the password. Try again or say 'cancel'",
+	},
+	GetExpenseTotalCancel: []string{
+		"ok, just message me if you change your mind later.",
 	},
 	TrackExpenseSuccess: []string{
 		"ok writing it down...",
@@ -130,14 +153,27 @@ var MessageMap = map[string][]string{
 
 		"ok '{{var}}' right? Just say yes or no",
 	},
+	OnboardUserAskForCurrency: []string{
+		"what currency do you want to receive updates in? You can say something like 'USD' " +
+			"or 'SGD' or any other currency ISO",
+	},
+	OnboardUserInvalidCurrency: []string{
+		"hey I don't understand that! Please say a currency ISO like 'USD' or 'JPY'",
+	},
 	OnboardUserSayOutro: []string{
 		"got it! you're all set! Next time you buy something, just to tell me something " +
 			"like 450SGD for tickets",
+	},
+	OnboardUserDecryptionFailed: []string{
+		"whoops something went wrong with your password. Let's start over.",
 	},
 	OnboardUserConfirmPasswordError: []string{
 		"I don't get it. I told you just say yes or no!",
 
 		"You're confusing me. Just say 'yes' or 'no'",
+	},
+	OnboardUserConfirmPasswordInvalid: []string{
+		"I can't use this as a password, try something else",
 	},
 	OnboardUserRejectPassword: []string{
 		"alright well just come back later if you think of a password",

@@ -127,6 +127,9 @@ var MessageMapMock = map[string][]string{
 	"get_expense_total_error": []string{
 		"Whoops!",
 	},
+	"get_expense_total_cancel": []string{
+		"Ok I'll stop asking",
+	},
 	"get_expense_total_success": []string{
 		"You spent {{var}}",
 	},
@@ -153,6 +156,18 @@ var MessageMapMock = map[string][]string{
 	},
 	"onboard_user_confirm_password": []string{
 		"Your password is {{var}}",
+	},
+	"onboard_user_confirm_password_invalid": []string{
+		"I can't use this password. Try something else",
+	},
+	"onboard_user_decryption_failed": []string{
+		"I'm having trouble with this password",
+	},
+	"onboard_user_ask_for_currency": []string{
+		"What currency do you want to use?",
+	},
+	"onboard_user_invalid_currency": []string{
+		"Currency is invalid",
 	},
 	"onboard_user_say_outro": []string{
 		"Outro message",

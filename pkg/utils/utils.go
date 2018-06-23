@@ -2,6 +2,7 @@
 package utils
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -9,16 +10,16 @@ import (
 	"github.com/kierdavis/dateparser"
 )
 
-// isISO checks if an input string is a valid currency ISO.
-func isISO(s string) bool {
+// ParseISO checks if an input string is a valid currency ISO.
+func ParseISO(s string) (string, error) {
 	cleanString := strings.Replace(s, " ", "", -1)
 	upperS := strings.ToUpper(cleanString)
 	for _, iso := range CURRENCIES {
 		if upperS == iso {
-			return true
+			return upperS, nil
 		}
 	}
-	return false
+	return "", errors.New("invalid currency")
 }
 
 // ParseAmount checks a string for possible currency and amount values,
