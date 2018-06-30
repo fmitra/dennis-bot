@@ -3,7 +3,7 @@ package conversation
 // GenericResponse is an Intent designed to deliver generic messages
 // when we are unable to determine what the user wants.
 type GenericResponse struct {
-	Context
+	*Conversation
 	actions *Actions
 }
 
@@ -12,12 +12,6 @@ func (i *GenericResponse) GetResponses() []func() (BotResponse, error) {
 	return []func() (BotResponse, error){
 		i.SayDefault,
 	}
-}
-
-// Respond proccesses a list of response functions.
-func (i *GenericResponse) Respond() (BotResponse, *Context) {
-	responses := i.GetResponses()
-	return i.Process(responses)
 }
 
 // SayDefault returns a generic message.

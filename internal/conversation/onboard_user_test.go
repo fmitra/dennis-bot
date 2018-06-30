@@ -44,7 +44,7 @@ func (suite *OnboardUserSuite) TestGetResponseList() {
 
 func (suite *OnboardUserSuite) TestAsksForPassword() {
 	onboardUser := &OnboardUser{
-		Context{
+		&Conversation{
 			Step: 0,
 		},
 		suite.Action,
@@ -60,7 +60,7 @@ func (suite *OnboardUserSuite) TestConfirmsPassword() {
 	json.Unmarshal(message, &incMessage)
 
 	onboardUser := &OnboardUser{
-		Context{
+		&Conversation{
 			Step:       1,
 			IncMessage: incMessage,
 		},
@@ -77,7 +77,7 @@ func (suite *OnboardUserSuite) TestValidatesPassword() {
 	json.Unmarshal(message, &incMessage)
 
 	onboardUser := &OnboardUser{
-		Context{
+		&Conversation{
 			Step:       2,
 			IncMessage: incMessage,
 		},
@@ -92,7 +92,7 @@ func (suite *OnboardUserSuite) TestValidatesPassword() {
 	json.Unmarshal(message, &incMessage)
 
 	onboardUser = &OnboardUser{
-		Context{
+		&Conversation{
 			Step:       2,
 			IncMessage: incMessage,
 		},
@@ -107,7 +107,7 @@ func (suite *OnboardUserSuite) TestValidatesPassword() {
 	json.Unmarshal(message, &incMessage)
 
 	onboardUser = &OnboardUser{
-		Context{
+		&Conversation{
 			Step:       2,
 			IncMessage: incMessage,
 		},
@@ -123,7 +123,7 @@ func (suite *OnboardUserSuite) TestValidatesPassword() {
 	password, _ := crypto.Encrypt("password", suite.Env.Config.SecretKey)
 
 	onboardUser = &OnboardUser{
-		Context{
+		&Conversation{
 			Step:       2,
 			IncMessage: incMessage,
 			AuxData:    password,
@@ -143,7 +143,7 @@ func (suite *OnboardUserSuite) TestCreatesUser() {
 	password, _ := crypto.Encrypt("password", suite.Env.Config.SecretKey)
 
 	onboardUser := &OnboardUser{
-		Context{
+		&Conversation{
 			Step:       2,
 			IncMessage: incMessage,
 			AuxData:    password,
@@ -169,7 +169,7 @@ func (suite *OnboardUserSuite) TestReturnsErrorForFailedAccountCreation() {
 	password, _ := crypto.Encrypt("password", suite.Env.Config.SecretKey)
 
 	onboardUser := &OnboardUser{
-		Context{
+		&Conversation{
 			Step:       2,
 			IncMessage: incMessage,
 			AuxData:    password,
@@ -185,7 +185,7 @@ func (suite *OnboardUserSuite) TestReturnsErrorForFailedAccountCreation() {
 
 func (suite *OnboardUserSuite) TestAsksForCurrency() {
 	onboardUser := &OnboardUser{
-		Context{},
+		&Conversation{},
 		suite.Action,
 	}
 	response, err := onboardUser.AskForCurrency()
@@ -200,7 +200,7 @@ func (suite *OnboardUserSuite) TestValidatesCurrency() {
 	mocks.CreateTestUser(suite.Env.Db)
 
 	onboardUser := &OnboardUser{
-		Context{
+		&Conversation{
 			IncMessage: incMessage,
 		},
 		suite.Action,
@@ -214,7 +214,7 @@ func (suite *OnboardUserSuite) TestValidatesCurrency() {
 	json.Unmarshal(message, &incMessage)
 
 	onboardUser = &OnboardUser{
-		Context{
+		&Conversation{
 			IncMessage: incMessage,
 		},
 		suite.Action,
@@ -227,7 +227,7 @@ func (suite *OnboardUserSuite) TestValidatesCurrency() {
 
 func (suite *OnboardUserSuite) TestSaysOutro() {
 	onboardUser := &OnboardUser{
-		Context{
+		&Conversation{
 			Step: 5,
 		},
 		suite.Action,

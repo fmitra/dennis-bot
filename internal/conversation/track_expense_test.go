@@ -63,16 +63,16 @@ func (suite *TrackExpenseSuite) TestReturnsSuccessMessage() {
 	json.Unmarshal(message, &incMessage)
 
 	trackExpense := &TrackExpense{
-		Context{
+		&Conversation{
 			Step:        0,
 			WitResponse: witResponse,
 			IncMessage:  incMessage,
 		},
 		suite.Action,
 	}
-	response, cx := trackExpense.Respond()
+	response, err := trackExpense.ConfirmExpense()
 	assert.Equal(suite.T(), BotResponse("Roger that!"), response)
-	assert.Equal(suite.T(), -1, cx.Step)
+	assert.NoError(suite.T(), err)
 }
 
 func (suite *TrackExpenseSuite) TestReturnsErrorMessage() {
@@ -93,16 +93,16 @@ func (suite *TrackExpenseSuite) TestReturnsErrorMessage() {
 	json.Unmarshal(message, &incMessage)
 
 	trackExpense := &TrackExpense{
-		Context{
+		&Conversation{
 			Step:        0,
 			WitResponse: witResponse,
 			IncMessage:  incMessage,
 		},
 		suite.Action,
 	}
-	response, cx := trackExpense.Respond()
+	response, err := trackExpense.ConfirmExpense()
 	assert.Equal(suite.T(), BotResponse("Whoops!"), response)
-	assert.Equal(suite.T(), -1, cx.Step)
+	assert.NoError(suite.T(), err)
 }
 
 func TestTrackExpenseSuite(t *testing.T) {

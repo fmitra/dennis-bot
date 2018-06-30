@@ -12,7 +12,7 @@ import (
 
 // GetExpenseTotal is an Intent designed to retrieve expense history totals
 type GetExpenseTotal struct {
-	Context
+	*Conversation
 	actions *Actions
 }
 
@@ -23,12 +23,6 @@ func (i *GetExpenseTotal) GetResponses() []func() (BotResponse, error) {
 		i.ValidatePassword,
 		i.CalculateTotal,
 	}
-}
-
-// Respond proccesses a list of response functions.
-func (i *GetExpenseTotal) Respond() (BotResponse, *Context) {
-	responses := i.GetResponses()
-	return i.Process(responses)
 }
 
 // AskForPassword requests a user for their password.

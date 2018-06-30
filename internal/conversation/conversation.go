@@ -26,74 +26,74 @@ const (
 	GetExpenseTotalIntent = "get_expense_total_intent"
 )
 
-// Intent describe what a user wants to accomplish from a conversation.
-// They are responsible for the business logic behind any action we
-// take in response to a user's incoming message and contain all responses
-// for that action.
+// Intent describe the objective of a user. They are responsible for the
+// business logic around any action we perform in response to a user's
+// incoming message and contain all responses for that action.
 type Intent interface {
-	// Determine's a user's intent behind an incoming message.
-	Respond() (BotResponse, *Context)
-
 	// Returns a list of functions to deliver responses to a user.
 	// Functions are listed in order of delivery from top to bottom.
 	GetResponses() []func() (BotResponse, error)
 }
 
-// Context is embedded into all Intents to provides necessary info and
-// methods to process a response
-type Context struct {
-	Step        int
-	WitResponse wit.Response
-	IncMessage  t.IncomingMessage
-	BotUserID   uint
-	AuxData     string
-}
-
 // Conversation represents a user's place in a conversation, for example a conversation
-// may have just recently been initialized or may be ongoing.
+// may have just recently been initialized or may be ongoing. Conversations instantiate
+// structs adhering to the Intent interface to build responses for the user.
 type Conversation struct {
-	Intent    string // The objective the of the user. Conversations are based around intents
-	UserID    uint   // The user ID from the incoming chat service (ex. Telegram User ID)
-	BotUserID uint   // The ID of the user account (if it exists) in our system
-	Step      int    // A user's place in a conversation
-	AuxData   string // Optional auxiliary info that we can set while processing a response
+	IntentType  string            // String representing the the Intent of the user
+	UserID      uint              // The user ID from the incoming chat service (ex. Telegram User ID)
+	BotUserID   uint              // The ID of the user account (if it exists) in our system
+	Step        int               // A user's place in a conversation
+	AuxData     string            // Optional auxiliary info that we can set while processing a response
+	WitResponse wit.Response      // Wit.ai API response to a user's message
+	IncMessage  t.IncomingMessage // Raw user message as received by Telegram
 }
 
-// Process is a helper method to ensure all Intents embeding context has access to the same
-// response logic. Intent response methods should return a BotResponse and an error.
-// Nil errors and empty responses are typically performed in validation steps (ex.
-// ask a question and check for an answer). Valid responses increment a step,
-// allowing a user to receive the next response in defined in the Intent's GetResponses array.
-func (cx *Context) Process(responses []func() (BotResponse, error)) (BotResponse, *Context) {
-	response, err := responses[cx.Step]()
+// SetLastUserMessage sets the most recently received telegram message and Wit.ai
+// parsing of the message to the Conversation struct.
+func (c *Conversation) SetLastUserMessage(w wit.Response, inc t.IncomingMessage) {
+	c.WitResponse = w
+	c.IncMessage = inc
+}
 
+// ProcessResponses takes a list of methods that return a BotResponse and error
+// to determine the next repsonse to deliver to a user. Nil errors and empty responses
+// are typically performed in validation steps (ex. ask a question and check for an
+// answer). Valid responses incremetn a step, allowing a user to receive the next
+// response in the list.
+func (c *Conversation) ProcessResponses(responses []func() (BotResponse, error)) BotResponse {
+	response, err := responses[c.Step]()
+
+	// We continue iterating through responses until we find the first
+	// non-empty response.
 	for response == BotResponse("") && err == nil {
-		cx.Step++
-		response, err = responses[cx.Step]()
+		c.Step++
+		response, err = responses[c.Step]()
 	}
 
-	if err == nil && cx.Step != -1 {
-		cx.Step++
+	conversationNotOver := err == nil && c.Step != -1
+	if conversationNotOver {
+		c.Step++
 	}
 
-	if cx.Step >= len(responses) {
-		cx.EndConversation()
+	noResponsesAvailable := c.Step >= len(responses)
+	if noResponsesAvailable {
+		c.EndConversation()
 	}
 
-	return response, cx
+	return response
 }
 
 // SkipResponse returns an empty BotResponse and nil error. When processing a list
 // of response functions, nil errors/empty responses are skipped.
-func (cx *Context) SkipResponse() (BotResponse, error) {
+func (c *Conversation) SkipResponse() (BotResponse, error) {
 	return BotResponse(""), nil
 }
 
 // EndConversation sets the Covnerstation step to -1, indicating no further responses
 // are available.
-func (cx *Context) EndConversation() {
+func (c *Conversation) EndConversation() {
 	finalStep := -1
-	cx.Step = finalStep
+	c.Step = finalStep
 }
 
 // HasResponse checks if Conversation step > -1, indicating there are still responses
@@ -103,41 +103,31 @@ func (c *Conversation) HasResponse() bool {
 	return c.Step > finalStep
 }
 
-// GetIntent creates an a new Intent with embedded Context. A Conversation create's an
-// Intent in order to formulate a BotResponse.
-func (c *Conversation) GetIntent(w wit.Response, inc t.IncomingMessage, a *Actions, userID uint) Intent {
-	context := Context{
-		WitResponse: w,
-		IncMessage:  inc,
-		Step:        c.Step,
-		BotUserID:   userID,
-		AuxData:     c.AuxData,
-	}
-	switch c.Intent {
+// GetIntent creates an a new Intent with the embedded Conversation to provide context.
+// A Conversation create's an Intent in order to formulate a BotResponse.
+func (c *Conversation) GetIntent(a *Actions) Intent {
+	switch c.IntentType {
 	case OnboardUserIntent:
-		return &OnboardUser{context, a}
+		return &OnboardUser{c, a}
 	case TrackExpenseIntent:
-		return &TrackExpense{context, a}
+		return &TrackExpense{c, a}
 	case GetExpenseTotalIntent:
-		return &GetExpenseTotal{context, a}
+		return &GetExpenseTotal{c, a}
 	default:
-		return &GenericResponse{context, a}
+		return &GenericResponse{c, a}
 	}
 }
 
 // Respond returns a response to the user. Responses are controlled by Intent types
-// which we create on demand with the necessary Context around the ongoing dialog.
-func (c *Conversation) Respond(w wit.Response, inc t.IncomingMessage, a *Actions) BotResponse {
+// which we create on demand using information from the surrounding Conversation.
+func (c *Conversation) Respond(a *Actions) BotResponse {
 	if !c.HasResponse() {
 		return BotResponse("")
 	}
 
-	intent := c.GetIntent(w, inc, a, c.BotUserID)
-	response, context := intent.Respond()
-	c.Step = context.Step
-	c.AuxData = context.AuxData
-
-	return response
+	intent := c.GetIntent(a)
+	responses := intent.GetResponses()
+	return c.ProcessResponses(responses)
 }
 
 // InferIntent determines which Intent to instantiate for the Conversation.
@@ -171,9 +161,9 @@ func NewConversation(userID uint, w wit.Response, a *Actions) Conversation {
 
 	intent := InferIntent(w, botUser.ID)
 	conversation := Conversation{
-		Intent:    intent,
-		UserID:    userID,
-		BotUserID: botUser.ID,
+		IntentType: intent,
+		UserID:     userID,
+		BotUserID:  botUser.ID,
 	}
 
 	return conversation
@@ -204,7 +194,8 @@ func GetResponse(w wit.Response, inc t.IncomingMessage, a *Actions) BotResponse 
 		conversation = NewConversation(userID, w, a)
 	}
 
-	response := conversation.Respond(w, inc, a)
+	conversation.SetLastUserMessage(w, inc)
+	response := conversation.Respond(a)
 
 	// Check if there are additional responses available. If responses are found,
 	// we cache the conversation so the user can pick up where they left off

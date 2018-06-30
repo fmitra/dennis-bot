@@ -63,7 +63,7 @@ func (suite *ExpenseTotalSuite) TestGetExpenseTotalMessage() {
 	json.Unmarshal(message, &incMessage)
 
 	expenseTotal := &GetExpenseTotal{
-		Context{
+		&Conversation{
 			Step:        2,
 			WitResponse: witResponse,
 			IncMessage:  incMessage,
@@ -71,9 +71,9 @@ func (suite *ExpenseTotalSuite) TestGetExpenseTotalMessage() {
 		},
 		suite.Action,
 	}
-	response, cx := expenseTotal.Respond()
+	response, err := expenseTotal.CalculateTotal()
 	assert.Equal(suite.T(), BotResponse("You spent 0.00 USD"), response)
-	assert.Equal(suite.T(), -1, cx.Step)
+	assert.NoError(suite.T(), err)
 }
 
 func (suite *ExpenseTotalSuite) TestGetExpenseTotalError() {
@@ -95,16 +95,16 @@ func (suite *ExpenseTotalSuite) TestGetExpenseTotalError() {
 	json.Unmarshal(message, &incMessage)
 
 	expenseTotal := &GetExpenseTotal{
-		Context{
+		&Conversation{
 			Step:        2,
 			WitResponse: witResponse,
 			IncMessage:  incMessage,
 		},
 		suite.Action,
 	}
-	response, cx := expenseTotal.Respond()
+	response, err := expenseTotal.CalculateTotal()
 	assert.Equal(suite.T(), BotResponse("Whoops!"), response)
-	assert.Equal(suite.T(), -1, cx.Step)
+	assert.NoError(suite.T(), err)
 }
 
 func (suite *ExpenseTotalSuite) TestAskForPassword() {
@@ -126,7 +126,7 @@ func (suite *ExpenseTotalSuite) TestAskForPassword() {
 	json.Unmarshal(rawWitResponse, &witResponse)
 
 	expenseTotal := &GetExpenseTotal{
-		Context{
+		&Conversation{
 			Step:        0,
 			IncMessage:  incMessage,
 			WitResponse: witResponse,
@@ -162,7 +162,7 @@ func (suite *ExpenseTotalSuite) TestSkipsPasswordRequest() {
 	suite.Action.Cache.Set(cacheKey, password, 180)
 
 	expenseTotal := &GetExpenseTotal{
-		Context{
+		&Conversation{
 			Step:        0,
 			IncMessage:  incMessage,
 			WitResponse: witResponse,
@@ -183,7 +183,7 @@ func (suite *ExpenseTotalSuite) TestValidatesPassword() {
 
 	mocks.CreateTestUser(suite.Env.Db)
 	expenseTotal := &GetExpenseTotal{
-		Context{
+		&Conversation{
 			Step:        0,
 			IncMessage:  incMessage,
 			WitResponse: witResponse,
@@ -204,7 +204,7 @@ func (suite *ExpenseTotalSuite) TestShouldCancelPasswordValidation() {
 
 	mocks.CreateTestUser(suite.Env.Db)
 	expenseTotal := &GetExpenseTotal{
-		Context{
+		&Conversation{
 			Step:        0,
 			IncMessage:  incMessage,
 			WitResponse: witResponse,
@@ -227,7 +227,7 @@ func (suite *ExpenseTotalSuite) TestSkipsPasswordValidation() {
 	suite.Action.Cache.Set(cacheKey, password, 180)
 
 	expenseTotal := &GetExpenseTotal{
-		Context{
+		&Conversation{
 			Step:       0,
 			IncMessage: incMessage,
 		},
@@ -246,7 +246,7 @@ func (suite *ExpenseTotalSuite) TestFailsPasswordValidation() {
 
 	mocks.CreateTestUser(suite.Env.Db)
 	expenseTotal := &GetExpenseTotal{
-		Context{
+		&Conversation{
 			Step:       0,
 			IncMessage: incMessage,
 		},

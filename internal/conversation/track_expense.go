@@ -8,7 +8,7 @@ import (
 
 // TrackExpense is an Intent designed to track a user's expenses.
 type TrackExpense struct {
-	Context
+	*Conversation
 	actions *Actions
 }
 
@@ -17,12 +17,6 @@ func (i *TrackExpense) GetResponses() []func() (BotResponse, error) {
 	return []func() (BotResponse, error){
 		i.ConfirmExpense,
 	}
-}
-
-// Respond proccesses a list of response functions.
-func (i *TrackExpense) Respond() (BotResponse, *Context) {
-	responses := i.GetResponses()
-	return i.Process(responses)
 }
 
 // ConfirmExpense starts an action to track the user's expense and returns

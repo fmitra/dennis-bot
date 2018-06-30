@@ -48,7 +48,7 @@ func (suite *GenericResponseSuite) TestReturnResponse() {
 	json.Unmarshal(message, &incMessage)
 
 	genericResponse := &GenericResponse{
-		Context{
+		&Conversation{
 			Step:        0,
 			WitResponse: witResponse,
 			IncMessage:  incMessage,
@@ -56,8 +56,8 @@ func (suite *GenericResponseSuite) TestReturnResponse() {
 		&Actions{},
 	}
 
-	response, cx := genericResponse.Respond()
-	assert.Equal(suite.T(), -1, cx.Step)
+	response, err := genericResponse.SayDefault()
+	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), BotResponse("This is a default message"), response)
 }
 

@@ -10,7 +10,7 @@ import (
 
 // OnboardUser is an Intent designed to onboard a new user into the bot platform.
 type OnboardUser struct {
-	Context
+	*Conversation
 	actions *Actions
 }
 
@@ -24,12 +24,6 @@ func (i *OnboardUser) GetResponses() []func() (BotResponse, error) {
 		i.ValidateCurrency,
 		i.SayOutro,
 	}
-}
-
-// Respond proccesses a list of response functions.
-func (i *OnboardUser) Respond() (BotResponse, *Context) {
-	responses := i.GetResponses()
-	return i.Process(responses)
 }
 
 // AskForPassword requests the User to create a new password in order to

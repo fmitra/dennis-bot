@@ -4,7 +4,7 @@
 
 A pet project to learn Go, Dennis is a privacy friendly Telegram bot to manage expense tracking. Talk to him [here](https://t.me/AssistantDennisBot)
 
-![dennis](https://www.francismitra.com/static/misc/dennis/convo.jpg)
+![dennis](assets/convo.jpg)
 
 ## Overview
 

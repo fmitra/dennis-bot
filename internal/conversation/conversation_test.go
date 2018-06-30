@@ -68,7 +68,7 @@ func (suite *ConvoSuite) TestCreatesNewConversation() {
 
 	conversation := NewConversation(mocks.TestUserID, witResponse, action)
 	assert.Equal(suite.T(), mocks.TestUserID, conversation.UserID)
-	assert.Equal(suite.T(), OnboardUserIntent, conversation.Intent)
+	assert.Equal(suite.T(), OnboardUserIntent, conversation.IntentType)
 }
 
 func (suite *ConvoSuite) TestInfersUserIntentFromWitResponse() {
@@ -149,8 +149,8 @@ func (suite *ConvoSuite) TestInfersUserIntentFromWitResponse() {
 func (suite *ConvoSuite) TestGetsConversationFromCache() {
 	cache := suite.Env.Cache
 	conversation := Conversation{
-		Intent: OnboardUserIntent,
-		UserID: mocks.TestUserID,
+		IntentType: OnboardUserIntent,
+		UserID:     mocks.TestUserID,
 	}
 	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserID)))
 
@@ -169,9 +169,9 @@ func (suite *ConvoSuite) TestReturnsErrorFetchingFromCache() {
 	assert.Equal(suite.T(), cachedConversation, Conversation{})
 
 	conversation := Conversation{
-		Intent: OnboardUserIntent,
-		UserID: mocks.TestUserID,
-		Step:   -1,
+		IntentType: OnboardUserIntent,
+		UserID:     mocks.TestUserID,
+		Step:       -1,
 	}
 	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserID)))
 	oneMinute := 60
@@ -182,19 +182,15 @@ func (suite *ConvoSuite) TestReturnsErrorFetchingFromCache() {
 
 func (suite *ConvoSuite) TestRetrievesIntent() {
 	conversation := &Conversation{
-		Intent: OnboardUserIntent,
+		IntentType: OnboardUserIntent,
 	}
-	witResponse := wit.Response{}
-	incMessage := telegram.IncomingMessage{}
-	actions := &Actions{}
-	botUserID := uint(0)
-	intent := conversation.GetIntent(witResponse, incMessage, actions, botUserID)
+	intent := conversation.GetIntent(&Actions{})
 	assert.IsType(suite.T(), &OnboardUser{}, intent)
 }
 
 func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	conversation := &Conversation{
-		Intent: OnboardUserIntent,
+		IntentType: OnboardUserIntent,
 	}
 	actions := &Actions{
 		suite.Env.Db,
@@ -210,35 +206,40 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	assert.Equal(suite.T(), 0, conversation.Step)
 
 	// First response requests password
-	response := conversation.Respond(witResponse, incMessage, actions)
+	conversation.SetLastUserMessage(witResponse, incMessage)
+	response := conversation.Respond(actions)
 	assert.Equal(suite.T(), BotResponse("What's your password?"), response)
 	assert.Equal(suite.T(), 1, conversation.Step)
 
 	// Second response requests confirmation
 	message = mocks.GetMockMessage("foo")
 	json.Unmarshal(message, &incMessage)
-	response = conversation.Respond(witResponse, incMessage, actions)
+	conversation.SetLastUserMessage(witResponse, incMessage)
+	response = conversation.Respond(actions)
 	assert.Equal(suite.T(), BotResponse("Your password is foo"), response)
 	assert.Equal(suite.T(), 2, conversation.Step)
 
 	// Invalid response prevents user from reaching step 3
 	message = mocks.GetMockMessage("invalid answer")
 	json.Unmarshal(message, &incMessage)
-	response = conversation.Respond(witResponse, incMessage, actions)
+	conversation.SetLastUserMessage(witResponse, incMessage)
+	response = conversation.Respond(actions)
 	assert.Equal(suite.T(), BotResponse("I didn't understand that"), response)
 	assert.Equal(suite.T(), 2, conversation.Step)
 
 	// Answering no to password confirmation ends the conversation
 	message = mocks.GetMockMessage("No")
 	json.Unmarshal(message, &incMessage)
-	response = conversation.Respond(witResponse, incMessage, actions)
+	conversation.SetLastUserMessage(witResponse, incMessage)
+	response = conversation.Respond(actions)
 	assert.Equal(suite.T(), BotResponse("Okay try again later"), response)
 	assert.Equal(suite.T(), -1, conversation.Step)
 
 	// After receiving a negative step, all future responses are empty
 	message = mocks.GetMockMessage("Hello?")
 	json.Unmarshal(message, &incMessage)
-	response = conversation.Respond(witResponse, incMessage, actions)
+	conversation.SetLastUserMessage(witResponse, incMessage)
+	response = conversation.Respond(actions)
 	assert.Equal(suite.T(), BotResponse(""), response)
 	assert.Equal(suite.T(), -1, conversation.Step)
 
@@ -249,7 +250,8 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	// reset the step to -1 to end the conversation
 	message = mocks.GetMockMessage("Yes")
 	json.Unmarshal(message, &incMessage)
-	response = conversation.Respond(witResponse, incMessage, actions)
+	conversation.SetLastUserMessage(witResponse, incMessage)
+	response = conversation.Respond(actions)
 	assert.Equal(suite.T(), BotResponse("Outro message"), response)
 	assert.Equal(suite.T(), -1, conversation.Step)
 }
@@ -269,7 +271,7 @@ func (suite *ConvoSuite) TestCachesConversationsWithRemainingResponses() {
 
 	var cachedConvo Conversation
 	suite.Env.Cache.Get(cacheKey, &cachedConvo)
-	assert.Equal(suite.T(), OnboardUserIntent, cachedConvo.Intent)
+	assert.Equal(suite.T(), OnboardUserIntent, cachedConvo.IntentType)
 }
 
 func TestConvoSuite(t *testing.T) {
