@@ -19,33 +19,23 @@ import (
 
 type BotSuite struct {
 	suite.Suite
-	Env    *mocks.TestEnv
-	BotEnv *Env
+	Env *mocks.TestEnv
 }
 
 func (suite *BotSuite) SetupSuite() {
 	configFile := "../config/config.json"
 	testEnv := mocks.GetTestEnv(configFile)
-	telegram := telegram.NewClient(
-		testEnv.Config.Telegram.Token,
-		testEnv.Config.BotDomain,
-	)
 	suite.Env = testEnv
-	suite.BotEnv = &Env{
-		suite.Env.Db,
-		suite.Env.Cache,
-		suite.Env.Config,
-		telegram,
-	}
+}
+
+func (suite *BotSuite) TearDownSuite() {
+	mocks.CleanUpEnv(suite.Env)
 }
 
 func (suite *BotSuite) BeforeTest(suiteName, testName string) {
 	convo.MessageMap = mocks.MessageMapMock
-	mocks.CreateTestUser(suite.Env.Db)
-}
-
-func (suite *BotSuite) AfterTest(suiteName, testName string) {
 	mocks.CleanUpEnv(suite.Env)
+	mocks.CreateTestUser(suite.Env.Db, 0)
 }
 
 func (suite *BotSuite) TestHandlesTrackingIntent() {
@@ -76,9 +66,22 @@ func (suite *BotSuite) TestHandlesTrackingIntent() {
 	defer witServer.Close()
 	defer alphapointServer.Close()
 
-	wit.BaseURL = witServer.URL
-	alphapoint.BaseURL = alphapointServer.URL
-	bot := &Bot{suite.BotEnv}
+	telegramMock := telegram.NewClient("", "")
+	alphapointMock := alphapoint.NewClient("")
+	witMock := wit.NewClient("")
+	witMock.BaseURL = witServer.URL
+	alphapointMock.BaseURL = alphapointServer.URL
+
+	bot := &Bot{
+		&Env{
+			suite.Env.Db,
+			suite.Env.Cache,
+			suite.Env.Config,
+			telegramMock,
+			witMock,
+			alphapointMock,
+		},
+	}
 
 	response := bot.BuildResponse(incMessage)
 	assert.Equal(suite.T(), convo.BotResponse("Roger that!"), response)
@@ -95,15 +98,28 @@ func (suite *BotSuite) TestHandlesExpenseTotalIntent() {
 			"datetime": [],
 			"description": [],
 			"total_spent": [
-				{ "value": "month", "confidence": 100.00 }
+				{ "value": "month", "confidence": 101.00 }
 			]
 		}
 	}`
 	witServer := mocks.MakeTestServer(witResponse)
-	wit.BaseURL = witServer.URL
 	defer witServer.Close()
 
-	bot := &Bot{suite.BotEnv}
+	telegramMock := telegram.NewClient("", "")
+	alphapointMock := alphapoint.NewClient("")
+	witMock := wit.NewClient("")
+	witMock.BaseURL = witServer.URL
+
+	bot := &Bot{
+		&Env{
+			suite.Env.Db,
+			suite.Env.Cache,
+			suite.Env.Config,
+			telegramMock,
+			witMock,
+			alphapointMock,
+		},
+	}
 
 	response := bot.BuildResponse(incMessage)
 	assert.Equal(suite.T(), convo.BotResponse("I need your password"), response)
@@ -123,10 +139,23 @@ func (suite *BotSuite) TestReturnsDefaultMessage() {
 		}
 	}`
 	witServer := mocks.MakeTestServer(witResponse)
-	wit.BaseURL = witServer.URL
 	defer witServer.Close()
 
-	bot := &Bot{suite.BotEnv}
+	telegramMock := telegram.NewClient("", "")
+	alphapointMock := alphapoint.NewClient("")
+	witMock := wit.NewClient("")
+	witMock.BaseURL = witServer.URL
+
+	bot := &Bot{
+		&Env{
+			suite.Env.Db,
+			suite.Env.Cache,
+			suite.Env.Config,
+			telegramMock,
+			witMock,
+			alphapointMock,
+		},
+	}
 
 	response := bot.BuildResponse(incMessage)
 	assert.Equal(suite.T(), convo.BotResponse("This is a default message"), response)
@@ -148,10 +177,23 @@ func (suite *BotSuite) TestReturnsErrorMessage() {
 		}
 	}`
 	witServer := mocks.MakeTestServer(witResponse)
-	wit.BaseURL = witServer.URL
 	defer witServer.Close()
 
-	bot := &Bot{suite.BotEnv}
+	telegramMock := telegram.NewClient("", "")
+	alphapointMock := alphapoint.NewClient("")
+	witMock := wit.NewClient("")
+	witMock.BaseURL = witServer.URL
+
+	bot := &Bot{
+		&Env{
+			suite.Env.Db,
+			suite.Env.Cache,
+			suite.Env.Config,
+			telegramMock,
+			witMock,
+			alphapointMock,
+		},
+	}
 
 	cacheKey := fmt.Sprintf("%s_password", strconv.Itoa(int(mocks.TestUserID)))
 	password, _ := crypto.Encrypt("my-password", suite.Env.Config.SecretKey)
@@ -164,15 +206,8 @@ func (suite *BotSuite) TestReturnsErrorMessage() {
 func (suite *BotSuite) TestReceivesRespondsWithTelegram() {
 	telegramMock := &mocks.TelegramMock{}
 	sessionMock := &mocks.SessionMock{}
-
-	bot := &Bot{
-		&Env{
-			suite.Env.Db,
-			sessionMock,
-			suite.Env.Config,
-			telegramMock,
-		},
-	}
+	witClient := wit.NewClient("")
+	alphapointClient := alphapoint.NewClient("")
 
 	message := mocks.GetMockMessage("")
 	witResponse := `{
@@ -183,18 +218,36 @@ func (suite *BotSuite) TestReceivesRespondsWithTelegram() {
 		}
 	}`
 	witServer := mocks.MakeTestServer(witResponse)
-	telegramServer := mocks.MakeTestServer("")
-	wit.BaseURL = witServer.URL
-	telegram.BaseURL = fmt.Sprintf("%s/", telegramServer.URL)
+	witClient.BaseURL = witServer.URL
 	defer witServer.Close()
-	defer telegramServer.Close()
+
+	bot := &Bot{
+		&Env{
+			suite.Env.Db,
+			sessionMock,
+			suite.Env.Config,
+			telegramMock,
+			witClient,
+			alphapointClient,
+		},
+	}
 
 	bot.Converse(message)
 	assert.Equal(suite.T(), 1, telegramMock.Calls.Send)
 }
 
 func (suite *BotSuite) TestReceivesIncomingMessage() {
-	bot := &Bot{suite.BotEnv}
+	bot := &Bot{
+		&Env{
+			suite.Env.Db,
+			suite.Env.Cache,
+			suite.Env.Config,
+			&telegram.Client{},
+			&wit.Client{},
+			&alphapoint.Client{},
+		},
+	}
+
 	message := mocks.GetMockMessage("")
 
 	var incMessage telegram.IncomingMessage
@@ -207,8 +260,8 @@ func (suite *BotSuite) TestReceivesIncomingMessage() {
 
 func (suite *BotSuite) TestSendsOutgoingMessage() {
 	telegramServer := mocks.MakeTestServer("")
-	telegram.BaseURL = fmt.Sprintf("%s/", telegramServer.URL)
 	telegramMock := telegram.NewClient("", "")
+	telegramMock.BaseURL = fmt.Sprintf("%s/", telegramServer.URL)
 	defer telegramServer.Close()
 
 	bot := &Bot{
@@ -217,6 +270,8 @@ func (suite *BotSuite) TestSendsOutgoingMessage() {
 			suite.Env.Cache,
 			suite.Env.Config,
 			telegramMock,
+			&wit.Client{},
+			&alphapoint.Client{},
 		},
 	}
 	message := mocks.GetMockMessage("")
@@ -231,8 +286,8 @@ func (suite *BotSuite) TestSendsOutgoingMessage() {
 
 func (suite *BotSuite) TestSendsTypingIndicator() {
 	telegramServer := mocks.MakeTestServer("")
-	telegram.BaseURL = fmt.Sprintf("%s/", telegramServer.URL)
 	telegramMock := telegram.NewClient("", "")
+	telegramMock.BaseURL = fmt.Sprintf("%s/", telegramServer.URL)
 	defer telegramServer.Close()
 
 	bot := &Bot{
@@ -241,6 +296,8 @@ func (suite *BotSuite) TestSendsTypingIndicator() {
 			suite.Env.Cache,
 			suite.Env.Config,
 			telegramMock,
+			&wit.Client{},
+			&alphapoint.Client{},
 		},
 	}
 	message := mocks.GetMockMessage("")

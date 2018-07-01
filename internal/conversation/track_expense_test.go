@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/fmitra/dennis-bot/internal/actions"
+	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
@@ -15,24 +17,26 @@ import (
 type TrackExpenseSuite struct {
 	suite.Suite
 	Env    *mocks.TestEnv
-	Action *Actions
+	Action *actions.Actions
 }
 
 func (suite *TrackExpenseSuite) SetupSuite() {
 	configFile := "../../config/config.json"
 	suite.Env = mocks.GetTestEnv(configFile)
-	suite.Action = &Actions{
-		suite.Env.Db,
-		suite.Env.Cache,
-		suite.Env.Config,
+	suite.Action = &actions.Actions{
+		Db:         suite.Env.Db,
+		Cache:      suite.Env.Cache,
+		Config:     suite.Env.Config,
+		Alphapoint: &alphapoint.Client{},
 	}
+}
+
+func (suite *TrackExpenseSuite) TearDownSuite() {
+	mocks.CleanUpEnv(suite.Env)
 }
 
 func (suite *TrackExpenseSuite) BeforeTest(suiteName, testName string) {
 	MessageMap = mocks.MessageMapMock
-}
-
-func (suite *TrackExpenseSuite) AfterTest(suiteName, testName string) {
 	mocks.CleanUpEnv(suite.Env)
 }
 

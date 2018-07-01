@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/fmitra/dennis-bot/internal/actions"
 	convo "github.com/fmitra/dennis-bot/internal/conversation"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
-	"github.com/fmitra/dennis-bot/pkg/wit"
 )
 
 // Bot is responsible for parsing messages and responding
@@ -60,12 +60,12 @@ func (bot *Bot) SendTypingIndicator(incM telegram.IncomingMessage) int {
 // BuildResponse coordinates with the action layer to to determine context behind
 // a user's message and return an appropriate response.
 func (bot *Bot) BuildResponse(incM telegram.IncomingMessage) convo.BotResponse {
-	w := wit.NewClient(bot.env.config.Wit.Token)
-	witResponse := w.ParseMessage(incM.GetMessage())
-	actions := &convo.Actions{
-		Db:     bot.env.db,
-		Cache:  bot.env.cache,
-		Config: bot.env.config,
+	witResponse := bot.env.wit.ParseMessage(incM.GetMessage())
+	actions := &actions.Actions{
+		Db:         bot.env.db,
+		Cache:      bot.env.cache,
+		Config:     bot.env.config,
+		Alphapoint: bot.env.alphapoint,
 	}
 	botResponse := convo.GetResponse(witResponse, incM, actions)
 	return botResponse

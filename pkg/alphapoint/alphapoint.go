@@ -17,7 +17,7 @@ import (
 )
 
 // BaseURL for Alphapoint
-var BaseURL = "https://www.alphavantage.co/query"
+const BaseURL = "https://www.alphavantage.co/query"
 
 // Alphapoint is an itnerface to provide utility methods to interact
 // with the Alphapoint API.

@@ -1,15 +1,15 @@
 package conversation
 
 import (
-	"github.com/fmitra/dennis-bot/pkg/wit"
-
+	a "github.com/fmitra/dennis-bot/internal/actions"
 	"github.com/fmitra/dennis-bot/pkg/users"
+	"github.com/fmitra/dennis-bot/pkg/wit"
 )
 
 // TrackExpense is an Intent designed to track a user's expenses.
 type TrackExpense struct {
 	*Conversation
-	actions *Actions
+	actions *a.Actions
 }
 
 // GetResponses proccesses a list of response functions.

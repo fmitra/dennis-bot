@@ -16,7 +16,7 @@ import (
 	"github.com/Rican7/retry/strategy"
 )
 
-var (
+const (
 	// BaseURL for Wit.ai
 	BaseURL = "https://api.wit.ai"
 

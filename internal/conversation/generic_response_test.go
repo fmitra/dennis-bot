@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/fmitra/dennis-bot/internal/actions"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
@@ -53,7 +54,7 @@ func (suite *GenericResponseSuite) TestReturnResponse() {
 			WitResponse: witResponse,
 			IncMessage:  incMessage,
 		},
-		&Actions{},
+		&actions.Actions{},
 	}
 
 	response, err := genericResponse.SayDefault()

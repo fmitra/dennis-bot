@@ -17,7 +17,7 @@ import (
 )
 
 // BaseURL for Telegram
-var BaseURL = "https://api.telegram.org/bot"
+const BaseURL = "https://api.telegram.org/bot"
 
 // Telegram is an interface to provide utility methods to interact with
 // the Telegram API.

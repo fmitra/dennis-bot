@@ -19,18 +19,17 @@ func (suite *Suite) SetupSuite() {
 	suite.Env = mocks.GetTestEnv(configFile)
 }
 
-func (suite *Suite) AfterTest(suiteName, testName string) {
+func (suite *Suite) TearDownSuite() {
+	mocks.CleanUpEnv(suite.Env)
+}
+
+func (suite *Suite) BeforeTest(suiteName, testName string) {
 	mocks.CleanUpEnv(suite.Env)
 }
 
 func (suite *Suite) TestReturnsUserByTelegramID() {
 	manager := NewUserManager(suite.Env.Db)
-	password := "my-password"
-	user := &User{
-		TelegramID: mocks.TestUserID,
-		Password:   password,
-	}
-	suite.Env.Db.Create(user)
+	mocks.CreateTestUser(suite.Env.Db, 0)
 
 	queriedUser := manager.GetByTelegramID(mocks.TestUserID)
 	assert.Equal(suite.T(), mocks.TestUserID, queriedUser.TelegramID)
@@ -39,19 +38,16 @@ func (suite *Suite) TestReturnsUserByTelegramID() {
 func (suite *Suite) TestCreatesNewUser() {
 	manager := NewUserManager(suite.Env.Db)
 	user := &User{
-		TelegramID: mocks.TestUserID,
+		TelegramID: uint(401),
 	}
 	err := manager.Save(user)
 	assert.NoError(suite.T(), err)
 }
 
 func (suite *Suite) TestUpdateCurrency() {
-	password := "my-password"
-	user := User{
-		TelegramID: uint(400),
-		Password:   password,
-	}
-	suite.Env.Db.Create(&user)
+	mocks.CreateTestUser(suite.Env.Db, uint(400))
+	um := NewUserManager(suite.Env.Db)
+	user := um.GetByTelegramID(uint(400))
 
 	manager := NewSettingManager(suite.Env.Db)
 	err := manager.UpdateCurrency(user.ID, "ABC")
@@ -70,12 +66,9 @@ func (suite *Suite) TestUpdateCurrency() {
 }
 
 func (suite *Suite) TestGetCurrency() {
-	password := "my-password"
-	user := User{
-		TelegramID: uint(400),
-		Password:   password,
-	}
-	suite.Env.Db.Create(&user)
+	mocks.CreateTestUser(suite.Env.Db, uint(400))
+	um := NewUserManager(suite.Env.Db)
+	user := um.GetByTelegramID(uint(400))
 
 	manager := NewSettingManager(suite.Env.Db)
 	currency := manager.GetCurrency(user.ID)

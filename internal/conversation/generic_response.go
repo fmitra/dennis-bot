@@ -1,10 +1,14 @@
 package conversation
 
+import (
+	a "github.com/fmitra/dennis-bot/internal/actions"
+)
+
 // GenericResponse is an Intent designed to deliver generic messages
 // when we are unable to determine what the user wants.
 type GenericResponse struct {
 	*Conversation
-	actions *Actions
+	actions *a.Actions
 }
 
 // GetResponses returns a list of functions each containing a BotResponse.

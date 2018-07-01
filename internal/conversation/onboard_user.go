@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	a "github.com/fmitra/dennis-bot/internal/actions"
 	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/users"
 )
@@ -11,7 +12,7 @@ import (
 // OnboardUser is an Intent designed to onboard a new user into the bot platform.
 type OnboardUser struct {
 	*Conversation
-	actions *Actions
+	actions *a.Actions
 }
 
 // GetResponses returns a list of functions each containing a BotResponse.

@@ -17,7 +17,7 @@ import (
 	"github.com/fmitra/dennis-bot/pkg/sessions"
 )
 
-// We use global variables here to implement testEnv as a singleton
+// We use package scoped variables here to implement testEnv as a singleton
 // across the different test suites.
 var (
 	testEnv *TestEnv
@@ -52,10 +52,14 @@ func GetTestEnv(configFile string) *TestEnv {
 }
 
 // CreateTestUser creates default test user with telegram user ID specified in mocks.
-func CreateTestUser(db *gorm.DB) {
+func CreateTestUser(db *gorm.DB, userID uint) {
+	telegramID := userID
+	if userID == 0 {
+		telegramID = TestUserID
+	}
 	password, _ := bcrypt.GenerateFromPassword([]byte("my-password"), 10)
 	user := &user{
-		TelegramID: TestUserID,
+		TelegramID: telegramID,
 		Password:   string(password),
 	}
 	db.Create(user)
@@ -64,14 +68,6 @@ func CreateTestUser(db *gorm.DB) {
 // CleanUpEnv cleans common DB and cached objects. Intended to be run after any test
 // suite with a DB dependency.
 func CleanUpEnv(testEnv *TestEnv) {
-	// TODO There is a race condition that needs to be investigated where test tear down
-	// methods do not finish clearing out the DB before the next suite starts. Setting
-	// a lock does not seem to resolve it. For now, we will miitigate the issue with
-	// with custom SQL and a sleeper until we find a more elegant solution.
-	testEnv.Db.Exec("DELETE FROM expenses e USING users u WHERE e.user_id = u.id and u.telegram_id != 100;")
-	testEnv.Db.Exec("DELETE FROM users;")
-	testEnv.Db.Exec("DELETE FROM settings;")
-
 	defaultUserCache := fmt.Sprintf("%s_conversation", strconv.Itoa(int(TestUserID)))
 	defaultPassCache := fmt.Sprintf("%s_password", strconv.Itoa(int(TestUserID)))
 	defaultCurrencyCache := "SGD_USD"
@@ -79,8 +75,11 @@ func CleanUpEnv(testEnv *TestEnv) {
 	testEnv.Cache.Delete(defaultPassCache)
 	testEnv.Cache.Delete(defaultCurrencyCache)
 
-	// TODO Clean this up later
-	time.Sleep(500 * time.Millisecond)
+	tx := testEnv.Db.Begin()
+	tx.Exec("DELETE FROM expenses;")
+	tx.Exec("DELETE FROM users;")
+	tx.Exec("DELETE FROM settings;")
+	tx.Commit()
 }
 
 // Duplicate of the users pkg model. We define this here to prevent circular

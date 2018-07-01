@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/fmitra/dennis-bot/internal/actions"
+	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
@@ -18,24 +20,26 @@ import (
 type ExpenseTotalSuite struct {
 	suite.Suite
 	Env    *mocks.TestEnv
-	Action *Actions
+	Action *actions.Actions
 }
 
 func (suite *ExpenseTotalSuite) SetupSuite() {
 	configFile := "../../config/config.json"
 	suite.Env = mocks.GetTestEnv(configFile)
-	suite.Action = &Actions{
-		suite.Env.Db,
-		suite.Env.Cache,
-		suite.Env.Config,
+	suite.Action = &actions.Actions{
+		Db:         suite.Env.Db,
+		Cache:      suite.Env.Cache,
+		Config:     suite.Env.Config,
+		Alphapoint: &alphapoint.Client{},
 	}
+}
+
+func (suite *ExpenseTotalSuite) TearDownSuite() {
+	mocks.CleanUpEnv(suite.Env)
 }
 
 func (suite *ExpenseTotalSuite) BeforeTest(suiteName, testName string) {
 	MessageMap = mocks.MessageMapMock
-}
-
-func (suite *ExpenseTotalSuite) AfterTest(suiteName, testName string) {
 	mocks.CleanUpEnv(suite.Env)
 }
 
@@ -181,7 +185,7 @@ func (suite *ExpenseTotalSuite) TestValidatesPassword() {
 	message := mocks.GetMockMessage("my-password")
 	json.Unmarshal(message, &incMessage)
 
-	mocks.CreateTestUser(suite.Env.Db)
+	mocks.CreateTestUser(suite.Env.Db, 0)
 	expenseTotal := &GetExpenseTotal{
 		&Conversation{
 			Step:        0,
@@ -202,7 +206,7 @@ func (suite *ExpenseTotalSuite) TestShouldCancelPasswordValidation() {
 	message := mocks.GetMockMessage("cancel")
 	json.Unmarshal(message, &incMessage)
 
-	mocks.CreateTestUser(suite.Env.Db)
+	mocks.CreateTestUser(suite.Env.Db, 0)
 	expenseTotal := &GetExpenseTotal{
 		&Conversation{
 			Step:        0,
@@ -244,7 +248,7 @@ func (suite *ExpenseTotalSuite) TestFailsPasswordValidation() {
 	message := mocks.GetMockMessage("Invalid password")
 	json.Unmarshal(message, &incMessage)
 
-	mocks.CreateTestUser(suite.Env.Db)
+	mocks.CreateTestUser(suite.Env.Db, 0)
 	expenseTotal := &GetExpenseTotal{
 		&Conversation{
 			Step:       0,

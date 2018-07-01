@@ -20,6 +20,8 @@ jobs:
         - make dev_dependencies
         - docker-compose up -d
         - make test_and_lint
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
     - stage: build
       if: tag =~ ^v
       script:

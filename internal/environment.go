@@ -11,21 +11,25 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"github.com/fmitra/dennis-bot/config"
+	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/expenses"
 	"github.com/fmitra/dennis-bot/pkg/sessions"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/users"
+	"github.com/fmitra/dennis-bot/pkg/wit"
 )
 
 // Env is the working environment. It exposes HTTP handlers
 // to communicate with the bot and the DB/Cache layer as well
 // as application configuration.
 type Env struct {
-	db       *gorm.DB
-	cache    sessions.Session
-	config   config.AppConfig
-	telegram telegram.Telegram
+	db         *gorm.DB
+	cache      sessions.Session
+	config     config.AppConfig
+	telegram   telegram.Telegram
+	wit        wit.Wit
+	alphapoint alphapoint.Alphapoint
 }
 
 // HealthCheck ensures application is running.
@@ -103,12 +107,17 @@ func LoadEnv(config config.AppConfig) *Env {
 		config.BotDomain,
 	)
 
+	wit := wit.NewClient(config.Wit.Token)
+	alphapoint := alphapoint.NewClient(config.AlphaPoint.Token)
+
 	crypto.InitializeGob()
 
 	return &Env{
-		db:       db,
-		cache:    cache,
-		config:   config,
-		telegram: telegram,
+		db:         db,
+		cache:      cache,
+		config:     config,
+		telegram:   telegram,
+		wit:        wit,
+		alphapoint: alphapoint,
 	}
 }

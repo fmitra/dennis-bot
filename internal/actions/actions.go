@@ -1,4 +1,6 @@
-package conversation
+// Package actions are a collection of actions that the bot
+// performs on behalf of the user, such as creating an account.
+package actions
 
 import (
 	"crypto/rsa"
@@ -20,9 +22,10 @@ import (
 // conversation. Typically a user contacts the bot to request some action
 // to be performed, such as expense tracking.
 type Actions struct {
-	Db     *gorm.DB
-	Cache  sessions.Session
-	Config config.AppConfig
+	Db         *gorm.DB
+	Cache      sessions.Session
+	Config     config.AppConfig
+	Alphapoint alphapoint.Alphapoint
 }
 
 // CreateNewExpense creates and saves a new Expense entry to the DB.
@@ -57,8 +60,7 @@ func (a *Actions) ConvertCurrency(from, to string, amount float64) float64 {
 	// already stored in our cache.
 	if err != nil {
 		oneWeek := 604800
-		ap := alphapoint.NewClient(a.Config.AlphaPoint.Token)
-		convertedAmount, newConversion := ap.Convert(from, to, amount)
+		convertedAmount, newConversion := a.Alphapoint.Convert(from, to, amount)
 		a.Cache.Set(cacheKey, newConversion, oneWeek)
 		return convertedAmount
 	}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/fmitra/dennis-bot/internal/actions"
 	"github.com/fmitra/dennis-bot/pkg/sessions"
 	t "github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/users"
@@ -105,7 +106,7 @@ func (c *Conversation) HasResponse() bool {
 
 // GetIntent creates an a new Intent with the embedded Conversation to provide context.
 // A Conversation create's an Intent in order to formulate a BotResponse.
-func (c *Conversation) GetIntent(a *Actions) Intent {
+func (c *Conversation) GetIntent(a *actions.Actions) Intent {
 	switch c.IntentType {
 	case OnboardUserIntent:
 		return &OnboardUser{c, a}
@@ -120,7 +121,7 @@ func (c *Conversation) GetIntent(a *Actions) Intent {
 
 // Respond returns a response to the user. Responses are controlled by Intent types
 // which we create on demand using information from the surrounding Conversation.
-func (c *Conversation) Respond(a *Actions) BotResponse {
+func (c *Conversation) Respond(a *actions.Actions) BotResponse {
 	if !c.HasResponse() {
 		return BotResponse("")
 	}
@@ -155,7 +156,7 @@ func InferIntent(w wit.Response, botUserID uint) string {
 // NewConversation creates a new conversation between the bot and the user. If the user
 // has an existing account, we associate their account ID with the user
 // ID of their chat service.
-func NewConversation(userID uint, w wit.Response, a *Actions) Conversation {
+func NewConversation(userID uint, w wit.Response, a *actions.Actions) Conversation {
 	manager := users.NewUserManager(a.Db)
 	botUser := manager.GetByTelegramID(userID)
 
@@ -186,7 +187,7 @@ func GetConversation(userID uint, cache sessions.Session) (Conversation, error) 
 
 // GetResponse creates or retrieves a Conversation in order to return the
 // next available response.
-func GetResponse(w wit.Response, inc t.IncomingMessage, a *Actions) BotResponse {
+func GetResponse(w wit.Response, inc t.IncomingMessage, a *actions.Actions) BotResponse {
 	userID := inc.GetUser().ID
 
 	conversation, err := GetConversation(userID, a.Cache)

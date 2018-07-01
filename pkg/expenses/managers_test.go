@@ -23,8 +23,11 @@ func (suite *ExpenseManagerSuite) SetupSuite() {
 	suite.Env = mocks.GetTestEnv(configFile)
 }
 
-func (suite *ExpenseManagerSuite) AfterTest(suiteName, testName string) {
-	suite.Env.Db.Exec("DELETE FROM expenses;")
+func (suite *ExpenseManagerSuite) TearDownSuite() {
+	mocks.CleanUpEnv(suite.Env)
+}
+
+func (suite *ExpenseManagerSuite) BeforeTest(suiteName, testName string) {
 	mocks.CleanUpEnv(suite.Env)
 }
 
@@ -34,10 +37,12 @@ func GetTestUser(db *gorm.DB) users.User {
 		Password:   "password",
 	}
 	db.Create(user)
+
 	return *user
 }
 
 func BatchCreateExpenses(db *gorm.DB, u users.User, firstEntryDate time.Time, totalEntries int) {
+	tx := db.Begin()
 	for days := 1; days <= totalEntries; days++ {
 		createdAt := firstEntryDate.AddDate(0, 0, days)
 		expense := &Expense{
@@ -51,13 +56,9 @@ func BatchCreateExpenses(db *gorm.DB, u users.User, firstEntryDate time.Time, to
 		}
 		publicKey, _ := crypto.ParsePublicKey(u.PublicKey)
 		expense.Encrypt(publicKey)
-		db.Create(expense)
-
-		// We cannot define the creation date on the initial
-		// insert so we need to update the record immediately after
-		expense.CreatedAt = createdAt
-		db.Save(&expense)
+		tx.Create(expense)
 	}
+	tx.Commit()
 }
 
 func (suite *ExpenseManagerSuite) TestReturnsExpenseManager() {

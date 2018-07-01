@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/fmitra/dennis-bot/internal/actions"
+	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
@@ -24,13 +26,14 @@ func (suite *ConvoSuite) SetupSuite() {
 	suite.Env = mocks.GetTestEnv(configFile)
 }
 
+func (suite *ConvoSuite) TearDownSuite() {
+	mocks.CleanUpEnv(suite.Env)
+}
+
 func (suite *ConvoSuite) BeforeTest(suiteName, testName string) {
 	// Responses may be randomized from a list of options.
 	// We need to ensure the returned response is predictable
 	MessageMap = mocks.MessageMapMock
-}
-
-func (suite *ConvoSuite) AfterTest(suiteName, testName string) {
 	mocks.CleanUpEnv(suite.Env)
 }
 
@@ -62,7 +65,7 @@ func (suite *ConvoSuite) TestCreatesNewConversation() {
 	}`)
 	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
-	action := &Actions{
+	action := &actions.Actions{
 		Db: suite.Env.Db,
 	}
 
@@ -184,7 +187,7 @@ func (suite *ConvoSuite) TestRetrievesIntent() {
 	conversation := &Conversation{
 		IntentType: OnboardUserIntent,
 	}
-	intent := conversation.GetIntent(&Actions{})
+	intent := conversation.GetIntent(&actions.Actions{})
 	assert.IsType(suite.T(), &OnboardUser{}, intent)
 }
 
@@ -192,10 +195,11 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	conversation := &Conversation{
 		IntentType: OnboardUserIntent,
 	}
-	actions := &Actions{
-		suite.Env.Db,
-		suite.Env.Cache,
-		suite.Env.Config,
+	a := &actions.Actions{
+		Db:         suite.Env.Db,
+		Cache:      suite.Env.Cache,
+		Config:     suite.Env.Config,
+		Alphapoint: &alphapoint.Client{},
 	}
 	witResponse := wit.Response{}
 	incMessage := telegram.IncomingMessage{}
@@ -207,7 +211,7 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 
 	// First response requests password
 	conversation.SetLastUserMessage(witResponse, incMessage)
-	response := conversation.Respond(actions)
+	response := conversation.Respond(a)
 	assert.Equal(suite.T(), BotResponse("What's your password?"), response)
 	assert.Equal(suite.T(), 1, conversation.Step)
 
@@ -215,7 +219,7 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	message = mocks.GetMockMessage("foo")
 	json.Unmarshal(message, &incMessage)
 	conversation.SetLastUserMessage(witResponse, incMessage)
-	response = conversation.Respond(actions)
+	response = conversation.Respond(a)
 	assert.Equal(suite.T(), BotResponse("Your password is foo"), response)
 	assert.Equal(suite.T(), 2, conversation.Step)
 
@@ -223,7 +227,7 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	message = mocks.GetMockMessage("invalid answer")
 	json.Unmarshal(message, &incMessage)
 	conversation.SetLastUserMessage(witResponse, incMessage)
-	response = conversation.Respond(actions)
+	response = conversation.Respond(a)
 	assert.Equal(suite.T(), BotResponse("I didn't understand that"), response)
 	assert.Equal(suite.T(), 2, conversation.Step)
 
@@ -231,7 +235,7 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	message = mocks.GetMockMessage("No")
 	json.Unmarshal(message, &incMessage)
 	conversation.SetLastUserMessage(witResponse, incMessage)
-	response = conversation.Respond(actions)
+	response = conversation.Respond(a)
 	assert.Equal(suite.T(), BotResponse("Okay try again later"), response)
 	assert.Equal(suite.T(), -1, conversation.Step)
 
@@ -239,7 +243,7 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	message = mocks.GetMockMessage("Hello?")
 	json.Unmarshal(message, &incMessage)
 	conversation.SetLastUserMessage(witResponse, incMessage)
-	response = conversation.Respond(actions)
+	response = conversation.Respond(a)
 	assert.Equal(suite.T(), BotResponse(""), response)
 	assert.Equal(suite.T(), -1, conversation.Step)
 
@@ -251,14 +255,14 @@ func (suite *ConvoSuite) TestGetResponseInCorrectOrder() {
 	message = mocks.GetMockMessage("Yes")
 	json.Unmarshal(message, &incMessage)
 	conversation.SetLastUserMessage(witResponse, incMessage)
-	response = conversation.Respond(actions)
+	response = conversation.Respond(a)
 	assert.Equal(suite.T(), BotResponse("Outro message"), response)
 	assert.Equal(suite.T(), -1, conversation.Step)
 }
 
 func (suite *ConvoSuite) TestCachesConversationsWithRemainingResponses() {
 	cacheKey := fmt.Sprintf("%s_conversation", strconv.Itoa(int(mocks.TestUserID)))
-	actions := &Actions{
+	a := &actions.Actions{
 		Cache: suite.Env.Cache,
 		Db:    suite.Env.Db,
 	}
@@ -267,7 +271,7 @@ func (suite *ConvoSuite) TestCachesConversationsWithRemainingResponses() {
 	message := mocks.GetMockMessage("")
 	json.Unmarshal(message, &incMessage)
 
-	GetResponse(witResponse, incMessage, actions)
+	GetResponse(witResponse, incMessage, a)
 
 	var cachedConvo Conversation
 	suite.Env.Cache.Get(cacheKey, &cachedConvo)

@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/fmitra/dennis-bot.svg?branch=master)](https://travis-ci.org/fmitra/dennis-bot) [![Report Card](https://goreportcard.com/badge/github.com/fmitra/dennis-bot)](https://goreportcard.com/badge/github.com/fmitra/dennis-bot)
+[![Build Status](https://travis-ci.org/fmitra/dennis-bot.svg?branch=master)](https://travis-ci.org/fmitra/dennis-bot) [![Report Card](https://goreportcard.com/badge/github.com/fmitra/dennis-bot)](https://goreportcard.com/badge/github.com/fmitra/dennis-bot) [![codecov](https://codecov.io/gh/fmitra/dennis-bot/branch/master/graph/badge.svg)](https://codecov.io/gh/fmitra/dennis-bot)
 
 # Dennis
 
@@ -92,27 +92,30 @@ dep ensure -vendor-only -v
 
 #### 2. Confirm tests are passing
 
-Run all tests:
+Note, test packages are dependent on a local shared DB. They must be run sequentially
+with `-p=1` to prevent race conditions during teardown methods.
 
 ```
-go test ./...
+go test -p=1 ./...
 ```
 
-You can also run vet, golint, megacheck and test in one command:
+You can also run vet, golint, megacheck and test (with race check and cache disabled) using the command below.
 
 ```
 make test_and_lint
 ```
 
-#### 3. Run Ngrok
+#### 3. Run Ngrok and set up your local `config.json`
 
-This step is not necessary if all you want to do is run the test suite.
+These steps are not necessary if all you want to do is run the test suite.
+
+##### Expose local port to web
 
 ```
 ./ngrok http 8080
 ```
 
-#### 4. Set up your local `config.json`
+##### Update settings
 
 * `database` and `reddis` - Postgres & Redis settings if you are not using the default test config
 * `telegram` - Telegram API token to respond to messages
@@ -129,11 +132,6 @@ go build ./cmd/dennis-bot
 ```
 
 ## Developer Notes
-
-#### Test Environment
-
-There is a race condition pending to be resolved in DB clean up tasks. It's visible when
-the entire test suite is run with `go test ./...`. Isolated they run fine.
 
 #### Telegram Authentication
 

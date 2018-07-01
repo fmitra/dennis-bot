@@ -2,6 +2,7 @@
 /dennis-bot.exe
 config.json
 docker-compose.yml
+coverage.txt
 
 .DS_Store
 .idea

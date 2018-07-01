@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/fmitra/dennis-bot/internal/actions"
+	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/users"
@@ -16,24 +18,26 @@ import (
 type OnboardUserSuite struct {
 	suite.Suite
 	Env    *mocks.TestEnv
-	Action *Actions
+	Action *actions.Actions
 }
 
 func (suite *OnboardUserSuite) SetupSuite() {
 	configFile := "../../config/config.json"
 	suite.Env = mocks.GetTestEnv(configFile)
-	suite.Action = &Actions{
-		suite.Env.Db,
-		suite.Env.Cache,
-		suite.Env.Config,
+	suite.Action = &actions.Actions{
+		Db:         suite.Env.Db,
+		Cache:      suite.Env.Cache,
+		Config:     suite.Env.Config,
+		Alphapoint: &alphapoint.Client{},
 	}
+}
+
+func (suite *OnboardUserSuite) TearDownSuite() {
+	mocks.CleanUpEnv(suite.Env)
 }
 
 func (suite *OnboardUserSuite) BeforeTest(suiteName, testName string) {
 	MessageMap = mocks.MessageMapMock
-}
-
-func (suite *OnboardUserSuite) AfterTest(suiteName, testName string) {
 	mocks.CleanUpEnv(suite.Env)
 }
 
@@ -165,7 +169,7 @@ func (suite *OnboardUserSuite) TestReturnsErrorForFailedAccountCreation() {
 	var incMessage telegram.IncomingMessage
 	message := mocks.GetMockMessage("Yes")
 	json.Unmarshal(message, &incMessage)
-	mocks.CreateTestUser(suite.Env.Db)
+	mocks.CreateTestUser(suite.Env.Db, 0)
 	password, _ := crypto.Encrypt("password", suite.Env.Config.SecretKey)
 
 	onboardUser := &OnboardUser{
@@ -197,7 +201,7 @@ func (suite *OnboardUserSuite) TestValidatesCurrency() {
 	var incMessage telegram.IncomingMessage
 	message := mocks.GetMockMessage("abc")
 	json.Unmarshal(message, &incMessage)
-	mocks.CreateTestUser(suite.Env.Db)
+	mocks.CreateTestUser(suite.Env.Db, 0)
 
 	onboardUser := &OnboardUser{
 		&Conversation{

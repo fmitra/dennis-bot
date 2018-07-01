@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	a "github.com/fmitra/dennis-bot/internal/actions"
 	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/sessions"
 	"github.com/fmitra/dennis-bot/pkg/users"
@@ -13,7 +14,7 @@ import (
 // GetExpenseTotal is an Intent designed to retrieve expense history totals
 type GetExpenseTotal struct {
 	*Conversation
-	actions *Actions
+	actions *a.Actions
 }
 
 // GetResponses returns a list of functions each containing a BotResponse.

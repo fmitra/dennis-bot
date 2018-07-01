@@ -1,4 +1,4 @@
-package conversation
+package actions
 
 import (
 	"crypto/rsa"
@@ -27,10 +27,15 @@ func (suite *ActionSuite) SetupSuite() {
 		suite.Env.Db,
 		suite.Env.Cache,
 		suite.Env.Config,
+		&alphapoint.Client{},
 	}
 }
 
-func (suite *ActionSuite) AfterTest(suiteName, testName string) {
+func (suite *ActionSuite) TearDownSuite() {
+	mocks.CleanUpEnv(suite.Env)
+}
+
+func (suite *ActionSuite) BeforeTest(suiteName, testName string) {
 	mocks.CleanUpEnv(suite.Env)
 }
 
@@ -59,9 +64,12 @@ func (suite *ActionSuite) TestCreatesNewExpense() {
 	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
-	alphapoint.BaseURL = alphapointServer.URL
-
+	ap := &alphapoint.Client{
+		BaseURL: alphapointServer.URL,
+		Token:   "",
+	}
 	action := suite.Action
+	action.Alphapoint = ap
 	publicKey := rsa.PublicKey{}
 	err := action.CreateNewExpense(witResponse, mocks.TestUserID, publicKey)
 	assert.NoError(suite.T(), err)
@@ -91,11 +99,13 @@ func (suite *ActionSuite) TestCreatesNewExpenseFromCache() {
 	var witResponse wit.Response
 	json.Unmarshal(rawWitResponse, &witResponse)
 
-	alphapoint.BaseURL = alphapointServer.URL
-
+	ap := &alphapoint.Client{
+		BaseURL: alphapointServer.URL,
+		Token:   "",
+	}
 	publicKey := rsa.PublicKey{}
-
 	action := suite.Action
+	action.Alphapoint = ap
 	// Initial call without cache
 	action.CreateNewExpense(witResponse, mocks.TestUserID, publicKey)
 
@@ -122,7 +132,6 @@ func (suite *ActionSuite) TestGetsConvertedExpenseTotal() {
 	}`
 	alphapointServer := mocks.MakeTestServer(alphapointResponse)
 	defer alphapointServer.Close()
-	alphapoint.BaseURL = alphapointServer.URL
 
 	user := users.User{
 		TelegramID: uint(201),
@@ -133,7 +142,12 @@ func (suite *ActionSuite) TestGetsConvertedExpenseTotal() {
 	manager := users.NewSettingManager(suite.Env.Db)
 	manager.UpdateCurrency(user.ID, "PHP")
 
+	ap := &alphapoint.Client{
+		BaseURL: alphapointServer.URL,
+		Token:   "",
+	}
 	action := suite.Action
+	action.Alphapoint = ap
 	privateKey := rsa.PrivateKey{}
 	period := "month"
 	total, err := action.GetExpenseTotal(period, user.ID, privateKey)
@@ -146,6 +160,7 @@ func (suite *ActionSuite) TestReturnsErrorForInvalidPeriod() {
 		suite.Env.Db,
 		suite.Env.Cache,
 		suite.Env.Config,
+		&alphapoint.Client{},
 	}
 
 	privateKey := rsa.PrivateKey{}
@@ -158,7 +173,7 @@ func (suite *ActionSuite) TestCreatesNewUser() {
 	action := suite.Action
 	password := "my-password"
 
-	err := action.CreateNewUser(mocks.TestUserID, password)
+	err := action.CreateNewUser(uint(201), password)
 	assert.NoError(suite.T(), err)
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/telegram"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
@@ -32,6 +33,8 @@ func (suite *EnvSuite) TestRespondsToHealthCheck() {
 		suite.Env.Cache,
 		suite.Env.Config,
 		&telegram.Client{},
+		&wit.Client{},
+		&alphapoint.Client{},
 	}
 
 	req, err := http.NewRequest("GET", "/healthcheck", nil)
@@ -56,15 +59,19 @@ func (suite *EnvSuite) TestRespondsToWebhook() {
 	telegramServer := mocks.MakeTestServer("")
 	witServer := mocks.MakeTestServer(witResponse)
 
-	telegram.BaseURL = fmt.Sprintf("%s/", telegramServer.URL)
-	wit.BaseURL = witServer.URL
+	alphapointClient := alphapoint.NewClient("")
+	witClient := wit.NewClient("")
 	telegramClient := telegram.NewClient("", "")
+	telegramClient.BaseURL = fmt.Sprintf("%s/", telegramServer.URL)
+	witClient.BaseURL = witServer.URL
 
 	env := &Env{
 		suite.Env.Db,
 		suite.Env.Cache,
 		suite.Env.Config,
 		telegramClient,
+		witClient,
+		alphapointClient,
 	}
 
 	req, err := http.NewRequest("POST", "/webook", bytes.NewBuffer(message))
