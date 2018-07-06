@@ -6,7 +6,11 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"log"
+	"os"
+	"time"
 	"strconv"
+	"encoding/csv"
+	"io/ioutil"
 
 	"github.com/jinzhu/gorm"
 
@@ -74,6 +78,7 @@ func (a *Actions) GetExpenseTotal(period string, userID uint, pk rsa.PrivateKey)
 	expenseM := expenses.NewExpenseManager(a.Db)
 	total, err := expenseM.TotalByPeriod(period, userID, pk)
 	if err != nil {
+		// Just log for now, we'll handle the error in the message
 		log.Printf("actions: failed to query expenses %s", err)
 	}
 
@@ -104,4 +109,54 @@ func (a *Actions) CreateNewUser(userID uint, password string) error {
 func (a *Actions) SetUserCurrency(userID uint, currency string) error {
 	manager := users.NewSettingManager(a.Db)
 	return manager.UpdateCurrency(userID, currency)
+}
+
+// GetExpenseCSV returns the user's expense history for a specific period
+// as a CSV file.
+func (a *Actions) GetExpenseCSV(period string, userID uint, pk rsa.PrivateKey) (string, error) {
+	tmpFileName := fmt.Sprintf("expenses_%s", strconv.Itoa(int(userID)))
+	tmpFile, err := ioutil.TempFile(os.TempDir(), tmpFileName)
+	if err != nil {
+		log.Printf("actions: failed to create csv file %s", err)
+	}
+
+	fileName := fmt.Sprintf("%s.csv", tmpFile.Name())
+	os.Rename(tmpFile.Name(), fileName)
+
+	csvFile, err := os.OpenFile(fileName, os.O_RDWR, os.ModeTemporary)
+	defer csvFile.Close()
+	if err != nil {
+		log.Printf("actions: failed to open csv file %s", err)
+	}
+
+	m := expenses.NewExpenseManager(a.Db)
+	expenses, err := m.QueryByPeriod(period, userID)
+	if err != nil {
+		log.Printf("actions: failed to query expenses %s", err)
+		return fileName, err
+	}
+
+	w := csv.NewWriter(csvFile)
+	for _, expense := range expenses {
+		expense.Decrypt(pk)
+		row := []string{
+			expense.Date.Format(time.UnixDate),
+			expense.Description,
+			expense.Total,
+			expense.Historical,
+			expense.Currency,
+		}
+		if err := w.Write(row); err != nil {
+			log.Printf("actions: failed to write to csv %s", err)
+			return fileName, err
+		}
+	}
+
+	w.Flush();
+	if err := w.Error(); err != nil {
+		log.Printf("actions: failed to write to csv %s", err)
+		return fileName, err
+	}
+
+	return fileName, nil
 }

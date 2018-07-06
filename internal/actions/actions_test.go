@@ -3,13 +3,18 @@ package actions
 import (
 	"crypto/rsa"
 	"encoding/json"
+	"encoding/csv"
+	"time"
 	"testing"
+	"os"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/alphapoint"
 	"github.com/fmitra/dennis-bot/pkg/users"
+	"github.com/fmitra/dennis-bot/pkg/expenses"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
@@ -175,6 +180,42 @@ func (suite *ActionSuite) TestCreatesNewUser() {
 
 	err := action.CreateNewUser(uint(201), password)
 	assert.NoError(suite.T(), err)
+}
+
+func (suite *ActionSuite) TestCreatesCSV() {
+	user := users.User{
+		TelegramID: uint(201),
+		Password:   "my-password",
+	}
+	suite.Env.Db.Create(&user)
+
+	for i := 0; i <= 3; i++ {
+		expense := &expenses.Expense{
+			Date: time.Now(),
+			Description: "Food",
+			Total: "3.00",
+			Historical: "2.00",
+			Currency: "SGD",
+			Category: "",
+			User: user,
+		}
+		publicKey, _ := crypto.ParsePublicKey(user.PublicKey)
+		expense.Encrypt(publicKey)
+		suite.Env.Db.Create(expense)
+	}
+
+	m := expenses.NewExpenseManager(suite.Env.Db)
+	expenses, _ := m.QueryByPeriod("week", user.ID)
+
+	action := suite.Action
+	privateKey, _ := user.GetPrivateKey("my-password")
+	fileName, err := action.GetExpenseCSV("week", user.ID, privateKey)
+	defer os.Remove(fileName)
+	assert.NoError(suite.T(), err)
+
+	file, _ := os.Open(fileName)
+	records, _ := csv.NewReader(file).ReadAll()
+	assert.Equal(suite.T(), len(expenses), len(records))
 }
 
 func TestActionSuite(t *testing.T) {
