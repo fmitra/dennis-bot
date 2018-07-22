@@ -4,13 +4,13 @@ package actions
 
 import (
 	"crypto/rsa"
+	"encoding/csv"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
-	"time"
 	"strconv"
-	"encoding/csv"
-	"io/ioutil"
+	"time"
 
 	"github.com/jinzhu/gorm"
 
@@ -111,8 +111,8 @@ func (a *Actions) SetUserCurrency(userID uint, currency string) error {
 	return manager.UpdateCurrency(userID, currency)
 }
 
-// GetExpenseCSV returns the user's expense history for a specific period
-// as a CSV file.
+// GetExpenseCSV creates a CSV of the user's expense history for a specific time
+// period and returns the name of the file.
 func (a *Actions) GetExpenseCSV(period string, userID uint, pk rsa.PrivateKey) (string, error) {
 	tmpFileName := fmt.Sprintf("expenses_%s", strconv.Itoa(int(userID)))
 	tmpFile, err := ioutil.TempFile(os.TempDir(), tmpFileName)
@@ -124,10 +124,10 @@ func (a *Actions) GetExpenseCSV(period string, userID uint, pk rsa.PrivateKey) (
 	os.Rename(tmpFile.Name(), fileName)
 
 	csvFile, err := os.OpenFile(fileName, os.O_RDWR, os.ModeTemporary)
-	defer csvFile.Close()
 	if err != nil {
 		log.Printf("actions: failed to open csv file %s", err)
 	}
+	defer csvFile.Close()
 
 	m := expenses.NewExpenseManager(a.Db)
 	expenses, err := m.QueryByPeriod(period, userID)
@@ -152,7 +152,7 @@ func (a *Actions) GetExpenseCSV(period string, userID uint, pk rsa.PrivateKey) (
 		}
 	}
 
-	w.Flush();
+	w.Flush()
 	if err := w.Error(); err != nil {
 		log.Printf("actions: failed to write to csv %s", err)
 		return fileName, err

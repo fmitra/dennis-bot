@@ -2,19 +2,19 @@ package actions
 
 import (
 	"crypto/rsa"
-	"encoding/json"
 	"encoding/csv"
-	"time"
-	"testing"
+	"encoding/json"
 	"os"
+	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/alphapoint"
-	"github.com/fmitra/dennis-bot/pkg/users"
+	"github.com/fmitra/dennis-bot/pkg/crypto"
 	"github.com/fmitra/dennis-bot/pkg/expenses"
+	"github.com/fmitra/dennis-bot/pkg/users"
 	"github.com/fmitra/dennis-bot/pkg/wit"
 	mocks "github.com/fmitra/dennis-bot/test"
 )
@@ -191,13 +191,13 @@ func (suite *ActionSuite) TestCreatesCSV() {
 
 	for i := 0; i <= 3; i++ {
 		expense := &expenses.Expense{
-			Date: time.Now(),
+			Date:        time.Now(),
 			Description: "Food",
-			Total: "3.00",
-			Historical: "2.00",
-			Currency: "SGD",
-			Category: "",
-			User: user,
+			Total:       "3.00",
+			Historical:  "2.00",
+			Currency:    "SGD",
+			Category:    "",
+			User:        user,
 		}
 		publicKey, _ := crypto.ParsePublicKey(user.PublicKey)
 		expense.Encrypt(publicKey)
