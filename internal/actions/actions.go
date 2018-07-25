@@ -117,7 +117,7 @@ func (a *Actions) GetExpenseCSV(period string, userID uint, pk rsa.PrivateKey) (
 	tmpFileName := fmt.Sprintf("expenses_%s", strconv.Itoa(int(userID)))
 	tmpFile, err := ioutil.TempFile(os.TempDir(), tmpFileName)
 	if err != nil {
-		log.Printf("actions: failed to create csv file %s", err)
+		log.Printf("actions: failed to create csv file - %s", err)
 	}
 
 	fileName := fmt.Sprintf("%s.csv", tmpFile.Name())
@@ -125,14 +125,15 @@ func (a *Actions) GetExpenseCSV(period string, userID uint, pk rsa.PrivateKey) (
 
 	csvFile, err := os.OpenFile(fileName, os.O_RDWR, os.ModeTemporary)
 	if err != nil {
-		log.Printf("actions: failed to open csv file %s", err)
+		log.Printf("actions: failed to open csv file - %s", err)
+		return fileName, err
 	}
 	defer csvFile.Close()
 
 	m := expenses.NewExpenseManager(a.Db)
 	expenses, err := m.QueryByPeriod(period, userID)
 	if err != nil {
-		log.Printf("actions: failed to query expenses %s", err)
+		log.Printf("actions: failed to query expenses - %s", err)
 		return fileName, err
 	}
 
@@ -147,14 +148,14 @@ func (a *Actions) GetExpenseCSV(period string, userID uint, pk rsa.PrivateKey) (
 			expense.Currency,
 		}
 		if err := w.Write(row); err != nil {
-			log.Printf("actions: failed to write to csv %s", err)
+			log.Printf("actions: failed to write to csv - %s", err)
 			return fileName, err
 		}
 	}
 
 	w.Flush()
 	if err := w.Error(); err != nil {
-		log.Printf("actions: failed to write to csv %s", err)
+		log.Printf("actions: failed to write to csv - %s", err)
 		return fileName, err
 	}
 

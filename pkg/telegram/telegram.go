@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/Rican7/retry"
@@ -116,6 +119,54 @@ func (c *Client) SendAction(chatID int, action string) int {
 	resp, err := http.Post(url, contentType, bytes.NewReader(payload))
 	if err != nil {
 		log.Printf("telegram: failed to send action - %s", err)
+		return errorCode
+	}
+
+	statusCode = resp.StatusCode
+	resp.Body.Close()
+	return statusCode
+}
+
+// SendDocument sends a file to a User. After a file is delivered,
+// it is deleted from the bot.
+func (c *Client) SendDocument(chatID int, fileName string) int {
+	defer os.Remove(fileName)
+	url := fmt.Sprintf("%s%s/sendDocument", c.BaseURL, c.Token)
+	errorCode := 400
+
+	file, err := os.Open(fileName)
+	if err != nil {
+		log.Printf("telegram: cannot open file - %s", err)
+		return errorCode
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("document", fileName)
+	if err != nil {
+		log.Printf("telegram: cannot create form file - %s", err)
+		return errorCode
+	}
+
+	_, err = io.Copy(part, file)
+	if err != nil {
+		log.Printf("telegram: cannot copy file - %s", err)
+		return errorCode
+	}
+
+	writer.WriteField("chat_id", strconv.Itoa(int(chatID)))
+	err = writer.Close()
+	if err != nil {
+		log.Printf("telegram: writer close error - %s", err)
+		return errorCode
+	}
+
+	// TODO Exponenial retry?
+	var statusCode int
+	resp, err := http.Post(url, writer.FormDataContentType(), body)
+	if err != nil {
+		log.Printf("telegram: failed to send document - %s", err)
 		return errorCode
 	}
 
